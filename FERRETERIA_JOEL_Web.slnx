@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="ApiGateway/ApiGateway.csproj" />
+  <Project Path="FERRETERIA_JOEL_Web/FERRETERIA_JOEL_Web.csproj" />
+  <Project Path="MicroServicioClientes/MicroServicioClientes.csproj" />
+  <Project Path="MicroServicioProductos/MicroServicioProductos.csproj" />
+  <Project Path="MicroServicioProveedores/MicroServicioProveedores.csproj" />
+  <Project Path="MicroServicioUsuarios/MicroServicioUsuarios.csproj" />
+</Solution>
