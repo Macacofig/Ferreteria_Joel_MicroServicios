@@ -1,0 +1,342 @@
+# =============================================================================
+# FERRETERÍA JOEL — Docker Compose (3raCompetencia · EC3 Entregable Único)
+#
+# 11 componentes:
+#   1) MicroServicioUsuarios       (hexagonal + Result + Factory Method + Keycloak)
+#   2) mysql-usuarios              (MySQL 8 — base bdusuarios)
+#   3) keycloak                    (realm ferreteria, JWT/JWKS)
+#   4) MicroServicioProductos      (API + /index)
+#   5) mysql-productos             (MySQL 8 — base bdproductos)
+#   6) MicroServicioClientes       (API + /index)
+#   7) postgres-clientes           (PostgreSQL 16 — base bdclientes)
+#   8) MicroServicioProveedores    (API + /index)
+#   9) mongo-proveedores           (MongoDB 7 — base bdproveedores)
+#  10) ApiGateway                  (YARP, valida JWT de Keycloak)
+#  11) ferreteria-web              (frontend Razor, patrón Adapter)
+#
+# Cada microservicio expone su API y un endpoint /index visible en el navegador.
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # 2) MySQL de usuarios — SOLO las tablas del microservicio de usuarios
+  #    (empleado, bitacora_sesion). No crea tablas de otros servicios.
+  # ---------------------------------------------------------------------------
+  mysql-usuarios:
+    image: mysql:8.0
+    container_name: ferreteria-mysql-usuarios
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_USUARIOS_ROOT_PASSWORD:?defina MYSQL_USUARIOS_ROOT_PASSWORD en .env}
+      MYSQL_DATABASE: bdusuarios
+    ports:
+      - "${MYSQL_USUARIOS_PUERTO:-3307}:3306"
+    volumes:
+      - mysql_usuarios_data:/var/lib/mysql
+      - ./Scripts/01-usuarios.sql:/docker-entrypoint-initdb.d/01-usuarios.sql:ro
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 20s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # 5) MySQL de productos
+  # ---------------------------------------------------------------------------
+  mysql-productos:
+    image: mysql:8.0
+    container_name: ferreteria-mysql-productos
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PRODUCTOS_ROOT_PASSWORD:?defina MYSQL_PRODUCTOS_ROOT_PASSWORD en .env}
+      MYSQL_DATABASE: bdproductos
+    ports:
+      - "${MYSQL_PRODUCTOS_PUERTO:-3308}:3306"
+    volumes:
+      - mysql_productos_data:/var/lib/mysql
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 20s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # 7) PostgreSQL de clientes
+  # ---------------------------------------------------------------------------
+  postgres-clientes:
+    image: postgres:16-alpine
+    container_name: ferreteria-postgres-clientes
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bdclientes
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_CLIENTES_PASSWORD:?defina POSTGRES_CLIENTES_PASSWORD en .env}
+    ports:
+      - "${POSTGRES_CLIENTES_PUERTO:-5433}:5432"
+    volumes:
+      - postgres_clientes_data:/var/lib/postgresql/data
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bdclientes"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # 9) MongoDB de proveedores
+  # ---------------------------------------------------------------------------
+  mongo-proveedores:
+    image: mongo:7
+    container_name: ferreteria-mongo-proveedores
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PROVEEDORES_PUERTO:-27018}:27017"
+    volumes:
+      - mongo_proveedores_data:/data/db
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\" || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # 3) Keycloak — emisor de JWT. Importa el realm "ferreteria" (roles,
+  #    cliente ferreteria-web con direct-access grants y los 10 empleados).
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: ferreteria-keycloak
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_ENABLED: "true"
+      # URL pública (navegador). El backchannel (token/JWKS) se resuelve de forma
+      # dinámica por la red interna de Docker, de modo que el issuer del token
+      # es http://localhost:8081/realms/ferreteria y los microservicios alcanzan
+      # Keycloak por http://keycloak:8080.
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_PUERTO:-8081}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "${KEYCLOAK_PUERTO:-8081}:8080"
+    volumes:
+      - ./Keycloak/ferreteria-realm.json:/opt/keycloak/data/import/ferreteria-realm.json:ro
+    networks:
+      - ferreteria-net
+
+  # ---------------------------------------------------------------------------
+  # 1) MicroServicioUsuarios — API hexagonal. Valida JWT de Keycloak (JWKS),
+  #    usa MySQL (mysql.data) y expone /index.
+  # ---------------------------------------------------------------------------
+  microservicio-usuarios:
+    build:
+      context: ./MicroServicioUsuarios
+      dockerfile: Dockerfile
+    container_name: ferreteria-microservicio-usuarios
+    restart: unless-stopped
+    depends_on:
+      mysql-usuarios:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    ports:
+      - "${MICROSERVICIO_USUARIOS_PUERTO:-5072}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__MySqlConnection=Server=mysql-usuarios;Database=bdusuarios;Uid=root;Pwd=${MYSQL_USUARIOS_ROOT_PASSWORD};Port=3306;
+      - UrlProteccion__Clave=${URL_PROTECCION_CLAVE:?defina URL_PROTECCION_CLAVE en .env}
+      # El token se emite por el backchannel interno (Keycloak resuelve el
+      # hostname de forma dinámica para el backchannel), por lo que el issuer
+      # del token es la URL interna; se acepta también la pública por robustez.
+      - Keycloak__Authority=http://keycloak:8080/realms/ferreteria
+      - Keycloak__ValidIssuers=http://keycloak:8080/realms/ferreteria,http://localhost:${KEYCLOAK_PUERTO:-8081}/realms/ferreteria
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/ferreteria/.well-known/openid-configuration
+      - Keycloak__BaseUrlInterna=http://keycloak:8080/realms/ferreteria
+      - Keycloak__Realm=ferreteria
+      - Keycloak__ClientId=ferreteria-web
+      - Keycloak__AdminUser=${KEYCLOAK_ADMIN:-admin}
+      - Keycloak__AdminPassword=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      - App__UrlWeb=http://localhost:${FRONTEND_PUERTO:-5267}
+      - Smtp__Host=${Smtp__Host:-}
+      - Smtp__Puerto=${Smtp__Puerto:-587}
+      - Smtp__Usuario=${Smtp__Usuario:-}
+      - Smtp__Clave=${Smtp__Clave:-}
+      - Smtp__UsarSsl=${Smtp__UsarSsl:-true}
+      - Smtp__Remitente=${Smtp__Remitente:-}
+      - Smtp__RemitenteNombre=${Smtp__RemitenteNombre:-Ferreteria Joel}
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # 4) MicroServicioProductos
+  # ---------------------------------------------------------------------------
+  microservicio-productos:
+    build:
+      context: ./MicroServicioProductos
+      dockerfile: Dockerfile
+    container_name: ferreteria-microservicio-productos
+    restart: unless-stopped
+    depends_on:
+      mysql-productos:
+        condition: service_healthy
+    ports:
+      - "${MICROSERVICIO_PRODUCTOS_PUERTO:-5071}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__MySqlConnection=Server=mysql-productos;Database=bdproductos;Uid=root;Pwd=${MYSQL_PRODUCTOS_ROOT_PASSWORD};Port=3306;
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # 6) MicroServicioClientes
+  # ---------------------------------------------------------------------------
+  microservicio-clientes:
+    build:
+      context: ./MicroServicioClientes
+      dockerfile: Dockerfile
+    container_name: ferreteria-microservicio-clientes
+    restart: unless-stopped
+    depends_on:
+      postgres-clientes:
+        condition: service_healthy
+    ports:
+      - "${MICROSERVICIO_CLIENTES_PUERTO:-5073}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__PostgresConnection=Host=postgres-clientes;Database=bdclientes;Username=postgres;Password=${POSTGRES_CLIENTES_PASSWORD};Port=5432;
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # 8) MicroServicioProveedores
+  # ---------------------------------------------------------------------------
+  microservicio-proveedores:
+    build:
+      context: ./MicroServicioProveedores
+      dockerfile: Dockerfile
+    container_name: ferreteria-microservicio-proveedores
+    restart: unless-stopped
+    depends_on:
+      mongo-proveedores:
+        condition: service_healthy
+    ports:
+      - "${MICROSERVICIO_PROVEEDORES_PUERTO:-5074}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__MongoConnection=mongodb://mongo-proveedores:27017
+      - Mongo__BaseDatos=bdproveedores
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # 10) ApiGateway (YARP) — enruta /api/** hacia los microservicios y valida
+  #     los JWT emitidos por Keycloak.
+  # ---------------------------------------------------------------------------
+  apigateway:
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    container_name: ferreteria-apigateway
+    restart: unless-stopped
+    depends_on:
+      keycloak:
+        condition: service_started
+      microservicio-usuarios:
+        condition: service_healthy
+    ports:
+      - "${APIGATEWAY_PUERTO:-5000}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      # El gateway valida el issuer interno con el que Keycloak firma el token
+      # en la red de Docker (ver nota en el microservicio de usuarios); acepta
+      # también el público por robustez.
+      - Keycloak__Authority=http://keycloak:8080/realms/ferreteria
+      - Keycloak__ValidIssuers=http://keycloak:8080/realms/ferreteria,http://localhost:${KEYCLOAK_PUERTO:-8081}/realms/ferreteria
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/ferreteria/.well-known/openid-configuration
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # 11) Frontend Razor — consume el microservicio de usuarios a través del
+  #     ApiGateway. Implementa el patrón Adapter (objeto) sobre el cliente HTTP.
+  # ---------------------------------------------------------------------------
+  ferreteria-web:
+    build:
+      context: ./FERRETERIA_JOEL_Web
+      dockerfile: Dockerfile
+    container_name: ferreteria-web
+    restart: unless-stopped
+    depends_on:
+      apigateway:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PUERTO:-5267}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - Servicios__UsuariosApiUrl=http://apigateway:8080
+      - UrlProteccion__Clave=${URL_PROTECCION_CLAVE:?defina URL_PROTECCION_CLAVE en .env}
+    networks:
+      - ferreteria-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+    volumes:
+      - ferreteria_web_keys:/app/keys
+
+volumes:
+  mysql_usuarios_data:
+  mysql_productos_data:
+  postgres_clientes_data:
+  mongo_proveedores_data:
+  ferreteria_web_keys:
+
+networks:
+  ferreteria-net:
+    driver: bridge

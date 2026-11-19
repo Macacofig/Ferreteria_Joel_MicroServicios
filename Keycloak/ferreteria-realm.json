@@ -1,0 +1,163 @@
+{
+  "realm": "ferreteria",
+  "enabled": true,
+  "displayName": "Ferretería Joel",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      {
+        "name": "Administrador",
+        "description": "Acceso total: gestión de personal y configuración."
+      },
+      {
+        "name": "EmpleadoVenta",
+        "description": "Acceso operativo: ventas y consultas."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "ferreteria-web",
+      "name": "Ferretería Joel Web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "fullScopeAllowed": true
+    }
+  ],
+  "users": [
+    {
+      "username": "jrios",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "joel.rios@ferreteria.com",
+      "firstName": "Joel",
+      "lastName": "Ríos",
+      "credentials": [
+        { "type": "password", "value": "admin123", "temporary": false }
+      ],
+      "realmRoles": ["Administrador"]
+    },
+    {
+      "username": "mlopez",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "maria.lopez@ferreteria.com",
+      "firstName": "María",
+      "lastName": "López",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "cmendoza",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "carlos.mendoza@ferreteria.com",
+      "firstName": "Carlos",
+      "lastName": "Mendoza",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "agutierrez",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "ana.gutierrez@ferreteria.com",
+      "firstName": "Ana",
+      "lastName": "Gutiérrez",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "lfernandez",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "luis.fernandez@ferreteria.com",
+      "firstName": "Luis",
+      "lastName": "Fernández",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "sramirez",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "sofia.ramirez@ferreteria.com",
+      "firstName": "Sofía",
+      "lastName": "Ramírez",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "dtorres",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "diego.torres@ferreteria.com",
+      "firstName": "Diego",
+      "lastName": "Torres",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "lvargas",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "lucia.vargas@ferreteria.com",
+      "firstName": "Lucía",
+      "lastName": "Vargas",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "pcastillo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "pedro.castillo@ferreteria.com",
+      "firstName": "Pedro",
+      "lastName": "Castillo",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    },
+    {
+      "username": "erojas",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "elena.rojas@ferreteria.com",
+      "firstName": "Elena",
+      "lastName": "Rojas",
+      "credentials": [
+        { "type": "password", "value": "clave123", "temporary": false }
+      ],
+      "realmRoles": ["EmpleadoVenta"]
+    }
+  ]
+}

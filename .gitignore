@@ -1,0 +1,17 @@
+# Visual Studio
+.vs/
+**/.vs/
+
+# Build
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio user files
+*.user
+*.suo
+
+# Logs
+*.log
+
+# .env
+.env

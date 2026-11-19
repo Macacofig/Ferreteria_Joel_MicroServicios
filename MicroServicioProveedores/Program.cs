@@ -1,23 +1,53 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
+app.UseRouting();
 app.MapControllers();
 
+app.MapGet("/health", () => Results.Ok(new
+{
+    servicio = "MicroServicioProveedores",
+    estado = "saludable",
+    fecha = DateTime.UtcNow
+}));
+
+app.MapGet("/index", () => Results.Content(PaginaEstado(), "text/html"));
+app.MapGet("/", () => Results.Redirect("/index"));
+
 app.Run();
+
+static string PaginaEstado()
+{
+    return """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>MicroServicioProveedores</title>
+      <style>
+        body { font-family: system-ui, Segoe UI, Arial, sans-serif; background:#0f172a; color:#e2e8f0; margin:0; padding:48px; }
+        .tarjeta { max-width:720px; margin:0 auto; background:#1e293b; border:1px solid #334155; border-radius:14px; padding:32px; }
+        h1 { margin-top:0; color:#38bdf8; }
+        .estado { display:inline-block; background:#064e3b; color:#6ee7b7; padding:4px 12px; border-radius:999px; font-weight:600; }
+        ul { line-height:1.9; }
+        code { background:#0f172a; padding:2px 6px; border-radius:6px; color:#fbbf24; }
+      </style>
+    </head>
+    <body>
+      <div class="tarjeta">
+        <h1>MicroServicioProveedores</h1>
+        <p><span class="estado">ACTIVO</span></p>
+        <p>Microservicio de gestión de proveedores. Su base es MongoDB (MongoProveedores).</p>
+        <ul>
+          <li>API: <code>/api/proveedores</code></li>
+          <li>Salud: <code>/health</code></li>
+        </ul>
+      </div>
+    </body>
+    </html>
+    """;
+}

@@ -6,4 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- ApiGateway con YARP (Yet Another Reverse Proxy). -->
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
+    <!-- Validación de los JWT emitidos por Keycloak (JWKS). -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+  </ItemGroup>
+
 </Project>
