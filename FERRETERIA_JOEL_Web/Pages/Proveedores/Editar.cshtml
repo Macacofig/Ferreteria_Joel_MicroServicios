@@ -1,0 +1,64 @@
+﻿@page "{id:int}"
+@model FERRETERIA__Joel.Pages.Proveedores.EditarModel
+@{
+    ViewData["Title"] = "Editar proveedor";
+    ViewData["ActiveMenu"] = "Proveedores";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Proveedores</p>
+        <h1>Editar proveedor</h1>
+        <p class="fj-page-sub">Actualice los datos del proveedor seleccionado.</p>
+    </section>
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    <section class="fj-card" style="padding:1.25rem;">
+        <form method="post" novalidate>
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="fj-form-grid" style="display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+                <div>
+                    <label asp-for="Formulario.RazonSocial">Razón social</label>
+                    <input asp-for="Formulario.RazonSocial" class="form-control" />
+                    <span asp-validation-for="Formulario.RazonSocial" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Formulario.Nit">NIT</label>
+                    <input asp-for="Formulario.Nit" class="form-control" />
+                    <span asp-validation-for="Formulario.Nit" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Formulario.Contacto">Contacto</label>
+                    <input asp-for="Formulario.Contacto" class="form-control" />
+                    <span asp-validation-for="Formulario.Contacto" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Formulario.Telefono">Teléfono</label>
+                    <input asp-for="Formulario.Telefono" class="form-control" />
+                    <span asp-validation-for="Formulario.Telefono" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div style="margin-top:1.25rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+                <button type="submit" class="fj-btn fj-btn-primary">Guardar cambios</button>
+                <a asp-page="./Index" class="fj-btn fj-btn-ghost">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

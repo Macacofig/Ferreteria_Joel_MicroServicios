@@ -1,0 +1,54 @@
+﻿@page "{id:int}"
+@model FERRETERIA__Joel.Pages.Proveedores.DetalleModel
+@{
+    ViewData["Title"] = "Detalle de proveedor";
+    ViewData["ActiveMenu"] = "Proveedores";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Proveedores</p>
+        <h1>Detalle del proveedor</h1>
+        <p class="fj-page-sub">Consulta de la información registrada del proveedor.</p>
+    </section>
+
+    @if (Model.Proveedor is null)
+    {
+        <div class="fj-alert" role="alert"><span>No se encontró el proveedor solicitado.</span></div>
+    }
+    else
+    {
+        <section class="fj-card" style="padding:1.25rem;">
+            <dl style="display:grid; grid-template-columns: minmax(160px, 220px) 1fr; gap:.75rem 1rem; margin:0;">
+                <dt><strong>ID</strong></dt>
+                <dd style="margin:0;">@Model.Proveedor.Id</dd>
+                <dt><strong>Razón social</strong></dt>
+                <dd style="margin:0;">@Model.Proveedor.RazonSocial</dd>
+                <dt><strong>NIT</strong></dt>
+                <dd style="margin:0;">@Model.Proveedor.Nit</dd>
+                <dt><strong>Contacto</strong></dt>
+                <dd style="margin:0;">@Model.Proveedor.Contacto</dd>
+                <dt><strong>Teléfono</strong></dt>
+                <dd style="margin:0;">@Model.Proveedor.Telefono</dd>
+            </dl>
+
+            <div style="margin-top:1.25rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+                <a asp-page="./Index" class="fj-btn fj-btn-ghost">Volver al listado</a>
+                <a asp-page="./Editar" asp-route-id="@Model.Proveedor.Id" class="fj-btn fj-btn-primary">Editar</a>
+                <form method="post"
+                      asp-page-handler="Eliminar"
+                      asp-route-id="@Model.Proveedor.Id"
+                      class="fj-inline-form"
+                      data-fj-confirm="¿Está seguro de eliminar al proveedor '@Model.Proveedor.RazonSocial'? Esta acción no se puede deshacer.">
+                    <button type="submit" class="fj-btn fj-btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </section>
+    }
+</div>
+
+<partial name="_ConfirmModal" />

@@ -1,0 +1,114 @@
+﻿@page
+@model FERRETERIA__Joel.Pages.Proveedores.IndexModel
+@{
+    ViewData["Title"] = "Proveedores";
+    ViewData["ActiveMenu"] = "Proveedores";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Proveedores</p>
+        <h1>Proveedores</h1>
+        <p class="fj-page-sub">Gestión de proveedores con listado, consulta, registro, edición y eliminación.</p>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="fj-alert fj-alert-success" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            <span>@TempData["Mensaje"]</span>
+        </div>
+    }
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    <section class="fj-toolbar fj-toolbar-simple">
+        <p class="fj-toolbar-count">
+            <strong>@Model.Proveedores.Count</strong>
+            @(Model.Proveedores.Count == 1 ? "proveedor registrado" : "proveedores registrados")
+        </p>
+
+        <div class="fj-toolbar-actions" style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:.9rem; color:var(--texto-sec, #64748b);">Ordenar por razón social:</span>
+            <a class="fj-btn @(Model.Orden == "asc" ? "fj-btn-primary" : "fj-btn-ghost")" asp-page="./Index" asp-route-orden="asc" title="Orden ascendente">Ascendente</a>
+            <a class="fj-btn @(Model.Orden == "desc" ? "fj-btn-primary" : "fj-btn-ghost")" asp-page="./Index" asp-route-orden="desc" title="Orden descendente">Descendente</a>
+            <a class="fj-btn fj-btn-ghost" asp-page="./Index" asp-route-orden="@Model.Orden" title="Refrescar listado">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                Refrescar
+            </a>
+            <a class="fj-btn fj-btn-primary" asp-page="./Crear">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Registrar proveedor
+            </a>
+        </div>
+    </section>
+
+    <section class="fj-card fj-table-card" aria-label="Listado de proveedores">
+        <div class="fj-table-wrap fj-table-wrap-scroll">
+            <table class="fj-table">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Razón social</th>
+                        <th scope="col">NIT</th>
+                        <th scope="col">Contacto</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col" class="fj-td-acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Proveedores.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="fj-table-vacio">
+                                <div class="fj-empty">
+                                    <p>Sin proveedores registrados</p>
+                                    <span>Cuando existan proveedores, aparecerán aquí.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var proveedor in Model.Proveedores)
+                    {
+                        <tr>
+                            <td class="fj-td-secundario">@proveedor.Id</td>
+                            <td><span class="fj-nombre">@proveedor.RazonSocial</span></td>
+                            <td class="fj-td-secundario">@proveedor.Nit</td>
+                            <td class="fj-td-secundario">@proveedor.Contacto</td>
+                            <td class="fj-td-secundario">@proveedor.Telefono</td>
+                            <td class="fj-td-acciones">
+                                <div class="fj-acciones" style="display:flex; gap:.4rem; flex-wrap:wrap;">
+                                    <a class="fj-btn fj-btn-ghost fj-btn-sm" asp-page="./Detalle" asp-route-id="@proveedor.Id" title="Consultar">Consultar</a>
+                                    <a class="fj-btn fj-btn-ghost fj-btn-sm" asp-page="./Editar" asp-route-id="@proveedor.Id" title="Editar">Editar</a>
+                                    <form method="post"
+                                          asp-page-handler="Eliminar"
+                                          asp-route-id="@proveedor.Id"
+                                          asp-route-orden="@Model.Orden"
+                                          class="fj-inline-form"
+                                          data-fj-confirm="¿Está seguro de eliminar al proveedor '@proveedor.RazonSocial'? Esta acción no se puede deshacer.">
+                                        <button type="submit" class="fj-btn fj-btn-danger fj-btn-sm" title="Eliminar">Eliminar</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<partial name="_ConfirmModal" />
