@@ -11,6 +11,7 @@ public static class MapeadorProveedor
         RazonSocial = proveedor.RazonSocial,
         Nit = proveedor.Nit,
         Contacto = proveedor.Contacto,
-        Telefono = proveedor.Telefono
+        Telefono = proveedor.Telefono,
+        NombreResponsable = proveedor.NombreResponsable
     };
 }

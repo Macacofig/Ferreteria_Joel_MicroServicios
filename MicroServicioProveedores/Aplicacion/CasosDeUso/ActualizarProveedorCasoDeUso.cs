@@ -34,7 +34,7 @@ public class ActualizarProveedorCasoDeUso
             }
         }
 
-        var resultadoActualizacion = proveedor.Actualizar(solicitud.RazonSocial, solicitud.Nit, solicitud.Contacto, solicitud.Telefono);
+        var resultadoActualizacion = proveedor.Actualizar(solicitud.RazonSocial, solicitud.Nit, solicitud.Contacto, solicitud.Telefono, solicitud.NombreResponsable);
         if (resultadoActualizacion.EsFallo)
         {
             return Result.Fallo<ProveedorDto>(resultadoActualizacion.Error!);

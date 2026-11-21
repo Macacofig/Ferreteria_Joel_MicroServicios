@@ -24,11 +24,13 @@ public class CrearModel : PageModel
     public void OnGet()
     {
         ViewData["ActiveMenu"] = "Proveedores";
+        Formulario.NombreResponsable = ObtenerNombreResponsable();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         ViewData["ActiveMenu"] = "Proveedores";
+        Formulario.NombreResponsable = ObtenerNombreResponsable();
 
         try
         {
@@ -63,6 +65,7 @@ public class CrearModel : PageModel
                 nameof(ProveedorDto.Nit) => "Formulario.Nit",
                 nameof(ProveedorDto.Contacto) => "Formulario.Contacto",
                 nameof(ProveedorDto.Telefono) => "Formulario.Telefono",
+                nameof(ProveedorDto.NombreResponsable) => "Formulario.NombreResponsable",
                 _ => string.Empty
             };
 
@@ -74,6 +77,11 @@ public class CrearModel : PageModel
     }
 
     private string? ObtenerToken() => HttpContext.Session.GetString(UsuariosApiCliente.ClaveSesionJwt);
+
+    private string ObtenerNombreResponsable()
+        => User.FindFirst("NombreCompleto")?.Value
+           ?? User.Identity?.Name
+           ?? string.Empty;
 
     private static string MensajeError<T>(RespuestaApi<T> respuesta, string defecto)
     {

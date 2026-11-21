@@ -73,9 +73,9 @@ public class MongoInicializadorProveedores
         // Datos de ejemplo para facilitar la verificación de listado/ordenación con varios registros.
         var semilla = new[]
         {
-            new ProveedorDocumento { Id = 1, RazonSocial = "Ferretería Central S.A.", Nit = "100200300", Contacto = "Jorge Vargas", Telefono = "700-11111" },
-            new ProveedorDocumento { Id = 2, RazonSocial = "Importadora Andina Ltda.", Nit = "200300400", Contacto = "Lucía Paredes", Telefono = "700-22222" },
-            new ProveedorDocumento { Id = 3, RazonSocial = "Distribuidora El Tornillo", Nit = "300400500", Contacto = "Pedro Chávez", Telefono = "700-33333" }
+            new ProveedorDocumento { Id = 1, RazonSocial = "Ferreteria Central SA", Nit = "100200300", Contacto = "Jorge Vargas", Telefono = "70011111", NombreResponsable = "Joel Ríos" },
+            new ProveedorDocumento { Id = 2, RazonSocial = "Importadora Andina Ltda", Nit = "200300400", Contacto = "Lucia Paredes", Telefono = "70022222", NombreResponsable = "Joel Ríos" },
+            new ProveedorDocumento { Id = 3, RazonSocial = "Distribuidora El Tornillo", Nit = "300400500", Contacto = "Pedro Chavez", Telefono = "70033333", NombreResponsable = "Joel Ríos" }
         };
 
         await proveedores.InsertManyAsync(semilla, cancellationToken: ct);

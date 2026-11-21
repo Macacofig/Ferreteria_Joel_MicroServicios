@@ -18,33 +18,62 @@
 
     @if (Model.Proveedor is null)
     {
-        <div class="fj-alert" role="alert"><span>No se encontró el proveedor solicitado.</span></div>
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>No se encontró el proveedor solicitado.</span>
+        </div>
     }
     else
     {
-        <section class="fj-card" style="padding:1.25rem;">
-            <dl style="display:grid; grid-template-columns: minmax(160px, 220px) 1fr; gap:.75rem 1rem; margin:0;">
-                <dt><strong>ID</strong></dt>
-                <dd style="margin:0;">@Model.Proveedor.Id</dd>
-                <dt><strong>Razón social</strong></dt>
-                <dd style="margin:0;">@Model.Proveedor.RazonSocial</dd>
-                <dt><strong>NIT</strong></dt>
-                <dd style="margin:0;">@Model.Proveedor.Nit</dd>
-                <dt><strong>Contacto</strong></dt>
-                <dd style="margin:0;">@Model.Proveedor.Contacto</dd>
-                <dt><strong>Teléfono</strong></dt>
-                <dd style="margin:0;">@Model.Proveedor.Telefono</dd>
-            </dl>
+        <section class="fj-card">
+            <div class="fj-form" style="padding-bottom:0;">
+                <dl class="fj-perfil-datos" style="margin:0;">
+                    <div>
+                        <dt>ID</dt>
+                        <dd>@Model.Proveedor.Id</dd>
+                    </div>
+                    <div>
+                        <dt>Razón social</dt>
+                        <dd>@Model.Proveedor.RazonSocial</dd>
+                    </div>
+                    <div>
+                        <dt>NIT</dt>
+                        <dd>@Model.Proveedor.Nit</dd>
+                    </div>
+                    <div>
+                        <dt>Contacto</dt>
+                        <dd>@Model.Proveedor.Contacto</dd>
+                    </div>
+                    <div>
+                        <dt>Teléfono</dt>
+                        <dd>@Model.Proveedor.Telefono</dd>
+                    </div>
+                    <div>
+                        <dt>Responsable</dt>
+                        <dd>@(string.IsNullOrWhiteSpace(Model.Proveedor.NombreResponsable) ? "No registrado" : Model.Proveedor.NombreResponsable)</dd>
+                    </div>
+                </dl>
+            </div>
 
-            <div style="margin-top:1.25rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+            <div class="fj-form-actions" style="padding:0 1.75rem 1.75rem;">
                 <a asp-page="./Index" class="fj-btn fj-btn-ghost">Volver al listado</a>
-                <a asp-page="./Editar" asp-route-id="@Model.Proveedor.Id" class="fj-btn fj-btn-primary">Editar</a>
+                <a asp-page="./Editar" asp-route-id="@Model.Proveedor.Id" class="fj-btn fj-btn-edit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                    Editar
+                </a>
                 <form method="post"
                       asp-page-handler="Eliminar"
                       asp-route-id="@Model.Proveedor.Id"
                       class="fj-inline-form"
                       data-fj-confirm="¿Está seguro de eliminar al proveedor '@Model.Proveedor.RazonSocial'? Esta acción no se puede deshacer.">
-                    <button type="submit" class="fj-btn fj-btn-danger">Eliminar</button>
+                    <button type="submit" class="fj-btn fj-btn-danger">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                        Eliminar
+                    </button>
                 </form>
             </div>
         </section>

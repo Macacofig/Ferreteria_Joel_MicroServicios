@@ -30,7 +30,7 @@ public class CrearProveedorCasoDeUso
 
         // Se genera el identificador entero de forma atómica en persistencia para evitar colisiones bajo concurrencia.
         int nuevoId = await _repositorio.GenerarNuevoIdAsync(ct);
-        var resultadoCreacion = Proveedor.CrearNuevo(nuevoId, solicitud.RazonSocial, solicitud.Nit, solicitud.Contacto, solicitud.Telefono);
+        var resultadoCreacion = Proveedor.CrearNuevo(nuevoId, solicitud.RazonSocial, solicitud.Nit, solicitud.Contacto, solicitud.Telefono, solicitud.NombreResponsable);
         if (resultadoCreacion.EsFallo)
         {
             return Result.Fallo<ProveedorDto>(resultadoCreacion.Error!);

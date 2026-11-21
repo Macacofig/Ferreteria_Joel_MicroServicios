@@ -34,6 +34,7 @@ public class EditarModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         ViewData["ActiveMenu"] = "Proveedores";
+        Formulario.NombreResponsable = ObtenerNombreResponsable();
 
         try
         {
@@ -70,7 +71,9 @@ public class EditarModel : PageModel
                     RazonSocial = respuesta.Datos.RazonSocial,
                     Nit = respuesta.Datos.Nit,
                     Contacto = respuesta.Datos.Contacto,
-                    Telefono = respuesta.Datos.Telefono
+                    Telefono = respuesta.Datos.Telefono,
+                    // Al editar, el responsable que se guardará es el usuario que realiza el cambio (desde la UI/sesión).
+                    NombreResponsable = ObtenerNombreResponsable()
                 };
                 return Page();
             }
@@ -109,6 +112,7 @@ public class EditarModel : PageModel
                 nameof(ProveedorDto.Nit) => "Formulario.Nit",
                 nameof(ProveedorDto.Contacto) => "Formulario.Contacto",
                 nameof(ProveedorDto.Telefono) => "Formulario.Telefono",
+                nameof(ProveedorDto.NombreResponsable) => "Formulario.NombreResponsable",
                 _ => string.Empty
             };
 
@@ -124,6 +128,11 @@ public class EditarModel : PageModel
     }
 
     private string? ObtenerToken() => HttpContext.Session.GetString(UsuariosApiCliente.ClaveSesionJwt);
+
+    private string ObtenerNombreResponsable()
+        => User.FindFirst("NombreCompleto")?.Value
+           ?? User.Identity?.Name
+           ?? string.Empty;
 
     private static string MensajeError<T>(RespuestaApi<T> respuesta, string defecto)
     {

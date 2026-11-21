@@ -107,9 +107,10 @@ public class MongoProveedorRepositorio : IRepositorioProveedores
         RazonSocial = proveedor.RazonSocial,
         Nit = proveedor.Nit,
         Contacto = proveedor.Contacto,
-        Telefono = proveedor.Telefono
+        Telefono = proveedor.Telefono,
+        NombreResponsable = proveedor.NombreResponsable
     };
 
     private static Proveedor MapearADominio(ProveedorDocumento d)
-        => new(d.Id, d.RazonSocial, d.Nit, d.Contacto, d.Telefono);
+        => new(d.Id, d.RazonSocial, d.Nit, d.Contacto, d.Telefono, d.NombreResponsable ?? string.Empty);
 }

@@ -18,6 +18,9 @@ internal class ProveedorDocumento
 
     [BsonElement("telefono")]
     public string Telefono { get; set; } = string.Empty;
+
+    [BsonElement("nombreResponsable")]
+    public string NombreResponsable { get; set; } = string.Empty;
 }
 
 internal class ContadorDocumento

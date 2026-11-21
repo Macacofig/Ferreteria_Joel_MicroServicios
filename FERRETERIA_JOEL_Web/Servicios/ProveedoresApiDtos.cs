@@ -7,6 +7,7 @@ public class ProveedorDto
     public string Nit { get; set; } = string.Empty;
     public string Contacto { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
+    public string NombreResponsable { get; set; } = string.Empty;
 }
 
 public class ProveedorSolicitud
@@ -15,4 +16,5 @@ public class ProveedorSolicitud
     public string Nit { get; set; } = string.Empty;
     public string Contacto { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
+    public string NombreResponsable { get; set; } = string.Empty;
 }
