@@ -74,6 +74,16 @@ builder.Services.AddHttpClient<VentasApiCliente>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+string clientesApiUrl = builder.Configuration["Servicios:ClientesApiUrl"]
+    ?? builder.Configuration["Servicios__ClientesApiUrl"]
+    ?? "http://localhost:5000";
+
+builder.Services.AddHttpClient<ClientesApiCliente>(client =>
+{
+    client.BaseAddress = new Uri(clientesApiUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 string reportesApiUrl = builder.Configuration["Servicios:ReportesApiUrl"]
     ?? builder.Configuration["Servicios__ReportesApiUrl"]
     ?? "http://localhost:5073";

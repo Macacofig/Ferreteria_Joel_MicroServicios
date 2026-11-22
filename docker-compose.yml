@@ -321,6 +321,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - Servicios__UsuariosApiUrl=http://apigateway:8080
+      - Servicios__ClientesApiUrl=http://apigateway:8080
       - UrlProteccion__Clave=${URL_PROTECCION_CLAVE:?defina URL_PROTECCION_CLAVE en .env}
     networks:
       - ferreteria-net
