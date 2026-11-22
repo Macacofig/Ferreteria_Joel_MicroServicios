@@ -44,7 +44,7 @@ services:
       retries: 10
       start_period: 30s
 
-  # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
   # 5) MySQL de productos
   # ---------------------------------------------------------------------------
   mysql-productos:
@@ -58,6 +58,7 @@ services:
       - "${MYSQL_PRODUCTOS_PUERTO:-3308}:3306"
     volumes:
       - mysql_productos_data:/var/lib/mysql
+      - ./Scripts/02-productos.sql:/docker-entrypoint-initdb.d/02-productos.sql:ro
     networks:
       - ferreteria-net
     healthcheck:
@@ -187,7 +188,7 @@ services:
       retries: 8
       start_period: 40s
 
-  # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
   # 4) MicroServicioProductos
   # ---------------------------------------------------------------------------
   microservicio-productos:
@@ -199,11 +200,16 @@ services:
     depends_on:
       mysql-productos:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     ports:
       - "${MICROSERVICIO_PRODUCTOS_PUERTO:-5071}:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ConnectionStrings__MySqlConnection=Server=mysql-productos;Database=bdproductos;Uid=root;Pwd=${MYSQL_PRODUCTOS_ROOT_PASSWORD};Port=3306;
+      - Keycloak__Authority=http://keycloak:8080/realms/ferreteria
+      - Keycloak__ValidIssuers=http://keycloak:8080/realms/ferreteria,http://localhost:${KEYCLOAK_PUERTO:-8081}/realms/ferreteria
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/ferreteria/.well-known/openid-configuration
     networks:
       - ferreteria-net
     healthcheck:

@@ -1,36 +1,193 @@
-using MicroServicioProductos.Dominio;
+using MicroServicioProductos.Aplicacion.Modelos;
+using MicroServicioProductos.Aplicacion.Servicios;
+using MicroServicioProductos.Dominio.Resultados;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MicroServicioProductos.Controllers
+namespace MicroServicioProductos.Controllers;
+
+/// <summary>
+/// API REST del catálogo de productos. El controlador solo traduce HTTP ↔
+/// casos de uso; las reglas de negocio viven en <see cref="ServicioProductos"/>.
+/// </summary>
+[ApiController]
+[Route("api/productos")]
+[Authorize]
+public sealed class ProductosController : ControllerBase
 {
-    /// <summary>
-    /// API mínima del catálogo de productos. El listado semilla se mantiene en
-    /// memoria para que el microservicio arranque sin depender de la base de
-    /// datos; su base es MySQL (MysqlProductos).
-    /// </summary>
-    [ApiController]
-    [Route("api/productos")]
-    public class ProductosController : ControllerBase
+    private readonly ServicioProductos _servicio;
+
+    public ProductosController(ServicioProductos servicio)
     {
-        private static readonly List<Producto> Catalogo = new()
+        _servicio = servicio;
+    }
+
+    // ===================== Consultas =====================
+
+    [HttpGet]
+    public async Task<IActionResult> Listar(
+        [FromQuery] string? ordenarPor,
+        [FromQuery] string? direccion,
+        [FromQuery] bool incluirInactivos = false,
+        CancellationToken ct = default)
+    {
+        Result<IReadOnlyList<Dominio.Entidades.Producto>> resultado =
+            await _servicio.ListarAsync(
+                ordenarPor, direccion, incluirInactivos, ct);
+
+        if (resultado.EsFallo)
         {
-            new Producto(1, "Martillo de acero 16 oz", "Herramientas", 45.50m, 25),
-            new Producto(2, "Taladro percutor 650 W", "Herramientas", 320.00m, 10),
-            new Producto(3, "Cemento gris 50 kg", "Construcción", 55.75m, 80),
-            new Producto(4, "Pintura látex blanca 1 galón", "Pintura", 89.90m, 40)
-        };
-
-        [HttpGet]
-        public ActionResult<IEnumerable<Producto>> Listar() => Ok(Catalogo);
-
-        [HttpGet("{id:int}")]
-        public ActionResult<Producto> Obtener(int id)
-        {
-            Producto? producto = Catalogo.FirstOrDefault(p => p.Id == id);
-
-            return producto is null
-                ? NotFound(new { mensaje = "Producto no encontrado." })
-                : Ok(producto);
+            return ResponderFallo(resultado);
         }
+
+        return Ok(resultado.ValorRequerido
+            .Select(MapeosProducto.AResponse)
+            .ToList());
+    }
+
+    [HttpGet("categorias")]
+    public async Task<IActionResult> ListarCategorias(CancellationToken ct = default)
+    {
+        Result<IReadOnlyList<Dominio.Entidades.Categoria>> resultado =
+            await _servicio.ListarCategoriasAsync(ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(resultado.ValorRequerido
+            .Select(MapeosProducto.AResponse)
+            .ToList());
+    }
+
+    [HttpGet("marcas")]
+    public async Task<IActionResult> ListarMarcas(CancellationToken ct = default)
+    {
+        Result<IReadOnlyList<Dominio.Entidades.Marca>> resultado =
+            await _servicio.ListarMarcasAsync(ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(resultado.ValorRequerido
+            .Select(MapeosProducto.AResponse)
+            .ToList());
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> Obtener(int id, CancellationToken ct = default)
+    {
+        Result<Dominio.Entidades.Producto> resultado =
+            await _servicio.ObtenerPorIdAsync(id, ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(MapeosProducto.AResponse(resultado.ValorRequerido));
+    }
+
+    [HttpGet("{id:int}/historico")]
+    public async Task<IActionResult> ListarHistorico(
+        int id,
+        CancellationToken ct = default)
+    {
+        Result<IReadOnlyList<Dominio.Entidades.HistoricoProducto>> resultado =
+            await _servicio.ListarHistoricoAsync(id, ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(resultado.ValorRequerido
+            .Select(MapeosProducto.AResponse)
+            .ToList());
+    }
+
+    // ===================== Mutaciones =====================
+
+    [HttpPost]
+    public async Task<IActionResult> Crear(
+        [FromBody] CrearProductoRequest solicitud,
+        CancellationToken ct = default)
+    {
+        Result<int> resultado = await _servicio.CrearAsync(solicitud, ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        int idProducto = resultado.ValorRequerido;
+
+        return CreatedAtAction(
+            nameof(Obtener),
+            new { id = idProducto },
+            new { idProducto, mensaje = "Producto creado correctamente." });
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Actualizar(
+        int id,
+        [FromBody] ActualizarProductoRequest solicitud,
+        CancellationToken ct = default)
+    {
+        Result resultado = await _servicio.ActualizarAsync(id, solicitud, ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(new { mensaje = "Producto actualizado correctamente." });
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DarDeBaja(
+        int id,
+        CancellationToken ct = default)
+    {
+        Result resultado = await _servicio.DarDeBajaAsync(id, ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(new { mensaje = "Producto dado de baja correctamente." });
+    }
+
+    // ===================== Traducción Result → HTTP =====================
+
+    private IActionResult ResponderFallo(Result resultado)
+    {
+        string error = resultado.Error;
+
+        if (error.StartsWith(
+                ServicioProductos.PrefijoNoEncontrado,
+                StringComparison.Ordinal))
+        {
+            string mensaje = error[
+                ServicioProductos.PrefijoNoEncontrado.Length..];
+
+            return NotFound(new { mensaje });
+        }
+
+        if (error.StartsWith(
+                ServicioProductos.PrefijoConflicto,
+                StringComparison.Ordinal))
+        {
+            string mensaje = error[
+                ServicioProductos.PrefijoConflicto.Length..];
+
+            return Conflict(new { mensaje });
+        }
+
+        return BadRequest(new { mensaje = error });
     }
 }
