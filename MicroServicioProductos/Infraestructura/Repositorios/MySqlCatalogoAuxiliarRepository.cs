@@ -175,6 +175,44 @@ public sealed class MySqlCatalogoAuxiliarRepository : IRepositoryCatalogoAuxilia
         return await command.ExecuteScalarAsync(ct) is not null;
     }
 
+    public async Task<string> ObtenerSiguienteCodigoCategoriaAsync(
+        CancellationToken ct = default)
+    {
+        // Se consultan todas las categorías (activas e inactivas) para no
+        // reutilizar códigos de bajas lógicas. El mayor IdCategoria se usa como
+        // respaldo si algún registro tiene un código con otro formato.
+        const string query = @"
+            SELECT
+                COALESCE(
+                    MAX(CASE
+                        WHEN c.Codigo REGEXP '^CAT-[0-9]{3}$'
+                        THEN CAST(SUBSTRING(c.Codigo, 6) AS UNSIGNED)
+                    END),
+                    0
+                ) AS UltimoCorrelativo,
+                COALESCE(MAX(c.IdCategoria), 0) AS UltimoId
+            FROM categoria c";
+
+        using MySqlConnection connection = _connectionFactory.CreateConnection();
+        using MySqlCommand command = new(query, connection);
+
+        await connection.OpenAsync(ct);
+
+        using MySqlDataReader reader =
+            (MySqlDataReader)await command.ExecuteReaderAsync(ct);
+
+        if (!await reader.ReadAsync(ct))
+        {
+            return "CAT-001";
+        }
+
+        int ultimoCorrelativo = Convert.ToInt32(reader["UltimoCorrelativo"]);
+        int ultimoId = Convert.ToInt32(reader["UltimoId"]);
+        int siguiente = Math.Max(ultimoCorrelativo, ultimoId) + 1;
+
+        return $"CAT-{siguiente:D3}";
+    }
+
     public async Task<bool> ExisteNombreCategoriaAsync(
         string nombre,
         short? excluirIdCategoria = null,

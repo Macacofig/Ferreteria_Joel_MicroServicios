@@ -61,6 +61,21 @@ public sealed class ProductosController : ControllerBase
             .ToList());
     }
 
+    [HttpGet("categorias/siguiente-codigo")]
+    public async Task<IActionResult> ObtenerSiguienteCodigoCategoria(
+        CancellationToken ct = default)
+    {
+        Result<string> resultado =
+            await _servicio.ObtenerSiguienteCodigoCategoriaAsync(ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(new { codigo = resultado.ValorRequerido });
+    }
+
     [HttpGet("marcas")]
     public async Task<IActionResult> ListarMarcas(CancellationToken ct = default)
     {

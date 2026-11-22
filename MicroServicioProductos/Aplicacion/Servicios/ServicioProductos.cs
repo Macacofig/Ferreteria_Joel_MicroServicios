@@ -70,6 +70,18 @@ public sealed class ServicioProductos
         return Result.Ok(codigo);
     }
 
+    /// <summary>
+    /// Código autogenerado que debe mostrarse al dar de alta una categoría.
+    /// </summary>
+    public async Task<Result<string>> ObtenerSiguienteCodigoCategoriaAsync(
+        CancellationToken ct = default)
+    {
+        string codigo =
+            await _catalogo.ObtenerSiguienteCodigoCategoriaAsync(ct);
+
+        return Result.Ok(codigo);
+    }
+
     public async Task<Result<IReadOnlyList<Categoria>>> ListarCategoriasAsync(
         CancellationToken ct = default)
     {
@@ -350,8 +362,19 @@ public sealed class ServicioProductos
             return Result.Fallo<short>("Los datos de la categoría son obligatorios.");
         }
 
+        // El código es autogenerado: se asigna cuando viene vacío o cuando ya
+        // fue tomado por otra petición (concurrencia) antes de validar.
+        string codigo = string.IsNullOrWhiteSpace(solicitud.Codigo)
+            ? await GenerarCodigoCategoriaDisponibleAsync(ct)
+            : solicitud.Codigo.Trim().ToUpperInvariant();
+
+        if (await _catalogo.ExisteCodigoCategoriaAsync(codigo, null, ct))
+        {
+            codigo = await GenerarCodigoCategoriaDisponibleAsync(ct);
+        }
+
         Result<DatosCategoria> validacion = await ValidarCategoriaAsync(
-            solicitud.Codigo,
+            codigo,
             solicitud.Nombre,
             solicitud.Descripcion,
             null,
@@ -363,6 +386,26 @@ public sealed class ServicioProductos
         }
 
         DatosCategoria datos = validacion.ValorRequerido;
+
+        // Última comprobación antes de insertar: otra petición pudo tomar el
+        // mismo correlativo mientras se ejecutaban las validaciones.
+        if (await _catalogo.ExisteCodigoCategoriaAsync(datos.Codigo, null, ct))
+        {
+            string codigoAlterno =
+                await GenerarCodigoCategoriaDisponibleAsync(ct);
+
+            if (codigoAlterno == datos.Codigo
+                || await _catalogo.ExisteCodigoCategoriaAsync(
+                    codigoAlterno, null, ct))
+            {
+                return Result.Fallo<short>(
+                    PrefijoConflicto +
+                    "No se pudo asignar un código único. Inténtalo nuevamente.");
+            }
+
+            datos = datos with { Codigo = codigoAlterno };
+        }
+
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
         DateTime ahora = DateTime.Now;
 
@@ -403,8 +446,10 @@ public sealed class ServicioProductos
                 PrefijoNoEncontrado + "La categoría no existe o no está activa.");
         }
 
+        // El código es inmutable: se valida y se conserva el que ya está en BD,
+        // ignora cualquier valor enviado por el cliente.
         Result<DatosCategoria> validacion = await ValidarCategoriaAsync(
-            solicitud.Codigo,
+            actual.Codigo,
             solicitud.Nombre,
             solicitud.Descripcion,
             idCategoria,
@@ -422,7 +467,7 @@ public sealed class ServicioProductos
         Categoria actualizada = new()
         {
             IdCategoria = actual.IdCategoria,
-            Codigo = datos.Codigo,
+            Codigo = actual.Codigo,
             Nombre = datos.Nombre,
             Descripcion = datos.Descripcion,
             Estado = actual.Estado,
@@ -631,6 +676,26 @@ public sealed class ServicioProductos
              intento++)
         {
             codigo = await _productos.ObtenerSiguienteCodigoAsync(ct);
+        }
+
+        return codigo;
+    }
+
+    private async Task<string> GenerarCodigoCategoriaDisponibleAsync(
+        CancellationToken ct)
+    {
+        string codigo =
+            await _catalogo.ObtenerSiguienteCodigoCategoriaAsync(ct);
+
+        // Si otra petición tomó el correlativo entre la consulta y la
+        // verificación, se pide uno nuevo (con límite para no bloquear).
+        for (int intento = 0;
+             intento < 5
+             && await _catalogo.ExisteCodigoCategoriaAsync(codigo, null, ct);
+             intento++)
+        {
+            codigo =
+                await _catalogo.ObtenerSiguienteCodigoCategoriaAsync(ct);
         }
 
         return codigo;

@@ -27,6 +27,13 @@ public interface IRepositoryCatalogoAuxiliar
         short? excluirIdCategoria = null,
         CancellationToken ct = default);
 
+    /// <summary>
+    /// Devuelve el siguiente código <c>CAT-XXX</c> disponible, considerando
+    /// también las categorías dadas de baja para no reutilizar sus códigos.
+    /// </summary>
+    Task<string> ObtenerSiguienteCodigoCategoriaAsync(
+        CancellationToken ct = default);
+
     Task<bool> ExisteNombreCategoriaAsync(
         string nombre,
         short? excluirIdCategoria = null,
