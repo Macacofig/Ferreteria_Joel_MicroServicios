@@ -12,8 +12,9 @@ public static class ValidadorCliente
     private static readonly Regex PatronCi =
         new(@"^[A-Za-z0-9\-]{5,15}$", RegexOptions.Compiled);
 
+    // Teléfono móvil de Bolivia: 8 dígitos que comienzan con 5, 6 o 7.
     private static readonly Regex PatronTelefono =
-        new(@"^\+?[0-9 \-]{7,15}$", RegexOptions.Compiled);
+        new(@"^[567][0-9]{7}$", RegexOptions.Compiled);
 
     private static readonly Regex PatronCorreo =
         new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
@@ -41,7 +42,7 @@ public static class ValidadorCliente
         if (solicitud.Telefono is not null && !PatronTelefono.IsMatch(solicitud.Telefono))
         {
             errores[nameof(ClienteSolicitud.Telefono)] =
-                "El teléfono debe tener de 7 a 15 dígitos y puede incluir espacios, guiones o el prefijo +.";
+                "El teléfono debe tener 8 dígitos y comenzar con 5, 6 o 7.";
         }
 
         if (solicitud.Direccion is { Length: > 150 })

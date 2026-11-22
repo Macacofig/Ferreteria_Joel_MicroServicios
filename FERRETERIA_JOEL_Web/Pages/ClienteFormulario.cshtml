@@ -62,8 +62,8 @@
 
             <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Telefono") ? "fj-form-field-error" : "")">
                 <label class="fj-form-label" asp-for="Solicitud.Telefono">Teléfono</label>
-                <input class="fj-input" asp-for="Solicitud.Telefono" type="tel" maxlength="15" placeholder="Ej: 71234567" />
-                <span class="fj-form-hint">Opcional. De 7 a 15 dígitos.</span>
+                <input class="fj-input" asp-for="Solicitud.Telefono" type="tel" maxlength="8" inputmode="numeric" pattern="[567][0-9]{7}" placeholder="Ej: 71234567" oninput="this.value = this.value.replace(/\D/g, '')" />
+                <span class="fj-form-hint">Opcional. Debe tener 8 dígitos y comenzar con 5, 6 o 7.</span>
                 @if (Model.ErroresCampo.TryGetValue("Telefono", out var errorTelefono))
                 {
                     <p class="fj-form-error" role="alert">@errorTelefono</p>

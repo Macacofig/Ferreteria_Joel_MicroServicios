@@ -27,7 +27,7 @@ namespace FERRETERIA__Joel.Pages
         public string? Buscar { get; set; }
 
         [BindProperty(SupportsGet = true)]
-        public string OrdenarPor { get; set; } = "nombre";
+        public string OrdenarPor { get; set; } = "apellido";
 
         [BindProperty(SupportsGet = true)]
         public bool Descendente { get; set; }

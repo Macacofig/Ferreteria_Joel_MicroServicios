@@ -47,3 +47,4 @@ namespace FERRETERIA__Joel.Servicios
         public string? Direccion { get; set; }
     }
 }
+
