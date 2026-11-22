@@ -137,6 +137,46 @@ namespace FERRETERIA__Joel.Servicios
         public string Mensaje { get; set; } = string.Empty;
     }
 
+    /// <summary>Cuerpo compartido por el alta y la edición de categorías.</summary>
+    public class GuardarCategoriaApi
+    {
+        [Required(ErrorMessage = "El código es obligatorio.")]
+        [StringLength(20, ErrorMessage = "El código no puede superar los 20 caracteres.")]
+        public string Codigo { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [StringLength(100, ErrorMessage = "El nombre no puede superar los 100 caracteres.")]
+        public string Nombre { get; set; } = string.Empty;
+
+        [StringLength(255, ErrorMessage = "La descripción no puede superar los 255 caracteres.")]
+        public string? Descripcion { get; set; }
+    }
+
+    /// <summary>Cuerpo compartido por el alta y la edición de marcas.</summary>
+    public class GuardarMarcaApi
+    {
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [StringLength(100, ErrorMessage = "El nombre no puede superar los 100 caracteres.")]
+        public string Nombre { get; set; } = string.Empty;
+
+        [StringLength(80, ErrorMessage = "El país de origen no puede superar los 80 caracteres.")]
+        public string? PaisOrigen { get; set; }
+    }
+
+    public class CrearCategoriaRespuestaApi
+    {
+        public short IdCategoria { get; set; }
+
+        public string Mensaje { get; set; } = string.Empty;
+    }
+
+    public class CrearMarcaRespuestaApi
+    {
+        public short IdMarca { get; set; }
+
+        public string Mensaje { get; set; } = string.Empty;
+    }
+
     public class MensajeApi
     {
         public string Mensaje { get; set; } = string.Empty;

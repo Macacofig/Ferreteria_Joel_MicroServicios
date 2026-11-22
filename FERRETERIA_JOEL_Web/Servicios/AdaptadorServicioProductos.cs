@@ -73,5 +73,50 @@ namespace FERRETERIA__Joel.Servicios
             int idProducto,
             CancellationToken cancelacion = default) =>
             _adaptee.ListarHistoricoAsync(ObtenerToken(), idProducto, cancelacion);
+
+        public Task<ResultadoApi<CategoriaApi>> ObtenerCategoriaAsync(
+            short idCategoria,
+            CancellationToken cancelacion = default) =>
+            _adaptee.ObtenerCategoriaAsync(ObtenerToken(), idCategoria, cancelacion);
+
+        public Task<ResultadoApi<CrearCategoriaRespuestaApi>> CrearCategoriaAsync(
+            GuardarCategoriaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            _adaptee.CrearCategoriaAsync(ObtenerToken(), solicitud, cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ActualizarCategoriaAsync(
+            short idCategoria,
+            GuardarCategoriaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            _adaptee.ActualizarCategoriaAsync(
+                ObtenerToken(), idCategoria, solicitud, cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> DarDeBajaCategoriaAsync(
+            short idCategoria,
+            CancellationToken cancelacion = default) =>
+            _adaptee.DarDeBajaCategoriaAsync(
+                ObtenerToken(), idCategoria, cancelacion);
+
+        public Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
+            short idMarca,
+            CancellationToken cancelacion = default) =>
+            _adaptee.ObtenerMarcaAsync(ObtenerToken(), idMarca, cancelacion);
+
+        public Task<ResultadoApi<CrearMarcaRespuestaApi>> CrearMarcaAsync(
+            GuardarMarcaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            _adaptee.CrearMarcaAsync(ObtenerToken(), solicitud, cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ActualizarMarcaAsync(
+            short idMarca,
+            GuardarMarcaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            _adaptee.ActualizarMarcaAsync(
+                ObtenerToken(), idMarca, solicitud, cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> DarDeBajaMarcaAsync(
+            short idMarca,
+            CancellationToken cancelacion = default) =>
+            _adaptee.DarDeBajaMarcaAsync(ObtenerToken(), idMarca, cancelacion);
     }
 }

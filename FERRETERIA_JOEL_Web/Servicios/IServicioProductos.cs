@@ -40,5 +40,43 @@ namespace FERRETERIA__Joel.Servicios
         Task<ResultadoApi<List<HistoricoProductoApi>>> ListarHistoricoAsync(
             int idProducto,
             CancellationToken cancelacion = default);
+
+        // ===================== Categorías =====================
+
+        Task<ResultadoApi<CategoriaApi>> ObtenerCategoriaAsync(
+            short idCategoria,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<CrearCategoriaRespuestaApi>> CrearCategoriaAsync(
+            GuardarCategoriaApi solicitud,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> ActualizarCategoriaAsync(
+            short idCategoria,
+            GuardarCategoriaApi solicitud,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> DarDeBajaCategoriaAsync(
+            short idCategoria,
+            CancellationToken cancelacion = default);
+
+        // ===================== Marcas =====================
+
+        Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
+            short idMarca,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<CrearMarcaRespuestaApi>> CrearMarcaAsync(
+            GuardarMarcaApi solicitud,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> ActualizarMarcaAsync(
+            short idMarca,
+            GuardarMarcaApi solicitud,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> DarDeBajaMarcaAsync(
+            short idMarca,
+            CancellationToken cancelacion = default);
     }
 }

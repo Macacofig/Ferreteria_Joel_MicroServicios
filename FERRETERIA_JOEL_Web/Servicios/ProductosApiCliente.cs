@@ -123,6 +123,100 @@ namespace FERRETERIA__Joel.Servicios
                 null,
                 cancelacion);
 
+        // ===================== Categorías =====================
+
+        public Task<ResultadoApi<CategoriaApi>> ObtenerCategoriaAsync(
+            string? token,
+            short idCategoria,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<CategoriaApi>(
+                HttpMethod.Get,
+                $"api/productos/categorias/{idCategoria}",
+                token,
+                null,
+                cancelacion);
+
+        public Task<ResultadoApi<CrearCategoriaRespuestaApi>> CrearCategoriaAsync(
+            string? token,
+            GuardarCategoriaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<CrearCategoriaRespuestaApi>(
+                HttpMethod.Post,
+                "api/productos/categorias",
+                token,
+                solicitud,
+                cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ActualizarCategoriaAsync(
+            string? token,
+            short idCategoria,
+            GuardarCategoriaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MensajeApi>(
+                HttpMethod.Put,
+                $"api/productos/categorias/{idCategoria}",
+                token,
+                solicitud,
+                cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> DarDeBajaCategoriaAsync(
+            string? token,
+            short idCategoria,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MensajeApi>(
+                HttpMethod.Delete,
+                $"api/productos/categorias/{idCategoria}",
+                token,
+                null,
+                cancelacion);
+
+        // ===================== Marcas =====================
+
+        public Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
+            string? token,
+            short idMarca,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MarcaApi>(
+                HttpMethod.Get,
+                $"api/productos/marcas/{idMarca}",
+                token,
+                null,
+                cancelacion);
+
+        public Task<ResultadoApi<CrearMarcaRespuestaApi>> CrearMarcaAsync(
+            string? token,
+            GuardarMarcaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<CrearMarcaRespuestaApi>(
+                HttpMethod.Post,
+                "api/productos/marcas",
+                token,
+                solicitud,
+                cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ActualizarMarcaAsync(
+            string? token,
+            short idMarca,
+            GuardarMarcaApi solicitud,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MensajeApi>(
+                HttpMethod.Put,
+                $"api/productos/marcas/{idMarca}",
+                token,
+                solicitud,
+                cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> DarDeBajaMarcaAsync(
+            string? token,
+            short idMarca,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MensajeApi>(
+                HttpMethod.Delete,
+                $"api/productos/marcas/{idMarca}",
+                token,
+                null,
+                cancelacion);
+
         private async Task<ResultadoApi<T>> EnviarAsync<T>(
             HttpMethod metodo,
             string ruta,

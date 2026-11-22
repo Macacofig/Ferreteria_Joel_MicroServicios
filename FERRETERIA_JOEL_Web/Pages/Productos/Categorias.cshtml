@@ -1,0 +1,163 @@
+@page
+@model FERRETERIA__Joel.Pages.Productos.CategoriasModel
+@{
+    ViewData["Title"] = "Gestión de Categorías";
+    ViewData["ActiveMenu"] = "Productos";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Catálogo · Categorías</p>
+        <h1>Gestión de Categorías</h1>
+        <p class="fj-page-sub">Administración de las categorías disponibles para los productos.</p>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="fj-alert fj-alert-success" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            <span>@TempData["Mensaje"]</span>
+        </div>
+    }
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@Model.Error</span>
+        </div>
+    }
+
+    <section class="fj-card" aria-label="Formulario de categoría">
+        <form method="post" asp-page-handler="Guardar">
+            <div class="fj-form">
+                <h2 class="fj-form-title">@(Model.Editando ? "Edición de categoría" : "Nueva categoría")</h2>
+                <input type="hidden" asp-for="IdEditar" />
+
+                <div class="fj-form-grid">
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Codigo">Código</label>
+                        <input class="fj-input" asp-for="Solicitud.Codigo" maxlength="20" placeholder="Ej. CAT-011" required />
+                        <span class="fj-form-error" asp-validation-for="Solicitud.Codigo"></span>
+                    </div>
+
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Nombre">Nombre</label>
+                        <input class="fj-input" asp-for="Solicitud.Nombre" maxlength="100" required />
+                        <span class="fj-form-error" asp-validation-for="Solicitud.Nombre"></span>
+                    </div>
+
+                    <div class="fj-form-field fj-form-field--full">
+                        <label class="fj-form-label" asp-for="Solicitud.Descripcion">Descripción</label>
+                        <textarea class="fj-input fj-input-area" asp-for="Solicitud.Descripcion" maxlength="255" rows="3" placeholder="Descripción opcional de la categoría"></textarea>
+                        <span class="fj-form-error" asp-validation-for="Solicitud.Descripcion"></span>
+                    </div>
+                </div>
+
+                <div class="fj-form-actions">
+                    @if (Model.Editando)
+                    {
+                        <button type="submit" asp-page-handler="Cancelar" class="fj-btn fj-btn-ghost">Cancelar edición</button>
+                    }
+                    <button type="submit" class="fj-btn fj-btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+                        @(Model.Editando ? "Guardar cambios" : "Guardar Categoría")
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="fj-toolbar fj-toolbar-simple" aria-label="Herramientas del listado">
+        <p class="fj-toolbar-count">
+            <strong>@Model.Categorias.Count</strong>
+            @(Model.Categorias.Count == 1 ? "categoría activa" : "categorías activas")
+        </p>
+
+        <div class="fj-toolbar-actions">
+            <form method="post" asp-page-handler="Refrescar" class="fj-inline-form">
+                <button type="submit" class="fj-btn fj-btn-ghost fj-btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
+                    Refrescar
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <section class="fj-card fj-table-card" aria-label="Listado de categorías">
+        <div class="fj-table-wrap fj-table-wrap-scroll">
+            <table class="fj-table fj-table-productos">
+                <thead>
+                    <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Descripción</th>
+                        <th scope="col" class="fj-td-acciones">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Categorias.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="fj-table-vacio">
+                                <div class="fj-empty">
+                                    <p>Sin categorías registradas</p>
+                                    <span>Cuando existan categorías activas, aparecerán aquí.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var categoria in Model.Categorias)
+                    {
+                        <tr>
+                            <td class="fj-td-codigo">
+                                <span class="fj-codigo">@categoria.Codigo</span>
+                            </td>
+                            <td>
+                                <span class="fj-nombre">@categoria.Nombre</span>
+                            </td>
+                            <td class="fj-td-secundario">
+                                @(string.IsNullOrWhiteSpace(categoria.Descripcion) ? "—" : categoria.Descripcion)
+                            </td>
+                            <td class="fj-td-acciones">
+                                <div class="fj-acciones">
+                                    <a class="fj-btn fj-btn-edit fj-btn-sm"
+                                       asp-page="/Productos/Categorias"
+                                       asp-route-IdEditar="@categoria.IdCategoria"
+                                       title="Editar categoría">Editar</a>
+
+                                    <form method="post"
+                                          asp-page-handler="Eliminar"
+                                          class="fj-inline-form"
+                                          data-fj-confirm="¿Desea dar de baja la categoría '@categoria.Nombre'?">
+                                        <input type="hidden" name="idCategoria" value="@categoria.IdCategoria" />
+                                        <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Eliminar" aria-label="Eliminar categoría">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<partial name="_ConfirmModal" />
