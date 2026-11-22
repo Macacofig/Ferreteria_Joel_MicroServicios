@@ -1,0 +1,183 @@
+@page
+@model FERRETERIA__Joel.Pages.Productos.IndexModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Gestión de Productos";
+    ViewData["ActiveMenu"] = "Productos";
+
+    string DireccionDe(string columna) =>
+        Model.OrdenarPor == columna && Model.Direccion == "ASC" ? "DESC" : "ASC";
+
+    string FlechaDe(string columna) =>
+        Model.OrdenarPor == columna
+            ? (Model.Direccion == "ASC" ? " ↑" : " ↓")
+            : string.Empty;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Catálogo</p>
+        <h1>Gestión de Productos</h1>
+        <p class="fj-page-sub">Administración de productos, precios y stock del inventario.</p>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="fj-alert fj-alert-success" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            <span>@TempData["Mensaje"]</span>
+        </div>
+    }
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    <section class="fj-toolbar fj-toolbar-simple">
+        <p class="fj-toolbar-count">
+            <strong>@Model.Productos.Count</strong>
+            @(Model.Productos.Count == 1 ? "producto activo" : "productos activos")
+        </p>
+
+        <div class="fj-toolbar-actions">
+            <form method="post" asp-page-handler="Refrescar" class="fj-inline-form">
+                <label for="ordenarPor" class="fj-td-secundario">Ordenar por</label>
+                <select id="ordenarPor" name="ordenarPor" aria-label="Ordenar por">
+                    <option value="codigo" selected="@(Model.OrdenarPor == "codigo")">Código</option>
+                    <option value="nombre" selected="@(Model.OrdenarPor == "nombre")">Nombre</option>
+                    <option value="precio" selected="@(Model.OrdenarPor == "precio")">Precio</option>
+                    <option value="stock" selected="@(Model.OrdenarPor == "stock")">Stock</option>
+                    <option value="categoria" selected="@(Model.OrdenarPor == "categoria")">Categoría</option>
+                    <option value="marca" selected="@(Model.OrdenarPor == "marca")">Marca</option>
+                </select>
+                <select id="direccion" name="direccion" aria-label="Dirección de ordenación">
+                    <option value="ASC" selected="@(Model.Direccion == "ASC")">Ascendente</option>
+                    <option value="DESC" selected="@(Model.Direccion == "DESC")">Descendente</option>
+                </select>
+                <button type="submit" class="fj-btn fj-btn-ghost fj-btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
+                    Refrescar
+                </button>
+            </form>
+
+            <a class="fj-btn fj-btn-primary" asp-page="/Productos/Crear">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Nuevo Producto
+            </a>
+        </div>
+    </section>
+
+    <section class="fj-card fj-table-card" aria-label="Listado de productos">
+        <div class="fj-table-wrap fj-table-wrap-scroll">
+            <table class="fj-table fj-table-productos">
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            <a asp-page="/Productos/Index" asp-route-ordenarPor="codigo" asp-route-direccion="@DireccionDe("codigo")">Código@FlechaDe("codigo")</a>
+                        </th>
+                        <th scope="col">
+                            <a asp-page="/Productos/Index" asp-route-ordenarPor="nombre" asp-route-direccion="@DireccionDe("nombre")">Nombre@FlechaDe("nombre")</a>
+                        </th>
+                        <th scope="col">
+                            <a asp-page="/Productos/Index" asp-route-ordenarPor="categoria" asp-route-direccion="@DireccionDe("categoria")">Categoría@FlechaDe("categoria")</a>
+                        </th>
+                        <th scope="col">
+                            <a asp-page="/Productos/Index" asp-route-ordenarPor="marca" asp-route-direccion="@DireccionDe("marca")">Marca@FlechaDe("marca")</a>
+                        </th>
+                        <th scope="col">Unidad de Medida</th>
+                        <th scope="col">
+                            <a asp-page="/Productos/Index" asp-route-ordenarPor="precio" asp-route-direccion="@DireccionDe("precio")">Precio (Bs.)@FlechaDe("precio")</a>
+                        </th>
+                        <th scope="col">
+                            <a asp-page="/Productos/Index" asp-route-ordenarPor="stock" asp-route-direccion="@DireccionDe("stock")">Stock@FlechaDe("stock")</a>
+                        </th>
+                        <th scope="col" class="fj-td-acciones">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Productos.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="fj-table-vacio">
+                                <div class="fj-empty">
+                                    <span class="fj-empty-ico" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
+                                    </span>
+                                    <p>Sin productos registrados</p>
+                                    <span>Cuando existan productos activos, aparecerán aquí.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var producto in Model.Productos)
+                    {
+                        <tr>
+                            <td class="fj-td-codigo">
+                                <span class="fj-codigo">@producto.Codigo</span>
+                            </td>
+                            <td>
+                                <span class="fj-nombre">@producto.Nombre</span>
+                                @if (!string.IsNullOrWhiteSpace(producto.Descripcion))
+                                {
+                                    <span class="fj-nombre-sub">@producto.Descripcion</span>
+                                }
+                            </td>
+                            <td class="fj-td-secundario">@producto.CategoriaNombre</td>
+                            <td class="fj-td-secundario">@producto.MarcaNombre</td>
+                            <td class="fj-td-secundario">@producto.UnidadMedida</td>
+                            <td class="fj-td-secundario">
+                                @producto.PrecioVenta.ToString("N2", new CultureInfo("es-ES"))
+                            </td>
+                            <td class="fj-td-secundario">
+                                <span class="fj-pill" style="--pill: @(producto.CantidadStock == 0 ? "var(--danger)" : producto.CantidadStock < 10 ? "var(--warning)" : "var(--success)");">
+                                    @producto.CantidadStock
+                                </span>
+                            </td>
+                            <td class="fj-td-acciones">
+                                <div class="fj-acciones">
+                                    <a class="fj-btn fj-btn-edit fj-btn-sm"
+                                       asp-page="/Productos/Editar"
+                                       asp-route-id="@producto.IdProducto"
+                                       title="Editar producto">Editar</a>
+
+                                    <a class="fj-btn fj-btn-ghost fj-btn-sm fj-btn-detalle"
+                                       asp-page="/Productos/Historico"
+                                       asp-route-id="@producto.IdProducto"
+                                       title="Ver histórico">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                        Ver Histórico
+                                    </a>
+
+                                    <form method="post"
+                                          asp-page-handler="Eliminar"
+                                          class="fj-inline-form"
+                                          data-fj-confirm="¿Desea dar de baja el producto '@producto.Nombre' (código @producto.Codigo)?">
+                                        <input type="hidden" name="idProducto" value="@producto.IdProducto" />
+                                        <input type="hidden" name="ordenarPor" value="@Model.OrdenarPor" />
+                                        <input type="hidden" name="direccion" value="@Model.Direccion" />
+                                        <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Eliminar" aria-label="Eliminar producto">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<partial name="_ConfirmModal" />

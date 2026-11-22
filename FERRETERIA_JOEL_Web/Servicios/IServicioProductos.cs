@@ -1,0 +1,44 @@
+namespace FERRETERIA__Joel.Servicios
+{
+    /// <summary>
+    /// Target del patrón Adapter para el microservicio de productos. Las Razor
+    /// Pages dependen de este contrato y nunca conocen la URL del ApiGateway ni
+    /// el cliente HTTP concreto. El JWT se toma de la sesión dentro del
+    /// adaptador, de modo que las páginas no lo manipulan.
+    /// </summary>
+    public interface IServicioProductos
+    {
+        Task<ResultadoApi<List<ProductoApi>>> ListarAsync(
+            string? ordenarPor,
+            string? direccion,
+            bool incluirInactivos = false,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<List<CategoriaApi>>> ListarCategoriasAsync(
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<List<MarcaApi>>> ListarMarcasAsync(
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<ProductoApi>> ObtenerAsync(
+            int idProducto,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<CrearProductoRespuestaApi>> CrearAsync(
+            GuardarProductoApi solicitud,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> ActualizarAsync(
+            int idProducto,
+            GuardarProductoApi solicitud,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> DarDeBajaAsync(
+            int idProducto,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<List<HistoricoProductoApi>>> ListarHistoricoAsync(
+            int idProducto,
+            CancellationToken cancelacion = default);
+    }
+}

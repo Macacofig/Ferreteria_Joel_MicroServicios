@@ -64,6 +64,14 @@ builder.Services.AddScoped<IServicioUsuarios, AdaptadorServicioUsuarios>();
 builder.Services.AddScoped<FERRETERIA_Web.Services.IServicioUsuariosClient,
     AdaptadorServicioUsuarios>();
 
+// Productos usa el mismo ApiGateway que Usuarios; el Adaptador adjunta el JWT de sesión.
+builder.Services.AddHttpClient<ProductosApiCliente>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IServicioProductos, AdaptadorServicioProductos>();
+
 string ventasApiUrl = builder.Configuration["Servicios:VentasApiUrl"]
     ?? builder.Configuration["Servicios__VentasApiUrl"]
     ?? "http://localhost:5071";

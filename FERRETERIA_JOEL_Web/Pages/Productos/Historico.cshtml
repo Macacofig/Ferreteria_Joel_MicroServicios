@@ -1,0 +1,145 @@
+@page
+@model FERRETERIA__Joel.Pages.Productos.HistoricoModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Histórico del Producto";
+    ViewData["ActiveMenu"] = "Productos";
+
+    string EtiquetaAccion(string accion) => accion switch
+    {
+        "INSERT" => "Alta",
+        "UPDATE" => "Actualización",
+        "DELETE" => "Eliminación",
+        _ => accion
+    };
+
+    string ColorAccion(string accion) => accion switch
+    {
+        "INSERT" => "var(--success)",
+        "UPDATE" => "var(--amarillo-texto, var(--warning))",
+        "DELETE" => "var(--danger)",
+        _ => "var(--texto-ter)"
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Catálogo · Auditoría</p>
+        <h1>Histórico del Producto</h1>
+        <p class="fj-page-sub">
+            Registro de altas, actualizaciones y eliminaciones de
+            <strong>@Model.NombreProducto</strong>
+            @if (!string.IsNullOrWhiteSpace(Model.CodigoProducto))
+            {
+                <text>(código @Model.CodigoProducto)</text>
+            }.
+        </p>
+    </section>
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    <section class="fj-toolbar fj-toolbar-simple">
+        <p class="fj-toolbar-count">
+            <strong>@Model.Historial.Count</strong>
+            @(Model.Historial.Count == 1 ? "registro" : "registros")
+        </p>
+
+        <div class="fj-toolbar-actions">
+            <a class="fj-btn fj-btn-ghost" asp-page="/Productos/Index">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+                Volver a Productos
+            </a>
+        </div>
+    </section>
+
+    <section class="fj-card fj-table-card" aria-label="Histórico del producto">
+        <div class="fj-table-wrap fj-table-wrap-scroll">
+            <table class="fj-table fj-table-productos">
+                <thead>
+                    <tr>
+                        <th scope="col">Acción</th>
+                        <th scope="col">Precio Anterior (Bs.)</th>
+                        <th scope="col">Precio Nuevo (Bs.)</th>
+                        <th scope="col">Stock Anterior</th>
+                        <th scope="col">Stock Nuevo</th>
+                        <th scope="col">Detalle</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Responsable</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Historial.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="fj-table-vacio">
+                                <div class="fj-empty">
+                                    <span class="fj-empty-ico" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                    </span>
+                                    <p>Sin registros de histórico</p>
+                                    <span>Este producto todavía no tiene cambios registrados.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var registro in Model.Historial)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fj-pill" style="--pill: @ColorAccion(registro.Accion);">@EtiquetaAccion(registro.Accion)</span>
+                            </td>
+                            <td class="fj-td-secundario">
+                                @(registro.PrecioAnterior?.ToString("N2", new CultureInfo("es-ES")) ?? "—")
+                            </td>
+                            <td class="fj-td-secundario">
+                                @(registro.PrecioNuevo?.ToString("N2", new CultureInfo("es-ES")) ?? "—")
+                            </td>
+                            <td class="fj-td-secundario">@(registro.StockAnterior?.ToString() ?? "—")</td>
+                            <td class="fj-td-secundario">@(registro.StockNuevo?.ToString() ?? "—")</td>
+                            <td class="fj-td-secundario">
+                                @if (!string.IsNullOrWhiteSpace(registro.Detalle))
+                                {
+                                    <span title="@registro.Detalle">@registro.Detalle</span>
+                                }
+                                else
+                                {
+                                    <text>—</text>
+                                }
+                            </td>
+                            <td class="fj-td-secundario">
+                                @registro.FechaCambio.ToString("dd/MM/yyyy HH:mm", new CultureInfo("es-ES"))
+                            </td>
+                            <td class="fj-td-secundario">
+                                @if (registro.IdEmpleadoResponsable is int id && Model.Responsables.TryGetValue(id, out string? nombre))
+                                {
+                                    @nombre
+                                }
+                                else if (registro.IdEmpleadoResponsable is int identificador)
+                                {
+                                    <text>Empleado #@identificador</text>
+                                }
+                                else
+                                {
+                                    <text>—</text>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
