@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace FERRETERIA__Joel.Pages.Productos;
 
 /// <summary>
-/// Gestión de categorías en una sola vista. El alta, la edición, la baja
-/// lógica y el listado se resuelven siempre a través del Adapter del
-/// microservicio de productos; los mensajes del Result se muestran tal cual.
+/// Gestión de categorías en una sola vista. El alta y la edición se resuelven
+/// en un modal de la propia página; la baja lógica y el listado siguen pasando
+/// siempre por el Adapter del microservicio de productos. Los mensajes del
+/// Result se muestran tal cual dentro del modal cuando falla el guardado.
 /// </summary>
 [Authorize]
 public sealed class CategoriasModel : PageModel
@@ -26,12 +27,19 @@ public sealed class CategoriasModel : PageModel
     public GuardarCategoriaApi Solicitud { get; set; } = new();
 
     /// <summary>Identificador en edición; vacío indica alta.</summary>
-    [BindProperty(SupportsGet = true)]
+    [BindProperty]
     public short? IdEditar { get; set; }
 
     public List<CategoriaApi> Categorias { get; set; } = new();
 
-    public bool Editando => IdEditar.HasValue;
+    /// <summary>Código <c>CAT-XXX</c> autogenerado para el alta.</summary>
+    public string SiguienteCodigo { get; private set; } = string.Empty;
+
+    /// <summary>Reabre el modal tras una validación fallida.</summary>
+    public bool AbrirModal { get; private set; }
+
+    /// <summary>Mensaje exacto devuelto por la API cuando falla el guardado.</summary>
+    public string? ErrorModal { get; private set; }
 
     public string? Error { get; private set; }
 
@@ -39,11 +47,6 @@ public sealed class CategoriasModel : PageModel
     {
         ViewData["ActiveMenu"] = "Productos";
         await CargarAsync();
-
-        if (IdEditar.HasValue)
-        {
-            await CargarParaEditarAsync();
-        }
     }
 
     public async Task<IActionResult> OnPostGuardarAsync(
@@ -53,7 +56,8 @@ public sealed class CategoriasModel : PageModel
 
         if (!ModelState.IsValid)
         {
-            Error = PrimerErrorDeValidacion();
+            ErrorModal = PrimerErrorDeValidacion();
+            AbrirModal = true;
             await CargarAsync(cancelacion);
             return Page();
         }
@@ -72,7 +76,7 @@ public sealed class CategoriasModel : PageModel
                     return RedirectToPage();
                 }
 
-                Error = resultado.Mensaje;
+                ErrorModal = resultado.Mensaje;
             }
             else
             {
@@ -85,27 +89,20 @@ public sealed class CategoriasModel : PageModel
                     return RedirectToPage();
                 }
 
-                Error = resultado.Mensaje;
+                ErrorModal = resultado.Mensaje;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al guardar la categoría.");
-            Error = Editando
+            ErrorModal = IdEditar.HasValue
                 ? "No se pudo completar la edición. Inténtalo nuevamente."
                 : "No se pudo completar el alta. Inténtalo nuevamente.";
         }
 
+        AbrirModal = true;
         await CargarAsync(cancelacion);
         return Page();
-    }
-
-    /// <summary>Abandona la edición y limpia el formulario.</summary>
-    public IActionResult OnPostCancelar()
-    {
-        IdEditar = null;
-        Solicitud = new GuardarCategoriaApi();
-        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostRefrescarAsync(
@@ -113,12 +110,6 @@ public sealed class CategoriasModel : PageModel
     {
         ViewData["ActiveMenu"] = "Productos";
         await CargarAsync(cancelacion);
-
-        if (IdEditar.HasValue)
-        {
-            await CargarParaEditarAsync(cancelacion);
-        }
-
         return Page();
     }
 
@@ -151,29 +142,10 @@ public sealed class CategoriasModel : PageModel
         return RedirectToPage();
     }
 
-    private async Task CargarParaEditarAsync(
-        CancellationToken cancelacion = default)
-    {
-        ResultadoApi<CategoriaApi> resultado =
-            await _api.ObtenerCategoriaAsync(IdEditar!.Value, cancelacion);
-
-        if (resultado.Exitoso && resultado.Datos is not null)
-        {
-            Solicitud = new GuardarCategoriaApi
-            {
-                Codigo = resultado.Datos.Codigo,
-                Nombre = resultado.Datos.Nombre,
-                Descripcion = resultado.Datos.Descripcion
-            };
-            return;
-        }
-
-        Error = resultado.Mensaje;
-        IdEditar = null;
-    }
-
     private async Task CargarAsync(CancellationToken cancelacion = default)
     {
+        await CargarSiguienteCodigoAsync(cancelacion);
+
         try
         {
             ResultadoApi<List<CategoriaApi>> respuesta =
@@ -195,6 +167,31 @@ public sealed class CategoriasModel : PageModel
             _logger.LogError(ex, "Error al listar las categorías.");
             TempData["MensajeError"] =
                 "No se pudo cargar el listado de categorías.";
+        }
+    }
+
+    /// <summary>
+    /// Se consulta en cada carga (alta, refresco y errores de validación) para
+    /// que el campo readonly del modal siempre muestre un código vigente.
+    /// </summary>
+    private async Task CargarSiguienteCodigoAsync(
+        CancellationToken cancelacion)
+    {
+        try
+        {
+            ResultadoApi<SiguienteCodigoApi> respuesta =
+                await _api.ObtenerSiguienteCodigoCategoriaAsync(cancelacion);
+
+            if (respuesta.Exitoso
+                && respuesta.Datos is not null
+                && !string.IsNullOrWhiteSpace(respuesta.Datos.Codigo))
+            {
+                SiguienteCodigo = respuesta.Datos.Codigo;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el siguiente código de categoría.");
         }
     }
 

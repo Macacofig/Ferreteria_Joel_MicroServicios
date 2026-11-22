@@ -46,6 +46,9 @@ namespace FERRETERIA__Joel.Servicios
 
         // ===================== Categorías =====================
 
+        Task<ResultadoApi<SiguienteCodigoApi>> ObtenerSiguienteCodigoCategoriaAsync(
+            CancellationToken cancelacion = default);
+
         Task<ResultadoApi<CategoriaApi>> ObtenerCategoriaAsync(
             short idCategoria,
             CancellationToken cancelacion = default);

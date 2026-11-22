@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace FERRETERIA__Joel.Pages.Productos;
 
 /// <summary>
-/// Gestión de marcas en una sola vista. El alta, la edición, la baja lógica
-/// y el listado se resuelven siempre a través del Adapter del microservicio
-/// de productos; los mensajes del Result se muestran tal cual.
+/// Gestión de marcas en una sola vista. El alta y la edición se resuelven en
+/// un modal de la propia página; la baja lógica y el listado siguen pasando
+/// siempre por el Adapter del microservicio de productos. Los mensajes del
+/// Result se muestran tal cual dentro del modal cuando falla el guardado.
 /// </summary>
 [Authorize]
 public sealed class MarcasModel : PageModel
@@ -26,12 +27,16 @@ public sealed class MarcasModel : PageModel
     public GuardarMarcaApi Solicitud { get; set; } = new();
 
     /// <summary>Identificador en edición; vacío indica alta.</summary>
-    [BindProperty(SupportsGet = true)]
+    [BindProperty]
     public short? IdEditar { get; set; }
 
     public List<MarcaApi> Marcas { get; set; } = new();
 
-    public bool Editando => IdEditar.HasValue;
+    /// <summary>Reabre el modal tras una validación fallida.</summary>
+    public bool AbrirModal { get; private set; }
+
+    /// <summary>Mensaje exacto devuelto por la API cuando falla el guardado.</summary>
+    public string? ErrorModal { get; private set; }
 
     public string? Error { get; private set; }
 
@@ -39,11 +44,6 @@ public sealed class MarcasModel : PageModel
     {
         ViewData["ActiveMenu"] = "Productos";
         await CargarAsync();
-
-        if (IdEditar.HasValue)
-        {
-            await CargarParaEditarAsync();
-        }
     }
 
     public async Task<IActionResult> OnPostGuardarAsync(
@@ -53,7 +53,8 @@ public sealed class MarcasModel : PageModel
 
         if (!ModelState.IsValid)
         {
-            Error = PrimerErrorDeValidacion();
+            ErrorModal = PrimerErrorDeValidacion();
+            AbrirModal = true;
             await CargarAsync(cancelacion);
             return Page();
         }
@@ -72,7 +73,7 @@ public sealed class MarcasModel : PageModel
                     return RedirectToPage();
                 }
 
-                Error = resultado.Mensaje;
+                ErrorModal = resultado.Mensaje;
             }
             else
             {
@@ -85,27 +86,20 @@ public sealed class MarcasModel : PageModel
                     return RedirectToPage();
                 }
 
-                Error = resultado.Mensaje;
+                ErrorModal = resultado.Mensaje;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al guardar la marca.");
-            Error = Editando
+            ErrorModal = IdEditar.HasValue
                 ? "No se pudo completar la edición. Inténtalo nuevamente."
                 : "No se pudo completar el alta. Inténtalo nuevamente.";
         }
 
+        AbrirModal = true;
         await CargarAsync(cancelacion);
         return Page();
-    }
-
-    /// <summary>Abandona la edición y limpia el formulario.</summary>
-    public IActionResult OnPostCancelar()
-    {
-        IdEditar = null;
-        Solicitud = new GuardarMarcaApi();
-        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostRefrescarAsync(
@@ -113,12 +107,6 @@ public sealed class MarcasModel : PageModel
     {
         ViewData["ActiveMenu"] = "Productos";
         await CargarAsync(cancelacion);
-
-        if (IdEditar.HasValue)
-        {
-            await CargarParaEditarAsync(cancelacion);
-        }
-
         return Page();
     }
 
@@ -149,26 +137,6 @@ public sealed class MarcasModel : PageModel
         }
 
         return RedirectToPage();
-    }
-
-    private async Task CargarParaEditarAsync(
-        CancellationToken cancelacion = default)
-    {
-        ResultadoApi<MarcaApi> resultado =
-            await _api.ObtenerMarcaAsync(IdEditar!.Value, cancelacion);
-
-        if (resultado.Exitoso && resultado.Datos is not null)
-        {
-            Solicitud = new GuardarMarcaApi
-            {
-                Nombre = resultado.Datos.Nombre,
-                PaisOrigen = resultado.Datos.PaisOrigen
-            };
-            return;
-        }
-
-        Error = resultado.Mensaje;
-        IdEditar = null;
     }
 
     private async Task CargarAsync(CancellationToken cancelacion = default)

@@ -79,6 +79,11 @@ namespace FERRETERIA__Joel.Servicios
             CancellationToken cancelacion = default) =>
             _adaptee.ListarHistoricoAsync(ObtenerToken(), idProducto, cancelacion);
 
+        public Task<ResultadoApi<SiguienteCodigoApi>> ObtenerSiguienteCodigoCategoriaAsync(
+            CancellationToken cancelacion = default) =>
+            _adaptee.ObtenerSiguienteCodigoCategoriaAsync(
+                ObtenerToken(), cancelacion);
+
         public Task<ResultadoApi<CategoriaApi>> ObtenerCategoriaAsync(
             short idCategoria,
             CancellationToken cancelacion = default) =>

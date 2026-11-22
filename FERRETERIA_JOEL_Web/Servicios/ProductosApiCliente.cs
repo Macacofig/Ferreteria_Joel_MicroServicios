@@ -135,6 +135,16 @@ namespace FERRETERIA__Joel.Servicios
 
         // ===================== Categorías =====================
 
+        public Task<ResultadoApi<SiguienteCodigoApi>> ObtenerSiguienteCodigoCategoriaAsync(
+            string? token,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<SiguienteCodigoApi>(
+                HttpMethod.Get,
+                "api/productos/categorias/siguiente-codigo",
+                token,
+                null,
+                cancelacion);
+
         public Task<ResultadoApi<CategoriaApi>> ObtenerCategoriaAsync(
             string? token,
             short idCategoria,
