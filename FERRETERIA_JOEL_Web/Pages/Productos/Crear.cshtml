@@ -6,6 +6,99 @@
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+    <style>
+        .fj-form-producto {
+            padding: 28px 32px;
+            box-sizing: border-box;
+        }
+
+        .fj-form-producto *,
+        .fj-form-producto *::before,
+        .fj-form-producto *::after {
+            box-sizing: border-box;
+        }
+
+        .fj-form-producto .fj-fila {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .fj-form-producto .fj-fila--ultima {
+            margin-bottom: 0;
+        }
+
+        .fj-form-producto .fj-fila-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .fj-form-producto .fj-fila-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .fj-form-producto .fj-fila-1 {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .fj-form-producto .fj-campo {
+            min-width: 0;
+        }
+
+        .fj-form-producto .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .fj-form-producto .form-control,
+        .fj-form-producto .form-select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .fj-form-producto .fj-barra-botones {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eef0f3;
+        }
+
+        .fj-form-producto .fj-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0.625rem 1rem;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .fj-form-producto .fj-btn svg {
+            width: 1rem;
+            height: 1rem;
+            flex: none;
+        }
+
+        @@media (max-width: 640px) {
+            .fj-form-producto {
+                padding: 20px;
+            }
+
+            .fj-form-producto .fj-fila-2,
+            .fj-form-producto .fj-fila-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .fj-form-producto .fj-barra-botones {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 }
 
 <div class="fj-container fj-page-products">
@@ -25,21 +118,23 @@
     }
 
     <section class="fj-card" aria-label="Formulario de nuevo producto">
-        <form method="post">
-            <div class="row g-3">
-                <div class="col-md-6">
+        <form method="post" class="fj-form-producto">
+            <div class="fj-fila fj-fila-2">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.Codigo">Código</label>
                     <input class="form-control" asp-for="Solicitud.Codigo" maxlength="30" placeholder="Ej. MART-016" required />
                     <span class="text-danger" asp-validation-for="Solicitud.Codigo"></span>
                 </div>
 
-                <div class="col-md-6">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.Nombre">Nombre</label>
                     <input class="form-control" asp-for="Solicitud.Nombre" maxlength="150" required />
                     <span class="text-danger" asp-validation-for="Solicitud.Nombre"></span>
                 </div>
+            </div>
 
-                <div class="col-md-6">
+            <div class="fj-fila fj-fila-2">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.IdCategoria">Categoría</label>
                     <select class="form-select" asp-for="Solicitud.IdCategoria" required>
                         <option value="">Seleccione una categoría</option>
@@ -51,7 +146,7 @@
                     <span class="text-danger" asp-validation-for="Solicitud.IdCategoria"></span>
                 </div>
 
-                <div class="col-md-6">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.IdMarca">Marca</label>
                     <select class="form-select" asp-for="Solicitud.IdMarca" required>
                         <option value="">Seleccione una marca</option>
@@ -62,33 +157,37 @@
                     </select>
                     <span class="text-danger" asp-validation-for="Solicitud.IdMarca"></span>
                 </div>
+            </div>
 
-                <div class="col-md-4">
+            <div class="fj-fila fj-fila-3">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.UnidadMedida">Unidad de Medida</label>
                     <input class="form-control" asp-for="Solicitud.UnidadMedida" maxlength="30" placeholder="Ej. unidad, kg, caja" required />
                     <span class="text-danger" asp-validation-for="Solicitud.UnidadMedida"></span>
                 </div>
 
-                <div class="col-md-4">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.PrecioVenta">Precio de Venta (Bs.)</label>
                     <input class="form-control" asp-for="Solicitud.PrecioVenta" type="number" step="0.01" min="0.01" required />
                     <span class="text-danger" asp-validation-for="Solicitud.PrecioVenta"></span>
                 </div>
 
-                <div class="col-md-4">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.CantidadStock">Cantidad de Stock</label>
                     <input class="form-control" asp-for="Solicitud.CantidadStock" type="number" step="1" min="0" required />
                     <span class="text-danger" asp-validation-for="Solicitud.CantidadStock"></span>
                 </div>
+            </div>
 
-                <div class="col-12">
+            <div class="fj-fila fj-fila-1 fj-fila--ultima">
+                <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.Descripcion">Descripción</label>
                     <textarea class="form-control" asp-for="Solicitud.Descripcion" maxlength="500" rows="3" placeholder="Descripción opcional del producto"></textarea>
                     <span class="text-danger" asp-validation-for="Solicitud.Descripcion"></span>
                 </div>
             </div>
 
-            <div class="fj-modal-actions mt-4">
+            <div class="fj-barra-botones">
                 <a class="fj-btn fj-btn-ghost" asp-page="/Productos/Index">Cancelar</a>
                 <button type="submit" class="fj-btn fj-btn-primary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
