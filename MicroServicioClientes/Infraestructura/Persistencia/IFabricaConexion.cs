@@ -7,3 +7,4 @@ public interface IFabricaConexion
 {
     NpgsqlConnection Crear();
 }
+

@@ -12,13 +12,8 @@ namespace MicroServicioClientes.Infraestructura.Persistencia;
 public sealed class PostgresClienteRepositorio : IClienteRepositorio
 {
     private const string Columnas = @"
-        c.id_cliente, c.nombre, c.documento, c.correo, c.telefono, c.direccion,
-        c.id_tipo_cliente, t.nombre, t.descuento_porcentaje, c.activo,
-        c.fecha_creacion, c.usuario_creacion, c.fecha_modificacion, c.usuario_modificacion";
-
-    private const string Origen = @"
-        FROM cliente c
-        INNER JOIN tipo_cliente t ON t.id_tipo_cliente = c.id_tipo_cliente";
+        id_cliente, ci, nombre, apellido, correo, telefono, direccion, activo,
+        fecha_creacion, usuario_creacion, fecha_modificacion, usuario_modificacion";
 
     private readonly IFabricaConexion _fabrica;
 
@@ -38,19 +33,14 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
 
         if (filtro.SoloActivos)
         {
-            condiciones.Add("c.activo = TRUE");
-        }
-
-        if (filtro.IdTipoCliente is int idTipo)
-        {
-            condiciones.Add("c.id_tipo_cliente = @tipo");
-            comando.Parameters.AddWithValue("tipo", idTipo);
+            condiciones.Add("activo = TRUE");
         }
 
         if (!string.IsNullOrWhiteSpace(filtro.Buscar))
         {
             condiciones.Add(
-                "(c.nombre ILIKE @patron OR c.documento ILIKE @patron OR COALESCE(c.correo, '') ILIKE @patron)");
+                "(COALESCE(ci, '') ILIKE @patron OR nombre ILIKE @patron OR apellido ILIKE @patron " +
+                "OR COALESCE(correo, '') ILIKE @patron OR (nombre || ' ' || apellido) ILIKE @patron)");
             comando.Parameters.AddWithValue("patron", $"%{EscaparComodines(filtro.Buscar.Trim())}%");
         }
 
@@ -59,16 +49,16 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         // Solo se interpolan constantes de una lista blanca: nunca texto del usuario.
         string columnaOrden = filtro.OrdenarPor?.ToLowerInvariant() switch
         {
-            "documento" => "c.documento",
-            "tipo" => "t.nombre",
-            "fecha" => "c.fecha_creacion",
-            _ => "c.nombre"
+            "apellido" => "apellido",
+            "ci" => "ci",
+            "fecha" => "fecha_creacion",
+            _ => "nombre"
         };
 
         string sentido = filtro.Descendente ? "DESC" : "ASC";
 
         comando.CommandText =
-            $"SELECT {Columnas} {Origen} {where} ORDER BY {columnaOrden} {sentido}, c.id_cliente ASC";
+            $"SELECT {Columnas} FROM cliente {where} ORDER BY {columnaOrden} {sentido}, id_cliente ASC";
 
         var clientes = new List<Cliente>();
 
@@ -87,7 +77,7 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         await conexion.OpenAsync(cancelacion);
 
         await using var comando = new NpgsqlCommand(
-            $"SELECT {Columnas} {Origen} WHERE c.id_cliente = @id", conexion);
+            $"SELECT {Columnas} FROM cliente WHERE id_cliente = @id", conexion);
         comando.Parameters.AddWithValue("id", idCliente);
 
         await using NpgsqlDataReader lector = await comando.ExecuteReaderAsync(cancelacion);
@@ -95,13 +85,10 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         return await lector.ReadAsync(cancelacion) ? Leer(lector) : null;
     }
 
-    public async Task<bool> ExisteDocumentoAsync(
-        string documento,
-        int? excluirIdCliente,
-        CancellationToken cancelacion)
+    public async Task<bool> ExisteCiAsync(string ci, int? excluirIdCliente, CancellationToken cancelacion)
     {
         var sql = new StringBuilder(
-            "SELECT EXISTS (SELECT 1 FROM cliente WHERE LOWER(documento) = LOWER(@documento)");
+            "SELECT EXISTS (SELECT 1 FROM cliente WHERE LOWER(ci) = LOWER(@ci)");
 
         if (excluirIdCliente.HasValue)
         {
@@ -114,7 +101,7 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         await conexion.OpenAsync(cancelacion);
 
         await using var comando = new NpgsqlCommand(sql.ToString(), conexion);
-        comando.Parameters.AddWithValue("documento", documento);
+        comando.Parameters.AddWithValue("ci", ci);
 
         if (excluirIdCliente.HasValue)
         {
@@ -128,10 +115,10 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
     {
         const string sql = @"
             INSERT INTO cliente
-                (nombre, documento, correo, telefono, direccion, id_tipo_cliente,
+                (ci, nombre, apellido, correo, telefono, direccion,
                  activo, fecha_creacion, usuario_creacion)
             VALUES
-                (@nombre, @documento, @correo, @telefono, @direccion, @tipo,
+                (@ci, @nombre, @apellido, @correo, @telefono, @direccion,
                  TRUE, NOW(), @usuario)
             RETURNING id_cliente";
 
@@ -149,12 +136,12 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
     {
         const string sql = @"
             UPDATE cliente
-               SET nombre = @nombre,
-                   documento = @documento,
+               SET ci = @ci,
+                   nombre = @nombre,
+                   apellido = @apellido,
                    correo = @correo,
                    telefono = @telefono,
                    direccion = @direccion,
-                   id_tipo_cliente = @tipo,
                    fecha_modificacion = NOW(),
                    usuario_modificacion = @usuario
              WHERE id_cliente = @id";
@@ -170,19 +157,30 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         return await comando.ExecuteNonQueryAsync(cancelacion) > 0;
     }
 
-    public async Task<bool> DarDeBajaAsync(int idCliente, string usuario, CancellationToken cancelacion)
+    public Task<bool> DarDeBajaAsync(int idCliente, string usuario, CancellationToken cancelacion) =>
+        CambiarEstadoAsync(idCliente, usuario, nuevoEstado: false, cancelacion);
+
+    public Task<bool> ReactivarAsync(int idCliente, string usuario, CancellationToken cancelacion) =>
+        CambiarEstadoAsync(idCliente, usuario, nuevoEstado: true, cancelacion);
+
+    private async Task<bool> CambiarEstadoAsync(
+        int idCliente,
+        string usuario,
+        bool nuevoEstado,
+        CancellationToken cancelacion)
     {
         const string sql = @"
             UPDATE cliente
-               SET activo = FALSE,
+               SET activo = @estado,
                    fecha_modificacion = NOW(),
                    usuario_modificacion = @usuario
-             WHERE id_cliente = @id AND activo = TRUE";
+             WHERE id_cliente = @id AND activo <> @estado";
 
         await using NpgsqlConnection conexion = _fabrica.Crear();
         await conexion.OpenAsync(cancelacion);
 
         await using var comando = new NpgsqlCommand(sql, conexion);
+        comando.Parameters.AddWithValue("estado", nuevoEstado);
         comando.Parameters.AddWithValue("usuario", usuario);
         comando.Parameters.AddWithValue("id", idCliente);
 
@@ -191,30 +189,28 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
 
     private static void AgregarDatos(NpgsqlCommand comando, Cliente cliente)
     {
+        comando.Parameters.AddWithValue("ci", (object?)cliente.Ci ?? DBNull.Value);
         comando.Parameters.AddWithValue("nombre", cliente.Nombre);
-        comando.Parameters.AddWithValue("documento", cliente.Documento);
+        comando.Parameters.AddWithValue("apellido", cliente.Apellido);
         comando.Parameters.AddWithValue("correo", (object?)cliente.Correo ?? DBNull.Value);
-        comando.Parameters.AddWithValue("telefono", cliente.Telefono);
+        comando.Parameters.AddWithValue("telefono", (object?)cliente.Telefono ?? DBNull.Value);
         comando.Parameters.AddWithValue("direccion", (object?)cliente.Direccion ?? DBNull.Value);
-        comando.Parameters.AddWithValue("tipo", cliente.IdTipoCliente);
     }
 
     private static Cliente Leer(NpgsqlDataReader lector) => new()
     {
         IdCliente = lector.GetInt32(0),
-        Nombre = lector.GetString(1),
-        Documento = lector.GetString(2),
-        Correo = lector.IsDBNull(3) ? null : lector.GetString(3),
-        Telefono = lector.GetString(4),
-        Direccion = lector.IsDBNull(5) ? null : lector.GetString(5),
-        IdTipoCliente = lector.GetInt32(6),
-        TipoClienteNombre = lector.GetString(7),
-        DescuentoPorcentaje = lector.GetDecimal(8),
-        Activo = lector.GetBoolean(9),
-        FechaCreacion = lector.GetDateTime(10),
-        UsuarioCreacion = lector.GetString(11),
-        FechaModificacion = lector.IsDBNull(12) ? null : lector.GetDateTime(12),
-        UsuarioModificacion = lector.IsDBNull(13) ? null : lector.GetString(13)
+        Ci = lector.IsDBNull(1) ? null : lector.GetString(1),
+        Nombre = lector.GetString(2),
+        Apellido = lector.GetString(3),
+        Correo = lector.IsDBNull(4) ? null : lector.GetString(4),
+        Telefono = lector.IsDBNull(5) ? null : lector.GetString(5),
+        Direccion = lector.IsDBNull(6) ? null : lector.GetString(6),
+        Activo = lector.GetBoolean(7),
+        FechaCreacion = lector.GetDateTime(8),
+        UsuarioCreacion = lector.GetString(9),
+        FechaModificacion = lector.IsDBNull(10) ? null : lector.GetDateTime(10),
+        UsuarioModificacion = lector.IsDBNull(11) ? null : lector.GetString(11)
     };
 
     private static string EscaparComodines(string texto) =>

@@ -16,4 +16,6 @@ public interface IServicioClientes
     Task<Resultado<ClienteRespuesta>> ActualizarAsync(int idCliente, ClienteSolicitud solicitud, CancellationToken cancelacion);
 
     Task<Resultado> DarDeBajaAsync(int idCliente, CancellationToken cancelacion);
+
+    Task<Resultado> ReactivarAsync(int idCliente, CancellationToken cancelacion);
 }

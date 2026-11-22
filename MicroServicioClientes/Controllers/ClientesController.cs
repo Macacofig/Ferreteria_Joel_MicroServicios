@@ -24,17 +24,16 @@ public sealed class ClientesController : ControllerBase
         _servicio = servicio;
     }
 
-    /// <summary>Listado con búsqueda, filtro por tipo y ordenación.</summary>
+    /// <summary>Listado con búsqueda y ordenación.</summary>
     [HttpGet]
     public async Task<IActionResult> Listar(
         [FromQuery] string? buscar,
-        [FromQuery] int? idTipoCliente,
         [FromQuery] bool soloActivos = true,
         [FromQuery] string? ordenarPor = null,
         [FromQuery] bool descendente = false,
         CancellationToken cancelacion = default)
     {
-        var filtro = new FiltroClientes(buscar, idTipoCliente, soloActivos, ordenarPor, descendente);
+        var filtro = new FiltroClientes(buscar, soloActivos, ordenarPor, descendente);
 
         return this.Adaptar(await _servicio.ListarAsync(filtro, cancelacion));
     }
@@ -61,4 +60,10 @@ public sealed class ClientesController : ControllerBase
     [Authorize(Roles = RolesSistema.Administrador)]
     public async Task<IActionResult> DarDeBaja(int id, CancellationToken cancelacion) =>
         this.AdaptarSinDatos(await _servicio.DarDeBajaAsync(id, cancelacion));
+
+    /// <summary>Reactiva un cliente dado de baja. Solo el administrador.</summary>
+    [HttpPost("{id:int}/reactivar")]
+    [Authorize(Roles = RolesSistema.Administrador)]
+    public async Task<IActionResult> Reactivar(int id, CancellationToken cancelacion) =>
+        this.AdaptarSinDatos(await _servicio.ReactivarAsync(id, cancelacion));
 }

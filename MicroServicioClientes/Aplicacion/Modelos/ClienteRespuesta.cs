@@ -5,14 +5,12 @@ namespace MicroServicioClientes.Aplicacion.Modelos;
 /// <summary>Cliente tal como lo ve el front.</summary>
 public sealed record ClienteRespuesta(
     int IdCliente,
+    string? Ci,
     string Nombre,
-    string Documento,
+    string Apellido,
     string? Correo,
-    string Telefono,
+    string? Telefono,
     string? Direccion,
-    int IdTipoCliente,
-    string TipoCliente,
-    decimal DescuentoPorcentaje,
     bool Activo,
     DateTime FechaCreacion,
     string UsuarioCreacion,
@@ -21,17 +19,16 @@ public sealed record ClienteRespuesta(
 {
     public static ClienteRespuesta Desde(Cliente c) => new(
         c.IdCliente,
+        c.Ci,
         c.Nombre,
-        c.Documento,
+        c.Apellido,
         c.Correo,
         c.Telefono,
         c.Direccion,
-        c.IdTipoCliente,
-        c.TipoClienteNombre,
-        c.DescuentoPorcentaje,
         c.Activo,
         c.FechaCreacion,
         c.UsuarioCreacion,
         c.FechaModificacion,
         c.UsuarioModificacion);
 }
+

@@ -8,22 +8,17 @@ using MicroServicioClientes.Dominio.Puertos;
 namespace MicroServicioClientes.Aplicacion.Servicios;
 
 /// <summary>
-/// Casos de uso de clientes. Depende solo de puertos (repositorios y contexto
+/// Casos de uso de clientes. Depende solo de puertos (repositorio y contexto
 /// de usuario), nunca de PostgreSQL ni de ASP.NET.
 /// </summary>
 public sealed class ServicioClientes : IServicioClientes
 {
     private readonly IClienteRepositorio _clientes;
-    private readonly ITipoClienteRepositorio _tipos;
     private readonly IContextoUsuario _contexto;
 
-    public ServicioClientes(
-        IClienteRepositorio clientes,
-        ITipoClienteRepositorio tipos,
-        IContextoUsuario contexto)
+    public ServicioClientes(IClienteRepositorio clientes, IContextoUsuario contexto)
     {
         _clientes = clientes;
-        _tipos = tipos;
         _contexto = contexto;
     }
 
@@ -64,15 +59,9 @@ public sealed class ServicioClientes : IServicioClientes
                 TipoError.Validacion, "Revise los datos del cliente.", errores);
         }
 
-        Resultado tipo = await VerificarTipoActivoAsync(datos.IdTipoCliente, cancelacion);
-        if (!tipo.Exitoso)
+        if (datos.Ci is not null && await _clientes.ExisteCiAsync(datos.Ci, null, cancelacion))
         {
-            return Resultado<ClienteRespuesta>.DesdeFallo(tipo);
-        }
-
-        if (await _clientes.ExisteDocumentoAsync(datos.Documento, null, cancelacion))
-        {
-            return DocumentoDuplicado();
+            return CiDuplicada();
         }
 
         int id = await _clientes.InsertarAsync(Mapear(datos, new Cliente()), _contexto.NombreUsuario, cancelacion);
@@ -97,7 +86,7 @@ public sealed class ServicioClientes : IServicioClientes
         if (!existente.Activo)
         {
             return Resultado<ClienteRespuesta>.Falla(
-                TipoError.Conflicto, "No se puede modificar un cliente dado de baja.");
+                TipoError.Conflicto, "No se puede modificar un cliente dado de baja. Reactívelo primero.");
         }
 
         ClienteSolicitud datos = solicitud.Normalizada();
@@ -109,15 +98,9 @@ public sealed class ServicioClientes : IServicioClientes
                 TipoError.Validacion, "Revise los datos del cliente.", errores);
         }
 
-        Resultado tipo = await VerificarTipoActivoAsync(datos.IdTipoCliente, cancelacion);
-        if (!tipo.Exitoso)
+        if (datos.Ci is not null && await _clientes.ExisteCiAsync(datos.Ci, idCliente, cancelacion))
         {
-            return Resultado<ClienteRespuesta>.DesdeFallo(tipo);
-        }
-
-        if (await _clientes.ExisteDocumentoAsync(datos.Documento, idCliente, cancelacion))
-        {
-            return DocumentoDuplicado();
+            return CiDuplicada();
         }
 
         await _clientes.ActualizarAsync(Mapear(datos, existente), _contexto.NombreUsuario, cancelacion);
@@ -146,44 +129,44 @@ public sealed class ServicioClientes : IServicioClientes
         return Resultado.Exito("Cliente dado de baja correctamente.");
     }
 
-    private async Task<Resultado> VerificarTipoActivoAsync(int idTipoCliente, CancellationToken cancelacion)
+    public async Task<Resultado> ReactivarAsync(int idCliente, CancellationToken cancelacion)
     {
-        TipoCliente? tipo = await _tipos.ObtenerPorIdAsync(idTipoCliente, cancelacion);
-
-        if (tipo is null || !tipo.Activo)
+        Cliente? existente = await _clientes.ObtenerPorIdAsync(idCliente, cancelacion);
+        if (existente is null)
         {
-            return Resultado.Falla(
-                TipoError.Validacion,
-                "Revise los datos del cliente.",
-                new Dictionary<string, string>
-                {
-                    [nameof(ClienteSolicitud.IdTipoCliente)] = "El tipo de cliente no existe o está inactivo."
-                });
+            return Resultado.Falla(TipoError.NoEncontrado, "El cliente no existe.");
         }
 
-        return Resultado.Exito();
+        if (existente.Activo)
+        {
+            return Resultado.Falla(TipoError.Conflicto, "El cliente ya está activo.");
+        }
+
+        await _clientes.ReactivarAsync(idCliente, _contexto.NombreUsuario, cancelacion);
+
+        return Resultado.Exito("Cliente reactivado correctamente.");
     }
 
     private static Cliente Mapear(ClienteSolicitud datos, Cliente destino)
     {
+        destino.Ci = datos.Ci;
         destino.Nombre = datos.Nombre;
-        destino.Documento = datos.Documento;
+        destino.Apellido = datos.Apellido;
         destino.Correo = datos.Correo;
         destino.Telefono = datos.Telefono;
         destino.Direccion = datos.Direccion;
-        destino.IdTipoCliente = datos.IdTipoCliente;
         return destino;
     }
 
     private static Resultado<ClienteRespuesta> NoEncontrado() =>
         Resultado<ClienteRespuesta>.Falla(TipoError.NoEncontrado, "El cliente no existe.");
 
-    private static Resultado<ClienteRespuesta> DocumentoDuplicado() =>
+    private static Resultado<ClienteRespuesta> CiDuplicada() =>
         Resultado<ClienteRespuesta>.Falla(
             TipoError.Conflicto,
-            "Ya existe un cliente con ese documento.",
+            "Ya existe un cliente con esa CI.",
             new Dictionary<string, string>
             {
-                [nameof(ClienteSolicitud.Documento)] = "Este documento ya está registrado."
+                [nameof(ClienteSolicitud.Ci)] = "Esta CI ya está registrada."
             });
 }
