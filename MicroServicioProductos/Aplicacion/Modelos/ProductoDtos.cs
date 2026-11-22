@@ -45,18 +45,56 @@ public sealed record ProductoResponse(
     DateTime? FechaBaja,
     int? IdEmpleadoResponsable);
 
+// ===================== Catálogos auxiliares =====================
+
+public sealed record CrearCategoriaRequest(
+    string? Codigo,
+    string? Nombre,
+    string? Descripcion);
+
+public sealed record ActualizarCategoriaRequest(
+    string? Codigo,
+    string? Nombre,
+    string? Descripcion);
+
+public sealed record CrearMarcaRequest(
+    string? Nombre,
+    string? PaisOrigen);
+
+public sealed record ActualizarMarcaRequest(
+    string? Nombre,
+    string? PaisOrigen);
+
 public sealed record CategoriaResponse(
     short IdCategoria,
     string Codigo,
     string Nombre,
     string? Descripcion,
-    byte Estado);
+    byte Estado,
+    DateTime FechaRegistro,
+    DateTime? FechaActualizacion,
+    int? UsuarioCreacion,
+    DateTime? FechaCreacion,
+    int? UsuarioModificacion,
+    DateTime? FechaModificacion,
+    int? UsuarioBaja,
+    DateTime? FechaBaja,
+    int? IdEmpleadoResponsable);
 
 public sealed record MarcaResponse(
     short IdMarca,
     string Nombre,
     string? PaisOrigen,
-    byte Estado);
+    byte Estado,
+    DateTime FechaRegistro,
+    DateTime? FechaActualizacion,
+    int? UsuarioCreacion,
+    DateTime? FechaCreacion,
+    int? UsuarioModificacion,
+    DateTime? FechaModificacion,
+    int? UsuarioBaja,
+    DateTime? FechaBaja,
+    int? IdEmpleadoResponsable);
 
 public sealed record HistoricoProductoResponse(
     int IdHistorico,
@@ -101,13 +139,31 @@ public static class MapeosProducto
         categoria.Codigo,
         categoria.Nombre,
         categoria.Descripcion,
-        categoria.Estado);
+        categoria.Estado,
+        categoria.FechaRegistro,
+        categoria.FechaActualizacion,
+        categoria.UsuarioCreacion,
+        categoria.FechaCreacion,
+        categoria.UsuarioModificacion,
+        categoria.FechaModificacion,
+        categoria.UsuarioBaja,
+        categoria.FechaBaja,
+        categoria.IdEmpleadoResponsable);
 
     public static MarcaResponse AResponse(Marca marca) => new(
         marca.IdMarca,
         marca.Nombre,
         marca.PaisOrigen,
-        marca.Estado);
+        marca.Estado,
+        marca.FechaRegistro,
+        marca.FechaActualizacion,
+        marca.UsuarioCreacion,
+        marca.FechaCreacion,
+        marca.UsuarioModificacion,
+        marca.FechaModificacion,
+        marca.UsuarioBaja,
+        marca.FechaBaja,
+        marca.IdEmpleadoResponsable);
 
     public static HistoricoProductoResponse AResponse(HistoricoProducto registro) => new(
         registro.IdHistorico,

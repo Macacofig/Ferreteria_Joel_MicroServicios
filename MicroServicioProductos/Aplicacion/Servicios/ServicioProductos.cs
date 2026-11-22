@@ -287,7 +287,408 @@ public sealed class ServicioProductos
         return Result.Ok();
     }
 
+    // ===================== Categorías =====================
+
+    public async Task<Result<Categoria>> ObtenerCategoriaPorIdAsync(
+        short idCategoria,
+        CancellationToken ct = default)
+    {
+        Categoria? categoria =
+            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, ct);
+
+        return categoria is null
+            ? Result.Fallo<Categoria>(
+                PrefijoNoEncontrado + "La categoría no existe o no está activa.")
+            : Result.Ok(categoria);
+    }
+
+    public async Task<Result<short>> CrearCategoriaAsync(
+        CrearCategoriaRequest solicitud,
+        CancellationToken ct = default)
+    {
+        if (solicitud is null)
+        {
+            return Result.Fallo<short>("Los datos de la categoría son obligatorios.");
+        }
+
+        Result<DatosCategoria> validacion = await ValidarCategoriaAsync(
+            solicitud.Codigo,
+            solicitud.Nombre,
+            solicitud.Descripcion,
+            null,
+            ct);
+
+        if (validacion.EsFallo)
+        {
+            return Result.Fallo<short>(validacion.Error);
+        }
+
+        DatosCategoria datos = validacion.ValorRequerido;
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+        DateTime ahora = DateTime.Now;
+
+        Categoria categoria = new()
+        {
+            Codigo = datos.Codigo,
+            Nombre = datos.Nombre,
+            Descripcion = datos.Descripcion,
+            Estado = 1,
+            FechaRegistro = ahora,
+            FechaCreacion = ahora,
+            UsuarioCreacion = idEmpleado,
+            IdEmpleadoResponsable = idEmpleado
+        };
+
+        short idCategoria =
+            await _catalogo.InsertarCategoriaAsync(categoria, ct);
+
+        return Result.Ok(idCategoria);
+    }
+
+    public async Task<Result> ActualizarCategoriaAsync(
+        short idCategoria,
+        ActualizarCategoriaRequest solicitud,
+        CancellationToken ct = default)
+    {
+        if (solicitud is null)
+        {
+            return Result.Fallo("Los datos de la categoría son obligatorios.");
+        }
+
+        Categoria? actual =
+            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, ct);
+
+        if (actual is null || actual.Estado != 1)
+        {
+            return Result.Fallo(
+                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+        }
+
+        Result<DatosCategoria> validacion = await ValidarCategoriaAsync(
+            solicitud.Codigo,
+            solicitud.Nombre,
+            solicitud.Descripcion,
+            idCategoria,
+            ct);
+
+        if (validacion.EsFallo)
+        {
+            return validacion;
+        }
+
+        DatosCategoria datos = validacion.ValorRequerido;
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+        DateTime ahora = DateTime.Now;
+
+        Categoria actualizada = new()
+        {
+            IdCategoria = actual.IdCategoria,
+            Codigo = datos.Codigo,
+            Nombre = datos.Nombre,
+            Descripcion = datos.Descripcion,
+            Estado = actual.Estado,
+            FechaRegistro = actual.FechaRegistro,
+            FechaActualizacion = ahora,
+            UsuarioCreacion = actual.UsuarioCreacion,
+            FechaCreacion = actual.FechaCreacion,
+            UsuarioModificacion = idEmpleado,
+            FechaModificacion = ahora,
+            UsuarioBaja = actual.UsuarioBaja,
+            FechaBaja = actual.FechaBaja,
+            IdEmpleadoResponsable = idEmpleado
+        };
+
+        bool guardado =
+            await _catalogo.ActualizarCategoriaAsync(actualizada, ct);
+
+        return guardado
+            ? Result.Ok()
+            : Result.Fallo(
+                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+    }
+
+    public async Task<Result> DarDeBajaCategoriaAsync(
+        short idCategoria,
+        CancellationToken ct = default)
+    {
+        Categoria? actual =
+            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, ct);
+
+        if (actual is null || actual.Estado != 1)
+        {
+            return Result.Fallo(
+                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+        }
+
+        if (await _catalogo.TieneProductosActivosCategoriaAsync(idCategoria, ct))
+        {
+            return Result.Fallo(
+                PrefijoConflicto +
+                "No se puede dar de baja la categoría porque tiene productos activos asociados.");
+        }
+
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+
+        bool dadoDeBaja = await _catalogo.DarDeBajaCategoriaAsync(
+            idCategoria, idEmpleado, ct);
+
+        return dadoDeBaja
+            ? Result.Ok()
+            : Result.Fallo(
+                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+    }
+
+    // ===================== Marcas =====================
+
+    public async Task<Result<Marca>> ObtenerMarcaPorIdAsync(
+        short idMarca,
+        CancellationToken ct = default)
+    {
+        Marca? marca = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, ct);
+
+        return marca is null
+            ? Result.Fallo<Marca>(
+                PrefijoNoEncontrado + "La marca no existe o no está activa.")
+            : Result.Ok(marca);
+    }
+
+    public async Task<Result<short>> CrearMarcaAsync(
+        CrearMarcaRequest solicitud,
+        CancellationToken ct = default)
+    {
+        if (solicitud is null)
+        {
+            return Result.Fallo<short>("Los datos de la marca son obligatorios.");
+        }
+
+        Result<DatosMarca> validacion = await ValidarMarcaAsync(
+            solicitud.Nombre,
+            solicitud.PaisOrigen,
+            null,
+            ct);
+
+        if (validacion.EsFallo)
+        {
+            return Result.Fallo<short>(validacion.Error);
+        }
+
+        DatosMarca datos = validacion.ValorRequerido;
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+        DateTime ahora = DateTime.Now;
+
+        Marca marca = new()
+        {
+            Nombre = datos.Nombre,
+            PaisOrigen = datos.PaisOrigen,
+            Estado = 1,
+            FechaRegistro = ahora,
+            FechaCreacion = ahora,
+            UsuarioCreacion = idEmpleado,
+            IdEmpleadoResponsable = idEmpleado
+        };
+
+        short idMarca = await _catalogo.InsertarMarcaAsync(marca, ct);
+
+        return Result.Ok(idMarca);
+    }
+
+    public async Task<Result> ActualizarMarcaAsync(
+        short idMarca,
+        ActualizarMarcaRequest solicitud,
+        CancellationToken ct = default)
+    {
+        if (solicitud is null)
+        {
+            return Result.Fallo("Los datos de la marca son obligatorios.");
+        }
+
+        Marca? actual = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, ct);
+
+        if (actual is null || actual.Estado != 1)
+        {
+            return Result.Fallo(
+                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+        }
+
+        Result<DatosMarca> validacion = await ValidarMarcaAsync(
+            solicitud.Nombre,
+            solicitud.PaisOrigen,
+            idMarca,
+            ct);
+
+        if (validacion.EsFallo)
+        {
+            return validacion;
+        }
+
+        DatosMarca datos = validacion.ValorRequerido;
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+        DateTime ahora = DateTime.Now;
+
+        Marca actualizada = new()
+        {
+            IdMarca = actual.IdMarca,
+            Nombre = datos.Nombre,
+            PaisOrigen = datos.PaisOrigen,
+            Estado = actual.Estado,
+            FechaRegistro = actual.FechaRegistro,
+            FechaActualizacion = ahora,
+            UsuarioCreacion = actual.UsuarioCreacion,
+            FechaCreacion = actual.FechaCreacion,
+            UsuarioModificacion = idEmpleado,
+            FechaModificacion = ahora,
+            UsuarioBaja = actual.UsuarioBaja,
+            FechaBaja = actual.FechaBaja,
+            IdEmpleadoResponsable = idEmpleado
+        };
+
+        bool guardado = await _catalogo.ActualizarMarcaAsync(actualizada, ct);
+
+        return guardado
+            ? Result.Ok()
+            : Result.Fallo(
+                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+    }
+
+    public async Task<Result> DarDeBajaMarcaAsync(
+        short idMarca,
+        CancellationToken ct = default)
+    {
+        Marca? actual = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, ct);
+
+        if (actual is null || actual.Estado != 1)
+        {
+            return Result.Fallo(
+                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+        }
+
+        if (await _catalogo.TieneProductosActivosMarcaAsync(idMarca, ct))
+        {
+            return Result.Fallo(
+                PrefijoConflicto +
+                "No se puede dar de baja la marca porque tiene productos activos asociados.");
+        }
+
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+
+        bool dadoDeBaja =
+            await _catalogo.DarDeBajaMarcaAsync(idMarca, idEmpleado, ct);
+
+        return dadoDeBaja
+            ? Result.Ok()
+            : Result.Fallo(
+                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+    }
+
     // ===================== Validaciones =====================
+
+    private async Task<Result<DatosCategoria>> ValidarCategoriaAsync(
+        string? codigo,
+        string? nombre,
+        string? descripcion,
+        short? excluirIdCategoria,
+        CancellationToken ct)
+    {
+        List<string> errores = new();
+
+        string codigoNormalizado =
+            (codigo ?? string.Empty).Trim().ToUpperInvariant();
+        string nombreNormalizado = (nombre ?? string.Empty).Trim();
+        string? descripcionNormalizada = string.IsNullOrWhiteSpace(descripcion)
+            ? null
+            : descripcion.Trim();
+
+        if (codigoNormalizado.Length == 0)
+        {
+            errores.Add("El código es obligatorio.");
+        }
+        else if (codigoNormalizado.Length > 20)
+        {
+            errores.Add("El código no puede superar los 20 caracteres.");
+        }
+
+        if (nombreNormalizado.Length == 0)
+        {
+            errores.Add("El nombre es obligatorio.");
+        }
+        else if (nombreNormalizado.Length > 100)
+        {
+            errores.Add("El nombre no puede superar los 100 caracteres.");
+        }
+
+        if (descripcionNormalizada is not null
+            && descripcionNormalizada.Length > 255)
+        {
+            errores.Add("La descripción no puede superar los 255 caracteres.");
+        }
+
+        if (errores.Count > 0)
+        {
+            return Result.Fallo<DatosCategoria>(string.Join(" ", errores));
+        }
+
+        if (await _catalogo.ExisteCodigoCategoriaAsync(
+                codigoNormalizado, excluirIdCategoria, ct))
+        {
+            return Result.Fallo<DatosCategoria>(
+                PrefijoConflicto +
+                $"El código '{codigoNormalizado}' ya está registrado en otra categoría activa.");
+        }
+
+        if (await _catalogo.ExisteNombreCategoriaAsync(
+                nombreNormalizado, excluirIdCategoria, ct))
+        {
+            return Result.Fallo<DatosCategoria>(
+                PrefijoConflicto +
+                $"El nombre '{nombreNormalizado}' ya está registrado en otra categoría activa.");
+        }
+
+        return Result.Ok(new DatosCategoria(
+            codigoNormalizado, nombreNormalizado, descripcionNormalizada));
+    }
+
+    private async Task<Result<DatosMarca>> ValidarMarcaAsync(
+        string? nombre,
+        string? paisOrigen,
+        short? excluirIdMarca,
+        CancellationToken ct)
+    {
+        List<string> errores = new();
+
+        string nombreNormalizado = (nombre ?? string.Empty).Trim();
+        string? paisNormalizado = string.IsNullOrWhiteSpace(paisOrigen)
+            ? null
+            : paisOrigen.Trim();
+
+        if (nombreNormalizado.Length == 0)
+        {
+            errores.Add("El nombre es obligatorio.");
+        }
+        else if (nombreNormalizado.Length > 100)
+        {
+            errores.Add("El nombre no puede superar los 100 caracteres.");
+        }
+
+        if (paisNormalizado is not null && paisNormalizado.Length > 80)
+        {
+            errores.Add("El país de origen no puede superar los 80 caracteres.");
+        }
+
+        if (errores.Count > 0)
+        {
+            return Result.Fallo<DatosMarca>(string.Join(" ", errores));
+        }
+
+        if (await _catalogo.ExisteNombreMarcaAsync(
+                nombreNormalizado, excluirIdMarca, ct))
+        {
+            return Result.Fallo<DatosMarca>(
+                PrefijoConflicto +
+                $"El nombre '{nombreNormalizado}' ya está registrado en otra marca activa.");
+        }
+
+        return Result.Ok(new DatosMarca(nombreNormalizado, paisNormalizado));
+    }
 
     private async Task<Result<DatosValidados>> ValidarAsync(
         DatosValidados datos,
@@ -399,4 +800,13 @@ public sealed class ServicioProductos
         string UnidadMedida,
         decimal PrecioVenta,
         int CantidadStock);
+
+    private sealed record DatosCategoria(
+        string Codigo,
+        string Nombre,
+        string? Descripcion);
+
+    private sealed record DatosMarca(
+        string Nombre,
+        string? PaisOrigen);
 }
