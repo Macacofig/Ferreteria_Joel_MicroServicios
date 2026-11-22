@@ -15,6 +15,76 @@
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+    <style>
+        /* Ajustes locales de esta vista: no modifican el CSS compartido. */
+
+        /* Barra de ordenación: los controles se alinean sin montarse. */
+        .fj-page-products .prod-toolbar-controls,
+        .fj-page-products .prod-toolbar-controls .fj-inline-form {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .fj-page-products .prod-toolbar-label {
+            white-space: nowrap;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-right: 2px;
+        }
+
+        .fj-page-products .prod-select {
+            height: 36px;
+            padding: 0 28px 0 12px;
+            border: 1px solid #d8dde6;
+            border-radius: 8px;
+            background-color: #fff;
+            font-size: 0.875rem;
+            color: #1f2937;
+        }
+
+        /* Tabla: se mide por contenido (no 8 columnas iguales) y puede
+           desplazarse horizontalmente si la pantalla es estrecha. */
+        .fj-page-products .prod-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .fj-page-products .prod-table {
+            width: 100%;
+            min-width: 1180px;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+
+        .fj-page-products .prod-table thead th {
+            padding: 14px 12px;
+            white-space: nowrap;
+            overflow-wrap: normal;
+        }
+
+        .fj-page-products .prod-table tbody td {
+            padding: 14px 12px;
+            overflow-wrap: normal;
+        }
+
+        .fj-page-products .prod-table tbody td.fj-td-codigo,
+        .fj-page-products .prod-table tbody td.fj-td-secundario,
+        .fj-page-products .prod-table tbody td.fj-td-acciones,
+        .fj-page-products .prod-table .fj-nombre,
+        .fj-page-products .prod-table .fj-btn {
+            white-space: nowrap;
+        }
+
+        .fj-page-products .prod-table .fj-nombre-sub {
+            white-space: normal;
+        }
+
+        .fj-page-products .prod-table .fj-acciones {
+            flex-wrap: nowrap;
+        }
+    </style>
 }
 
 <div class="fj-container fj-page-products">
@@ -47,10 +117,10 @@
             @(Model.Productos.Count == 1 ? "producto activo" : "productos activos")
         </p>
 
-        <div class="fj-toolbar-actions">
+        <div class="fj-toolbar-actions prod-toolbar-controls">
             <form method="post" asp-page-handler="Refrescar" class="fj-inline-form">
-                <label for="ordenarPor" class="fj-td-secundario">Ordenar por</label>
-                <select id="ordenarPor" name="ordenarPor" aria-label="Ordenar por">
+                <label for="ordenarPor" class="prod-toolbar-label">Ordenar por</label>
+                <select id="ordenarPor" name="ordenarPor" class="prod-select" aria-label="Ordenar por">
                     <option value="codigo" selected="@(Model.OrdenarPor == "codigo")">Código</option>
                     <option value="nombre" selected="@(Model.OrdenarPor == "nombre")">Nombre</option>
                     <option value="precio" selected="@(Model.OrdenarPor == "precio")">Precio</option>
@@ -58,7 +128,7 @@
                     <option value="categoria" selected="@(Model.OrdenarPor == "categoria")">Categoría</option>
                     <option value="marca" selected="@(Model.OrdenarPor == "marca")">Marca</option>
                 </select>
-                <select id="direccion" name="direccion" aria-label="Dirección de ordenación">
+                <select id="direccion" name="direccion" class="prod-select" aria-label="Dirección de ordenación">
                     <option value="ASC" selected="@(Model.Direccion == "ASC")">Ascendente</option>
                     <option value="DESC" selected="@(Model.Direccion == "DESC")">Descendente</option>
                 </select>
@@ -76,8 +146,8 @@
     </section>
 
     <section class="fj-card fj-table-card" aria-label="Listado de productos">
-        <div class="fj-table-wrap fj-table-wrap-scroll">
-            <table class="fj-table fj-table-productos">
+        <div class="fj-table-wrap fj-table-wrap-scroll prod-table-wrap">
+            <table class="fj-table fj-table-productos prod-table">
                 <thead>
                     <tr>
                         <th scope="col">
