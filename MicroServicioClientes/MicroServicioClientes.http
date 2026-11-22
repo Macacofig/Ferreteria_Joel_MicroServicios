@@ -1,0 +1,80 @@
+# Pruebas del microservicio de clientes. Se llama a través de la gateway (puerto 5000).
+# Pegue un JWT válido de Keycloak (obtenido al iniciar sesión) en la variable @token.
+# Para probar el servicio directo use http://localhost:5073 en lugar de la gateway.
+
+@gateway = http://localhost:5000
+@token = PEGUE_AQUI_EL_JWT
+### Salud (sin token)
+GET http://localhost:5073/health
+
+### Listar clientes activos (orden por nombre)
+GET {{gateway}}/api/clientes
+Authorization: Bearer {{token}}
+
+### Buscar y ordenar: texto, orden y sentido; incluye los dados de baja
+GET {{gateway}}/api/clientes?buscar=lopez&ordenarPor=apellido&descendente=true&soloActivos=false
+Authorization: Bearer {{token}}
+
+### Obtener uno
+GET {{gateway}}/api/clientes/1
+Authorization: Bearer {{token}}
+
+### Crear cliente
+POST {{gateway}}/api/clientes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "ci": "10234567",
+  "nombre": "María",
+  "apellido": "López",
+  "correo": "maria.lopez@correo.com",
+  "telefono": "700-12345",
+  "direccion": "Av. Principal 123"
+}
+
+### Crear cliente solo con lo obligatorio (nombre y apellido)
+POST {{gateway}}/api/clientes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nombre": "Carlos", "apellido": "Rojas" }
+
+### Crear cliente inválido -> 400 con errores por campo
+POST {{gateway}}/api/clientes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "ci": "1", "nombre": "", "apellido": "R0jas", "correo": "no-es-correo", "telefono": "abc" }
+
+### Crear con CI repetida -> 409
+POST {{gateway}}/api/clientes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "ci": "10234567", "nombre": "Otra", "apellido": "Persona" }
+
+### Editar cliente
+PUT {{gateway}}/api/clientes/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "ci": "10234567",
+  "nombre": "María",
+  "apellido": "López Rojas",
+  "correo": "maria.lopez@correo.com",
+  "telefono": "700-12345",
+  "direccion": "Av. Principal 456"
+}
+
+### Baja lógica (solo Administrador)
+DELETE {{gateway}}/api/clientes/1
+Authorization: Bearer {{token}}
+
+### Reactivar (solo Administrador)
+POST {{gateway}}/api/clientes/1/reactivar
+Authorization: Bearer {{token}}
+
+### Sin token -> 401
+GET {{gateway}}/api/clientes
