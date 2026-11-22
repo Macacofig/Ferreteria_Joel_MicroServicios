@@ -109,6 +109,21 @@ public sealed class ProductosController : ControllerBase
         return Ok(MapeosProducto.AResponse(resultado.ValorRequerido));
     }
 
+    [HttpGet("siguiente-codigo")]
+    public async Task<IActionResult> ObtenerSiguienteCodigo(
+        CancellationToken ct = default)
+    {
+        Result<string> resultado =
+            await _servicio.ObtenerSiguienteCodigoAsync(ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(new { codigo = resultado.ValorRequerido });
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Obtener(int id, CancellationToken ct = default)
     {

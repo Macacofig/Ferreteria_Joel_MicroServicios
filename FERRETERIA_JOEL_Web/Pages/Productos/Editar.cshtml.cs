@@ -29,6 +29,9 @@ public sealed class EditarModel : PageModel
 
     public List<MarcaApi> Marcas { get; set; } = new();
 
+    public List<string> UnidadesMedida { get; set; } =
+        UnidadesMedidaProducto.Valores.ToList();
+
     public string? NombreProducto { get; private set; }
 
     public string? Error { get; private set; }
@@ -59,7 +62,9 @@ public sealed class EditarModel : PageModel
                 Codigo = producto.Codigo,
                 Nombre = producto.Nombre,
                 Descripcion = producto.Descripcion,
-                UnidadMedida = producto.UnidadMedida,
+                UnidadMedida = UnidadesMedidaProducto.Normalizar(producto.UnidadMedida)
+                    ?? producto.UnidadMedida
+                    ?? string.Empty,
                 PrecioVenta = producto.PrecioVenta,
                 CantidadStock = producto.CantidadStock
             };
@@ -118,6 +123,19 @@ public sealed class EditarModel : PageModel
 
     private async Task CargarCombosAsync(CancellationToken cancelacion = default)
     {
+        // Si el valor guardado venía en otro caso (p. ej. "caja"), se usa la
+        // opción canónica; si no está en la lista, se agrega temporalmente.
+        string? unidadCanonica =
+            UnidadesMedidaProducto.Normalizar(Solicitud.UnidadMedida);
+
+        if (unidadCanonica is not null)
+        {
+            Solicitud.UnidadMedida = unidadCanonica;
+        }
+
+        UnidadesMedida = UnidadesMedidaProducto.ObtenerConValorActual(
+            Solicitud.UnidadMedida);
+
         try
         {
             ResultadoApi<List<CategoriaApi>> categorias =

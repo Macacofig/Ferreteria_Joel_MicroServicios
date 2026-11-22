@@ -150,6 +150,44 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
         return await command.ExecuteScalarAsync(ct) is not null;
     }
 
+    public async Task<string> ObtenerSiguienteCodigoAsync(
+        CancellationToken ct = default)
+    {
+        // Se consultan todos los productos (activos e inactivos) para no
+        // reutilizar códigos de bajas lógicas. El mayor IdProducto se usa como
+        // respaldo si algún registro tiene un código con otro formato.
+        const string query = @"
+            SELECT
+                COALESCE(
+                    MAX(CASE
+                        WHEN p.Codigo REGEXP '^PROD-[0-9]{3}$'
+                        THEN CAST(SUBSTRING(p.Codigo, 6) AS UNSIGNED)
+                    END),
+                    0
+                ) AS UltimoCorrelativo,
+                COALESCE(MAX(p.IdProducto), 0) AS UltimoId
+            FROM producto p";
+
+        using MySqlConnection connection = _connectionFactory.CreateConnection();
+        using MySqlCommand command = new(query, connection);
+
+        await connection.OpenAsync(ct);
+
+        using MySqlDataReader reader =
+            (MySqlDataReader)await command.ExecuteReaderAsync(ct);
+
+        if (!await reader.ReadAsync(ct))
+        {
+            return "PROD-001";
+        }
+
+        int ultimoCorrelativo = Convert.ToInt32(reader["UltimoCorrelativo"]);
+        int ultimoId = Convert.ToInt32(reader["UltimoId"]);
+        int siguiente = Math.Max(ultimoCorrelativo, ultimoId) + 1;
+
+        return $"PROD-{siguiente:D3}";
+    }
+
     public async Task<int> InsertarAsync(
         Producto producto,
         CancellationToken ct = default)

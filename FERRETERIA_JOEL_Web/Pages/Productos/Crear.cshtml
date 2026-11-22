@@ -56,6 +56,11 @@
             box-sizing: border-box;
         }
 
+        .fj-form-producto .fj-codigo-autogenerado {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+
         .fj-form-producto .fj-barra-botones {
             display: flex;
             justify-content: flex-end;
@@ -122,7 +127,7 @@
             <div class="fj-fila fj-fila-2">
                 <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.Codigo">Código</label>
-                    <input class="form-control" asp-for="Solicitud.Codigo" maxlength="30" placeholder="Ej. MART-016" required />
+                    <input class="form-control fj-codigo-autogenerado" asp-for="Solicitud.Codigo" maxlength="30" readonly required />
                     <span class="text-danger" asp-validation-for="Solicitud.Codigo"></span>
                 </div>
 
@@ -162,7 +167,13 @@
             <div class="fj-fila fj-fila-3">
                 <div class="fj-campo">
                     <label class="form-label" asp-for="Solicitud.UnidadMedida">Unidad de Medida</label>
-                    <input class="form-control" asp-for="Solicitud.UnidadMedida" maxlength="30" placeholder="Ej. unidad, kg, caja" required />
+                    <select class="form-select" asp-for="Solicitud.UnidadMedida" required>
+                        <option value="">Seleccione una unidad de medida</option>
+                        @foreach (var unidad in Model.UnidadesMedida)
+                        {
+                            <option value="@unidad">@unidad</option>
+                        }
+                    </select>
                     <span class="text-danger" asp-validation-for="Solicitud.UnidadMedida"></span>
                 </div>
 

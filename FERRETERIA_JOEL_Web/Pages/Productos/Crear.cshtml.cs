@@ -26,12 +26,16 @@ public sealed class CrearModel : PageModel
 
     public List<MarcaApi> Marcas { get; set; } = new();
 
+    public List<string> UnidadesMedida { get; set; } =
+        UnidadesMedidaProducto.Valores.ToList();
+
     public string? Error { get; private set; }
 
     public async Task OnGetAsync()
     {
         ViewData["ActiveMenu"] = "Productos";
         await CargarCombosAsync();
+        await AsegurarCodigoAsync();
     }
 
     public async Task<IActionResult> OnPostAsync(
@@ -47,6 +51,7 @@ public sealed class CrearModel : PageModel
                 .FirstOrDefault(mensaje => !string.IsNullOrWhiteSpace(mensaje));
 
             await CargarCombosAsync(cancelacion);
+            await AsegurarCodigoAsync(cancelacion);
             return Page();
         }
 
@@ -71,7 +76,38 @@ public sealed class CrearModel : PageModel
         }
 
         await CargarCombosAsync(cancelacion);
+        await AsegurarCodigoAsync(cancelacion);
         return Page();
+    }
+
+    /// <summary>
+    /// Mantiene el código autogenerado en el formulario. Si la petición vino
+    /// sin él (alta nueva o validación fallida), se solicita uno al backend.
+    /// </summary>
+    private async Task AsegurarCodigoAsync(
+        CancellationToken cancelacion = default)
+    {
+        if (!string.IsNullOrWhiteSpace(Solicitud.Codigo))
+        {
+            return;
+        }
+
+        try
+        {
+            ResultadoApi<SiguienteCodigoApi> respuesta =
+                await _api.ObtenerSiguienteCodigoAsync(cancelacion);
+
+            if (respuesta.Exitoso
+                && respuesta.Datos is not null
+                && !string.IsNullOrWhiteSpace(respuesta.Datos.Codigo))
+            {
+                Solicitud.Codigo = respuesta.Datos.Codigo;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener el siguiente código de producto.");
+        }
     }
 
     private async Task CargarCombosAsync(CancellationToken cancelacion = default)

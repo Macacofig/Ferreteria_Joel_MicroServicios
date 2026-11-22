@@ -59,6 +59,17 @@ public sealed class ServicioProductos
             : Result.Ok(producto);
     }
 
+    /// <summary>
+    /// Código autogenerado que debe mostrarse al dar de alta un producto.
+    /// </summary>
+    public async Task<Result<string>> ObtenerSiguienteCodigoAsync(
+        CancellationToken ct = default)
+    {
+        string codigo = await _productos.ObtenerSiguienteCodigoAsync(ct);
+
+        return Result.Ok(codigo);
+    }
+
     public async Task<Result<IReadOnlyList<Categoria>>> ListarCategoriasAsync(
         CancellationToken ct = default)
     {
@@ -106,11 +117,22 @@ public sealed class ServicioProductos
             return Result.Fallo<int>("Los datos del producto son obligatorios.");
         }
 
+        // El código es autogenerado: se asigna cuando viene vacío o cuando ya
+        // fue tomado por otra petición (concurrencia) antes de validar.
+        string codigo = string.IsNullOrWhiteSpace(solicitud.Codigo)
+            ? await GenerarCodigoDisponibleAsync(ct)
+            : solicitud.Codigo.Trim().ToUpperInvariant();
+
+        if (await _productos.ExisteCodigoAsync(codigo, null, ct))
+        {
+            codigo = await GenerarCodigoDisponibleAsync(ct);
+        }
+
         Result<DatosValidados> validacion = await ValidarAsync(
             new DatosValidados(
                 solicitud.IdCategoria,
                 solicitud.IdMarca,
-                solicitud.Codigo ?? string.Empty,
+                codigo,
                 solicitud.Nombre ?? string.Empty,
                 solicitud.Descripcion,
                 solicitud.UnidadMedida ?? string.Empty,
@@ -125,6 +147,23 @@ public sealed class ServicioProductos
         }
 
         DatosValidados datos = validacion.ValorRequerido;
+
+        // Última comprobación antes de insertar: otra petición pudo tomar el
+        // mismo correlativo mientras se ejecutaban las validaciones.
+        if (await _productos.ExisteCodigoAsync(datos.Codigo, null, ct))
+        {
+            string codigoAlterno = await GenerarCodigoDisponibleAsync(ct);
+
+            if (codigoAlterno == datos.Codigo
+                || await _productos.ExisteCodigoAsync(codigoAlterno, null, ct))
+            {
+                return Result.Fallo<int>(
+                    PrefijoConflicto +
+                    "No se pudo asignar un código único. Inténtalo nuevamente.");
+            }
+
+            datos = datos with { Codigo = codigoAlterno };
+        }
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
         string usuario = _contextoUsuario.NombreUsuarioActual;
         DateTime ahora = DateTime.Now;
@@ -578,6 +617,23 @@ public sealed class ServicioProductos
             ? Result.Ok()
             : Result.Fallo(
                 PrefijoNoEncontrado + "La marca no existe o no está activa.");
+    }
+
+    private async Task<string> GenerarCodigoDisponibleAsync(
+        CancellationToken ct)
+    {
+        string codigo = await _productos.ObtenerSiguienteCodigoAsync(ct);
+
+        // Si otra petición tomó el correlativo entre la consulta y la
+        // verificación, se pide uno nuevo (con límite para no bloquear).
+        for (int intento = 0;
+             intento < 5 && await _productos.ExisteCodigoAsync(codigo, null, ct);
+             intento++)
+        {
+            codigo = await _productos.ObtenerSiguienteCodigoAsync(ct);
+        }
+
+        return codigo;
     }
 
     // ===================== Validaciones =====================

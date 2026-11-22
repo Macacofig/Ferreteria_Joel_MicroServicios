@@ -24,6 +24,9 @@ namespace FERRETERIA__Joel.Servicios
             int idProducto,
             CancellationToken cancelacion = default);
 
+        Task<ResultadoApi<SiguienteCodigoApi>> ObtenerSiguienteCodigoAsync(
+            CancellationToken cancelacion = default);
+
         Task<ResultadoApi<CrearProductoRespuestaApi>> CrearAsync(
             GuardarProductoApi solicitud,
             CancellationToken cancelacion = default);

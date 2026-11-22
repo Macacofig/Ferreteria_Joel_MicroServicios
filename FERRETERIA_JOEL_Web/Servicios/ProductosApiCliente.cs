@@ -78,6 +78,16 @@ namespace FERRETERIA__Joel.Servicios
                 null,
                 cancelacion);
 
+        public Task<ResultadoApi<SiguienteCodigoApi>> ObtenerSiguienteCodigoAsync(
+            string? token,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<SiguienteCodigoApi>(
+                HttpMethod.Get,
+                "api/productos/siguiente-codigo",
+                token,
+                null,
+                cancelacion);
+
         public Task<ResultadoApi<CrearProductoRespuestaApi>> CrearAsync(
             string? token,
             GuardarProductoApi solicitud,

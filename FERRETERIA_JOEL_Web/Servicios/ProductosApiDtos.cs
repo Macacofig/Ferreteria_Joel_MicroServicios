@@ -137,6 +137,12 @@ namespace FERRETERIA__Joel.Servicios
         public string Mensaje { get; set; } = string.Empty;
     }
 
+    /// <summary>Respuesta de <c>GET api/productos/siguiente-codigo</c>.</summary>
+    public class SiguienteCodigoApi
+    {
+        public string Codigo { get; set; } = string.Empty;
+    }
+
     /// <summary>Cuerpo compartido por el alta y la edición de categorías.</summary>
     public class GuardarCategoriaApi
     {

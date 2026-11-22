@@ -18,6 +18,12 @@ public interface IRepositoryProducto
         int? excluirIdProducto = null,
         CancellationToken ct = default);
 
+    /// <summary>
+    /// Devuelve el siguiente código <c>PROD-XXX</c> disponible. Considera
+    /// productos activos e inactivos para no reutilizar códigos dados de baja.
+    /// </summary>
+    Task<string> ObtenerSiguienteCodigoAsync(CancellationToken ct = default);
+
     Task<int> InsertarAsync(Producto producto, CancellationToken ct = default);
 
     Task<bool> ActualizarAsync(Producto producto, CancellationToken ct = default);
