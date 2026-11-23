@@ -1,35 +1,111 @@
-using MicroServicioProveedores.Dominio;
+﻿using MicroServicioProveedores.Aplicacion.CasosDeUso;
+using MicroServicioProveedores.Aplicacion.Modelos;
+using MicroServicioProveedores.Comun;
+using MicroServicioProveedores.Dominio.Resultados;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MicroServicioProveedores.Controllers
+namespace MicroServicioProveedores.Controllers;
+
+[ApiController]
+[Route("api/proveedores")]
+[Authorize]
+public class ProveedoresController : ControllerBase
 {
-    /// <summary>
-    /// API mínima de proveedores. El listado semilla se mantiene en memoria
-    /// para que el microservicio arranque sin depender de la base de datos; su
-    /// base es MongoDB (MongoProveedores).
-    /// </summary>
-    [ApiController]
-    [Route("api/proveedores")]
-    public class ProveedoresController : ControllerBase
+    private readonly ListarProveedoresCasoDeUso _listar;
+    private readonly ObtenerProveedorCasoDeUso _obtener;
+    private readonly CrearProveedorCasoDeUso _crear;
+    private readonly ActualizarProveedorCasoDeUso _actualizar;
+    private readonly EliminarProveedorCasoDeUso _eliminar;
+
+    public ProveedoresController(
+        ListarProveedoresCasoDeUso listar,
+        ObtenerProveedorCasoDeUso obtener,
+        CrearProveedorCasoDeUso crear,
+        ActualizarProveedorCasoDeUso actualizar,
+        EliminarProveedorCasoDeUso eliminar)
     {
-        private static readonly List<Proveedor> Proveedores = new()
+        _listar = listar;
+        _obtener = obtener;
+        _crear = crear;
+        _actualizar = actualizar;
+        _eliminar = eliminar;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Listar([FromQuery] string? orden, CancellationToken ct)
+    {
+        var resultado = await _listar.EjecutarAsync(orden, ct);
+        return DesdeResultado(resultado, datos => Ok(RespuestaApi<IReadOnlyList<ProveedorDto>>.Ok(datos)));
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> Obtener(int id, CancellationToken ct)
+    {
+        var resultado = await _obtener.EjecutarAsync(id, ct);
+        return DesdeResultado(resultado, datos => Ok(RespuestaApi<ProveedorDto>.Ok(datos)));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Crear([FromBody] CrearProveedorSolicitud solicitud, CancellationToken ct)
+    {
+        if (solicitud is null)
         {
-            new Proveedor(1, "Ferretería Central S.A.", "100200300", "Jorge Vargas", "700-11111"),
-            new Proveedor(2, "Importadora Andina Ltda.", "200300400", "Lucía Paredes", "700-22222"),
-            new Proveedor(3, "Distribuidora El Tornillo", "300400500", "Pedro Chávez", "700-33333")
-        };
-
-        [HttpGet]
-        public ActionResult<IEnumerable<Proveedor>> Listar() => Ok(Proveedores);
-
-        [HttpGet("{id:int}")]
-        public ActionResult<Proveedor> Obtener(int id)
-        {
-            Proveedor? proveedor = Proveedores.FirstOrDefault(p => p.Id == id);
-
-            return proveedor is null
-                ? NotFound(new { mensaje = "Proveedor no encontrado." })
-                : Ok(proveedor);
+            return BadRequest(RespuestaApi<ProveedorDto>.Error("Los datos del proveedor son obligatorios."));
         }
+
+        var resultado = await _crear.EjecutarAsync(solicitud, ct);
+        return DesdeResultado(resultado, datos => CreatedAtAction(nameof(Obtener), new { id = datos.Id },
+            RespuestaApi<ProveedorDto>.Ok(datos, "Proveedor registrado correctamente.")));
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Actualizar(int id, [FromBody] ActualizarProveedorSolicitud solicitud, CancellationToken ct)
+    {
+        if (solicitud is null)
+        {
+            return BadRequest(RespuestaApi<ProveedorDto>.Error("Los datos del proveedor son obligatorios."));
+        }
+
+        var resultado = await _actualizar.EjecutarAsync(id, solicitud, ct);
+        return DesdeResultado(resultado, datos => Ok(RespuestaApi<ProveedorDto>.Ok(datos, "Proveedor actualizado correctamente.")));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Eliminar(int id, CancellationToken ct)
+    {
+        var resultado = await _eliminar.EjecutarAsync(id, ct);
+        if (resultado.EsExitoso)
+        {
+            return Ok(RespuestaApi<object>.Ok(new { id }, "Proveedor eliminado correctamente."));
+        }
+
+        return DesdeFallo<object>(resultado.Error!);
+    }
+
+    private IActionResult DesdeResultado<T>(Result<T> resultado, Func<T, IActionResult> exito)
+    {
+        if (resultado.EsExitoso)
+        {
+            return exito(resultado.Valor!);
+        }
+
+        return DesdeFallo<T>(resultado.Error!);
+    }
+
+    private IActionResult DesdeFallo<T>(ErrorResultado error)
+    {
+        var respuesta = RespuestaApi<T>.Error(
+            error.Mensaje,
+            new List<string> { error.Mensaje },
+            error.ErroresCampo.ToDictionary(k => k.Key, v => v.Value));
+
+        return error.Tipo switch
+        {
+            TipoError.Validacion => BadRequest(respuesta),
+            TipoError.NoEncontrado => NotFound(respuesta),
+            TipoError.Conflicto => Conflict(respuesta),
+            _ => BadRequest(respuesta)
+        };
     }
 }

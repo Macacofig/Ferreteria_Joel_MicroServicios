@@ -64,6 +64,18 @@ builder.Services.AddScoped<IServicioUsuarios, AdaptadorServicioUsuarios>();
 builder.Services.AddScoped<FERRETERIA_Web.Services.IServicioUsuariosClient,
     AdaptadorServicioUsuarios>();
 
+string proveedoresApiUrl = builder.Configuration["Servicios:ProveedoresApiUrl"]
+    ?? builder.Configuration["Servicios__ProveedoresApiUrl"]
+    ?? apiUrl;
+
+builder.Services.AddHttpClient<ProveedoresApiCliente>(client =>
+{
+    client.BaseAddress = new Uri(proveedoresApiUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddScoped<IServicioProveedores, AdaptadorServicioProveedores>();
+
 string ventasApiUrl = builder.Configuration["Servicios:VentasApiUrl"]
     ?? builder.Configuration["Servicios__VentasApiUrl"]
     ?? "http://localhost:5071";

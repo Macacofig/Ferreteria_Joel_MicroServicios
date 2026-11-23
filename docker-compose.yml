@@ -251,12 +251,17 @@ services:
     depends_on:
       mongo-proveedores:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     ports:
       - "${MICROSERVICIO_PROVEEDORES_PUERTO:-5074}:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ConnectionStrings__MongoConnection=mongodb://mongo-proveedores:27017
       - Mongo__BaseDatos=bdproveedores
+      - Keycloak__Authority=http://keycloak:8080/realms/ferreteria
+      - Keycloak__ValidIssuers=http://keycloak:8080/realms/ferreteria,http://localhost:${KEYCLOAK_PUERTO:-8081}/realms/ferreteria
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/ferreteria/.well-known/openid-configuration
     networks:
       - ferreteria-net
     healthcheck:
@@ -318,6 +323,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - Servicios__UsuariosApiUrl=http://apigateway:8080
+      - Servicios__ProveedoresApiUrl=http://apigateway:8080
       - UrlProteccion__Clave=${URL_PROTECCION_CLAVE:?defina URL_PROTECCION_CLAVE en .env}
     networks:
       - ferreteria-net
