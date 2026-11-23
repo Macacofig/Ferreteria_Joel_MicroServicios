@@ -123,9 +123,19 @@ además del layout, navegación y modales compartidos.
 
 ## Puesta en marcha
 
+Requisitos: **Docker Desktop** (o Docker con Compose v2) y los puertos
+5267, 5000, 8081, 5071-5074, 3307, 3308, 5433 y 27018 libres.
+
 ```bash
-cd 3raCompetencia/FERRETERIA_JOEL_Web
-docker compose up --build
+# 1) Clonar y entrar en la raíz del repositorio
+git clone https://github.com/Macacofig/Ferreteria_Joel_MicroServicios.git
+cd Ferreteria_Joel_MicroServicios
+
+# 2) Crear el .env (NO está versionado; copiar desde la plantilla)
+cp .env.example .env        # en Windows: Copy-Item .env.example .env
+
+# 3) Construir y levantar los 11 contenedores
+docker compose up -d --build
 ```
 
 Luego:
@@ -136,8 +146,14 @@ Luego:
 - Keycloak (admin console): <http://localhost:8081> (`admin` / `admin`)
 - Productos / Clientes / Proveedores: puertos 5071 / 5073 / 5074 → `/index`
 
-> El archivo `.env` trae valores por defecto. Para personalizarlos, cópielo de
-> `.env.example`.
+> `.env` **no se versiona** (está en `.gitignore`). Cada persona debe crearlo
+> desde `.env.example`. Los valores de la plantilla ya son suficientes para
+> arrancar: las bases se inicializan solas (scripts SQL, esquema de clientes e
+> índices/semilla de MongoDB) y Keycloak importa el realm `ferreteria`.
+>
+> SMTP viene vacío a propósito: en modo desarrollo el enlace de activación se
+> escribe en el log del microservicio de usuarios. Si se configura un servidor
+> real, use credenciales propias y **nunca versionarlas ni compartirlas**.
 
 ---
 
