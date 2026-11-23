@@ -1,0 +1,201 @@
+@page
+@model FERRETERIA__Joel.Pages.ClientesModel
+@{
+    ViewData["Title"] = "Clientes";
+    ViewData["ActiveMenu"] = "Clientes";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Clientes</p>
+        <h1>Clientes</h1>
+        <p class="fj-page-sub">Registro y consulta de los clientes de la ferretería.</p>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="fj-alert fj-alert-success" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            <span>@TempData["Mensaje"]</span>
+        </div>
+    }
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    <section class="fj-card" style="padding:1rem 1.25rem;margin-bottom:1rem;">
+        <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end;">
+            <div class="fj-form-field" style="min-width:240px;flex:1;">
+                <label class="fj-form-label" for="Buscar">Buscar</label>
+                <input class="fj-input" id="Buscar" name="Buscar" value="@Model.Buscar" maxlength="100"
+                       placeholder="CI, nombre, apellido o correo" />
+            </div>
+
+            <div class="fj-form-field">
+                <label class="fj-form-label" for="OrdenarPor">Ordenar por</label>
+                <select class="fj-input" id="OrdenarPor" name="OrdenarPor">
+                    <option value="apellido" selected="@(Model.OrdenarPor == "apellido")">Apellido</option>
+                    <option value="ci" selected="@(Model.OrdenarPor == "ci")">CI</option>
+                    <option value="fecha" selected="@(Model.OrdenarPor == "fecha")">Fecha de registro</option>
+                    <option value="nombre" selected="@(Model.OrdenarPor == "nombre")">Nombre</option>
+                </select>
+            </div>
+
+            <div class="fj-form-field">
+                <label class="fj-form-label" for="Descendente">Sentido</label>
+                <select class="fj-input" id="Descendente" name="Descendente">
+                    <option value="false" selected="@(!Model.Descendente)">Ascendente (A-Z)</option>
+                    <option value="true" selected="@(Model.Descendente)">Descendente (Z-A)</option>
+                </select>
+            </div>
+
+            <label style="display:flex;gap:.4rem;align-items:center;padding-bottom:.55rem;">
+                <input type="checkbox" name="IncluirInactivos" value="true" checked="@Model.IncluirInactivos" />
+                Incluir clientes dados de baja
+            </label>
+
+            <div style="display:flex;gap:.5rem;padding-bottom:.1rem;">
+                <button type="submit" class="fj-btn fj-btn-primary">Buscar</button>
+                <a class="fj-btn fj-btn-ghost" asp-page="/Clientes">Limpiar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="fj-toolbar fj-toolbar-simple">
+        <p class="fj-toolbar-count">
+            <strong>@Model.Clientes.Count</strong>
+            @(Model.Clientes.Count == 1 ? "cliente encontrado" : "clientes encontrados")
+        </p>
+
+        <div class="fj-toolbar-actions">
+            <a class="fj-btn fj-btn-primary" asp-page="/ClienteFormulario">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Registrar cliente
+            </a>
+        </div>
+    </section>
+
+    <section class="fj-card fj-table-card" aria-label="Listado de clientes">
+        <div class="fj-table-wrap fj-table-wrap-scroll">
+            <table class="fj-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">CI</th>
+                        <th scope="col">Contacto</th>
+                        <th scope="col">Dirección</th>
+                        <th scope="col">Registro</th>
+                        <th scope="col" class="fj-td-estado">Estado</th>
+                        <th scope="col" class="fj-td-acciones">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Clientes.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="fj-table-vacio">
+                                <div class="fj-empty">
+                                    <p>No se encontraron clientes</p>
+                                    <span>Registre un cliente nuevo o cambie los criterios de búsqueda.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var cliente in Model.Clientes)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fj-nombre">@cliente.Nombre @cliente.Apellido</span>
+                            </td>
+
+                            <td class="fj-td-secundario">
+                                @(string.IsNullOrWhiteSpace(cliente.Ci) ? "—" : cliente.Ci)
+                            </td>
+
+                            <td class="fj-td-secundario">
+                                @(string.IsNullOrWhiteSpace(cliente.Telefono) ? "—" : cliente.Telefono)
+                                @if (!string.IsNullOrWhiteSpace(cliente.Correo))
+                                {
+                                    <span class="fj-nombre-sub">@cliente.Correo</span>
+                                }
+                            </td>
+
+                            <td class="fj-td-secundario">
+                                @(string.IsNullOrWhiteSpace(cliente.Direccion) ? "—" : cliente.Direccion)
+                            </td>
+
+                            <td class="fj-td-secundario">
+                                @cliente.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy")
+                            </td>
+
+                            <td class="fj-td-estado">
+                                @if (cliente.Activo)
+                                {
+                                    <span class="fj-pill" style="--pill: var(--success);">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="fj-pill" style="--pill: var(--texto-ter);">Inactivo</span>
+                                }
+                            </td>
+
+                            <td class="fj-td-acciones">
+                                <div class="fj-acciones">
+                                    @if (cliente.Activo)
+                                    {
+                                        <a class="fj-btn fj-btn-ghost fj-btn-sm"
+                                           asp-page="/ClienteFormulario"
+                                           asp-route-id="@cliente.IdCliente"
+                                           title="Editar datos del cliente">
+                                            Editar
+                                        </a>
+
+                                        @if (Model.EsAdministrador)
+                                        {
+                                            <form method="post"
+                                                  asp-page-handler="Baja"
+                                                  class="fj-inline-form"
+                                                  data-fj-confirm="¿Desea dar de baja al cliente '@cliente.Nombre @cliente.Apellido'?">
+                                                <input type="hidden" name="idCliente" value="@cliente.IdCliente" />
+                                                <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Dar de baja" aria-label="Dar de baja">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+                                    else if (Model.EsAdministrador)
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="Reactivar"
+                                              class="fj-inline-form"
+                                              data-fj-confirm="¿Está seguro de reactivar al cliente '@cliente.Nombre @cliente.Apellido'?">
+                                            <input type="hidden" name="idCliente" value="@cliente.IdCliente" />
+                                            <button type="submit" class="fj-btn fj-btn-primary fj-btn-sm" title="Reactivar cliente">
+                                                Reactivar
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<partial name="_ConfirmModal" />

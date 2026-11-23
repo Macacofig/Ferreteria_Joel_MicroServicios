@@ -1,10 +1,33 @@
+using MicroServicioClientes.Aplicacion.Puertos;
+using MicroServicioClientes.Aplicacion.Servicios;
+using MicroServicioClientes.Dominio.Puertos;
+using MicroServicioClientes.Infraestructura.Persistencia;
+using MicroServicioClientes.Infraestructura.Seguridad;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+
+// Seguridad: valida el JWT de Keycloak y arma los roles.
+builder.Services.AgregarAutenticacionKeycloak(builder.Configuration);
+
+// Adaptadores de salida (infraestructura) enlazados a los puertos del núcleo.
+builder.Services.AddSingleton<IFabricaConexion, FabricaConexionPostgres>();
+builder.Services.AddScoped<IClienteRepositorio, PostgresClienteRepositorio>();
+builder.Services.AddScoped<IContextoUsuario, ContextoUsuarioHttp>();
+
+// Casos de uso (puertos de entrada).
+builder.Services.AddScoped<IServicioClientes, ServicioClientes>();
+
+// Crea las tablas al arrancar si no existen.
+builder.Services.AddHostedService<InicializadorEsquema>();
 
 var app = builder.Build();
 
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.MapGet("/health", () => Results.Ok(new

@@ -1,35 +1,69 @@
-using MicroServicioClientes.Dominio;
+using MicroServicioClientes.Aplicacion.Modelos;
+using MicroServicioClientes.Aplicacion.Puertos;
+using MicroServicioClientes.Dominio.Entidades;
+using MicroServicioClientes.Infraestructura.Seguridad;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MicroServicioClientes.Controllers
+namespace MicroServicioClientes.Controllers;
+
+/// <summary>
+/// Adaptador de entrada HTTP de clientes. Solo traduce la petición a un caso
+/// de uso y el Resultado a una respuesta; no contiene reglas de negocio.
+/// El acceso llega por la gateway: <c>/api/clientes</c>.
+/// </summary>
+[ApiController]
+[Route("api/clientes")]
+[Authorize(Roles = RolesSistema.AdministradorOEmpleado)]
+public sealed class ClientesController : ControllerBase
 {
-    /// <summary>
-    /// API mínima de clientes. El listado semilla se mantiene en memoria para
-    /// que el microservicio arranque sin depender de la base de datos; su base
-    /// es PostgreSQL (PostgressClientes).
-    /// </summary>
-    [ApiController]
-    [Route("api/clientes")]
-    public class ClientesController : ControllerBase
+    private readonly IServicioClientes _servicio;
+
+    public ClientesController(IServicioClientes servicio)
     {
-        private static readonly List<Cliente> Clientes = new()
-        {
-            new Cliente(1, "María López", "10234567", "maria.lopez@correo.com", "700-12345"),
-            new Cliente(2, "Carlos Rojas", "8765432", "carlos.rojas@correo.com", "700-67890"),
-            new Cliente(3, "Ana Fernández", "5678901", "ana.fernandez@correo.com", "700-45678")
-        };
-
-        [HttpGet]
-        public ActionResult<IEnumerable<Cliente>> Listar() => Ok(Clientes);
-
-        [HttpGet("{id:int}")]
-        public ActionResult<Cliente> Obtener(int id)
-        {
-            Cliente? cliente = Clientes.FirstOrDefault(c => c.Id == id);
-
-            return cliente is null
-                ? NotFound(new { mensaje = "Cliente no encontrado." })
-                : Ok(cliente);
-        }
+        _servicio = servicio;
     }
+
+    /// <summary>Listado con búsqueda y ordenación.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Listar(
+        [FromQuery] string? buscar,
+        [FromQuery] bool soloActivos = true,
+        [FromQuery] string? ordenarPor = null,
+        [FromQuery] bool descendente = false,
+        CancellationToken cancelacion = default)
+    {
+        var filtro = new FiltroClientes(buscar, soloActivos, ordenarPor, descendente);
+
+        return this.Adaptar(await _servicio.ListarAsync(filtro, cancelacion));
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> Obtener(int id, CancellationToken cancelacion) =>
+        this.Adaptar(await _servicio.ObtenerAsync(id, cancelacion));
+
+    [HttpPost]
+    public async Task<IActionResult> Crear(
+        [FromBody] ClienteSolicitud solicitud,
+        CancellationToken cancelacion) =>
+        this.AdaptarCreado(await _servicio.CrearAsync(solicitud, cancelacion));
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Actualizar(
+        int id,
+        [FromBody] ClienteSolicitud solicitud,
+        CancellationToken cancelacion) =>
+        this.Adaptar(await _servicio.ActualizarAsync(id, solicitud, cancelacion));
+
+    /// <summary>Baja lógica. Solo el administrador (se combina con el rol exigido a la clase).</summary>
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = RolesSistema.Administrador)]
+    public async Task<IActionResult> DarDeBaja(int id, CancellationToken cancelacion) =>
+        this.AdaptarSinDatos(await _servicio.DarDeBajaAsync(id, cancelacion));
+
+    /// <summary>Reactiva un cliente dado de baja. Solo el administrador.</summary>
+    [HttpPost("{id:int}/reactivar")]
+    [Authorize(Roles = RolesSistema.Administrador)]
+    public async Task<IActionResult> Reactivar(int id, CancellationToken cancelacion) =>
+        this.AdaptarSinDatos(await _servicio.ReactivarAsync(id, cancelacion));
 }

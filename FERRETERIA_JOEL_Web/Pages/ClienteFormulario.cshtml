@@ -1,0 +1,102 @@
+@page "{id:int?}"
+@model FERRETERIA__Joel.Pages.ClienteFormularioModel
+@{
+    ViewData["Title"] = Model.EsEdicion ? "Editar cliente" : "Registrar cliente";
+    ViewData["ActiveMenu"] = "Clientes";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Clientes</p>
+        <h1>@(Model.EsEdicion ? "Editar cliente" : "Registrar cliente")</h1>
+        <p class="fj-page-sub">
+            @(Model.EsEdicion
+                ? "Modifique los datos del cliente y guarde los cambios."
+                : "Complete los datos del nuevo cliente. El nombre y el apellido son obligatorios.")
+        </p>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(Model.MensajeGeneral))
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+            <div>
+                <strong>No se pudo completar la operación:</strong>
+                <p>@Model.MensajeGeneral</p>
+            </div>
+        </div>
+    }
+
+    <form method="post" class="fj-card fj-form" novalidate>
+        <div class="fj-form-grid">
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Ci") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.Ci">CI (cédula de identidad)</label>
+                <input class="fj-input" asp-for="Solicitud.Ci" type="text" maxlength="15" placeholder="Ej: 10234567" />
+                <span class="fj-form-hint">Opcional. Si la registra, no puede repetirse en otro cliente.</span>
+                @if (Model.ErroresCampo.TryGetValue("Ci", out var errorCi))
+                {
+                    <p class="fj-form-error" role="alert">@errorCi</p>
+                }
+            </div>
+
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Nombre") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.Nombre">Nombre</label>
+                <input class="fj-input" asp-for="Solicitud.Nombre" type="text" maxlength="100" placeholder="Ej: María" required />
+                @if (Model.ErroresCampo.TryGetValue("Nombre", out var errorNombre))
+                {
+                    <p class="fj-form-error" role="alert">@errorNombre</p>
+                }
+            </div>
+
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Apellido") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.Apellido">Apellido</label>
+                <input class="fj-input" asp-for="Solicitud.Apellido" type="text" maxlength="100" placeholder="Ej: López" required />
+                @if (Model.ErroresCampo.TryGetValue("Apellido", out var errorApellido))
+                {
+                    <p class="fj-form-error" role="alert">@errorApellido</p>
+                }
+            </div>
+
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Telefono") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.Telefono">Teléfono</label>
+                <input class="fj-input" asp-for="Solicitud.Telefono" type="tel" maxlength="8" inputmode="numeric" pattern="[567][0-9]{7}" placeholder="Ej: 71234567" oninput="this.value = this.value.replace(/\D/g, '')" />
+                <span class="fj-form-hint">Opcional. Debe tener 8 dígitos y comenzar con 5, 6 o 7.</span>
+                @if (Model.ErroresCampo.TryGetValue("Telefono", out var errorTelefono))
+                {
+                    <p class="fj-form-error" role="alert">@errorTelefono</p>
+                }
+            </div>
+
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Correo") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.Correo">Correo electrónico</label>
+                <input class="fj-input" asp-for="Solicitud.Correo" type="email" maxlength="100" placeholder="correo@ejemplo.com" />
+                <span class="fj-form-hint">Opcional.</span>
+                @if (Model.ErroresCampo.TryGetValue("Correo", out var errorCorreo))
+                {
+                    <p class="fj-form-error" role="alert">@errorCorreo</p>
+                }
+            </div>
+
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Direccion") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.Direccion">Dirección</label>
+                <input class="fj-input" asp-for="Solicitud.Direccion" type="text" maxlength="150" placeholder="Ej: Av. Principal 123" />
+                <span class="fj-form-hint">Opcional.</span>
+                @if (Model.ErroresCampo.TryGetValue("Direccion", out var errorDireccion))
+                {
+                    <p class="fj-form-error" role="alert">@errorDireccion</p>
+                }
+            </div>
+        </div>
+
+        <div class="fj-form-actions">
+            <a asp-page="/Clientes" class="fj-btn fj-btn-ghost">Cancelar</a>
+            <button type="submit" class="fj-btn fj-btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+                @(Model.EsEdicion ? "Guardar cambios" : "Registrar cliente")
+            </button>
+        </div>
+    </form>
+</div>

@@ -236,6 +236,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ConnectionStrings__PostgresConnection=Host=postgres-clientes;Database=bdclientes;Username=postgres;Password=${POSTGRES_CLIENTES_PASSWORD};Port=5432;
+      - Keycloak__Authority=http://keycloak:8080/realms/ferreteria
+      - Keycloak__ValidIssuers=http://keycloak:8080/realms/ferreteria,http://localhost:${KEYCLOAK_PUERTO:-8081}/realms/ferreteria
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/ferreteria/.well-known/openid-configuration
     networks:
       - ferreteria-net
     healthcheck:
@@ -330,6 +333,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Docker
       - Servicios__UsuariosApiUrl=http://apigateway:8080
       - Servicios__ProveedoresApiUrl=http://apigateway:8080
+      - Servicios__ClientesApiUrl=http://apigateway:8080
       - UrlProteccion__Clave=${URL_PROTECCION_CLAVE:?defina URL_PROTECCION_CLAVE en .env}
     networks:
       - ferreteria-net
