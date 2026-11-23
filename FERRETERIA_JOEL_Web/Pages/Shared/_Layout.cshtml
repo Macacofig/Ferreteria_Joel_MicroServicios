@@ -20,7 +20,10 @@
 <body>
     @{
         string activo = (string?)ViewData["ActiveMenu"] ?? "";
+        bool ocultarNavbar = ViewData["OcultarNavbar"] as bool? ?? false;
     }
+    @if (!ocultarNavbar)
+    {
     <header class="fj-header">
         <div class="fj-header-inner">
 
@@ -211,6 +214,7 @@
             </button>
         </div>
     </header>
+    }
 
     <main class="fj-main">
         @RenderBody()
