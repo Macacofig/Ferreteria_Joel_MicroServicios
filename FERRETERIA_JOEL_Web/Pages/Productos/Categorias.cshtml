@@ -1,0 +1,365 @@
+@page
+@model FERRETERIA__Joel.Pages.Productos.CategoriasModel
+@{
+    ViewData["Title"] = "Gestión de Categorías";
+    ViewData["ActiveMenu"] = "Productos";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+    <style>
+        /* Estilos locales del modal de categorías: no afectan a .fj-table. */
+        .fj-modal.fj-catalogo-modal {
+            z-index: 1010;
+        }
+
+        .fj-catalogo-modal .fj-modal-dialog {
+            padding: 24px 28px;
+            max-width: 34rem;
+            text-align: left;
+        }
+
+        .fj-catalogo-modal .fj-catalogo-encabezado {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .fj-catalogo-modal .fj-modal-title {
+            margin: 0;
+            text-align: left;
+        }
+
+        .fj-catalogo-modal .fj-catalogo-cerrar {
+            border: 0;
+            background: transparent;
+            color: var(--texto-sec);
+            font-size: 1.6rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0 0.25rem;
+        }
+
+        .fj-catalogo-modal .fj-form-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .fj-catalogo-modal .fj-form-field {
+            width: 100%;
+        }
+
+        .fj-catalogo-modal .fj-input,
+        .fj-catalogo-modal .fj-input-area {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .fj-catalogo-modal .fj-codigo-autogenerado {
+            background: #f3f4f6;
+            color: var(--texto-sec, #4b5563);
+            cursor: not-allowed;
+        }
+
+        .fj-catalogo-modal .fj-form-actions {
+            margin-top: 20px;
+            padding-top: 16px;
+        }
+
+        .fj-catalogo-modal .fj-form-actions .fj-btn {
+            white-space: nowrap;
+        }
+
+        .fj-catalogo-modal .fj-alert {
+            margin: 0 0 16px;
+        }
+
+        /* Los errores se muestran en la alerta del modal: se ocultan los
+           validadores vacíos y se suprime su pseudo-elemento rojo. */
+        .fj-catalogo-modal .field-validation-valid,
+        .fj-catalogo-modal .field-validation-error:empty,
+        .fj-catalogo-modal .fj-form-error:empty {
+            display: none;
+        }
+
+        .fj-catalogo-modal .fj-form-error::before {
+            content: none;
+        }
+
+        @@media (max-width: 640px) {
+            .fj-catalogo-modal .fj-modal-dialog {
+                padding: 20px;
+            }
+
+            .fj-catalogo-modal .fj-form-actions {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+}
+
+<div class="fj-container fj-page-products">
+
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Catálogo · Categorías</p>
+        <h1>Gestión de Categorías</h1>
+        <p class="fj-page-sub">Administración de las categorías disponibles para los productos.</p>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="fj-alert fj-alert-success" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            <span>@TempData["Mensaje"]</span>
+        </div>
+    }
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@Model.Error</span>
+        </div>
+    }
+
+    <section class="fj-toolbar fj-toolbar-simple" aria-label="Herramientas del listado">
+        <p class="fj-toolbar-count">
+            <strong>@Model.Categorias.Count</strong>
+            @(Model.Categorias.Count == 1 ? "categoría activa" : "categorías activas")
+        </p>
+
+        <div class="fj-toolbar-actions">
+            <form method="post" asp-page-handler="Refrescar" class="fj-inline-form">
+                <button type="submit" class="fj-btn fj-btn-ghost fj-btn-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
+                    Refrescar
+                </button>
+            </form>
+
+            <button type="button" class="fj-btn fj-btn-primary" data-fj-categoria-nuevo>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Nueva Categoría
+            </button>
+        </div>
+    </section>
+
+    <section class="fj-card fj-table-card" aria-label="Listado de categorías">
+        <div class="fj-table-wrap fj-table-wrap-scroll">
+            <table class="fj-table fj-table-productos">
+                <thead>
+                    <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Descripción</th>
+                        <th scope="col" class="fj-td-acciones">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Categorias.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="fj-table-vacio">
+                                <div class="fj-empty">
+                                    <p>Sin categorías registradas</p>
+                                    <span>Cuando existan categorías activas, aparecerán aquí.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var categoria in Model.Categorias)
+                    {
+                        <tr>
+                            <td class="fj-td-codigo">
+                                <span class="fj-codigo">@categoria.Codigo</span>
+                            </td>
+                            <td>
+                                <span class="fj-nombre">@categoria.Nombre</span>
+                            </td>
+                            <td class="fj-td-secundario">
+                                @(string.IsNullOrWhiteSpace(categoria.Descripcion) ? "—" : categoria.Descripcion)
+                            </td>
+                            <td class="fj-td-acciones">
+                                <div class="fj-acciones">
+                                    <button type="button"
+                                            class="fj-btn fj-btn-edit fj-btn-sm"
+                                            data-fj-categoria-editar
+                                            data-id="@categoria.IdCategoria"
+                                            data-codigo="@categoria.Codigo"
+                                            data-nombre="@categoria.Nombre"
+                                            data-descripcion="@categoria.Descripcion"
+                                            title="Editar categoría">Editar</button>
+
+                                    <form method="post"
+                                          asp-page-handler="Eliminar"
+                                          class="fj-inline-form"
+                                          data-fj-confirm="¿Desea dar de baja la categoría '@categoria.Nombre'?">
+                                        <input type="hidden" name="idCategoria" value="@categoria.IdCategoria" />
+                                        <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Eliminar" aria-label="Eliminar categoría">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<div class="fj-modal fj-catalogo-modal @(Model.AbrirModal ? "is-open" : "")"
+     id="fjCategoriaModal"
+     data-codigo-siguiente="@Model.SiguienteCodigo"
+     aria-hidden="@(Model.AbrirModal ? "false" : "true")"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="fjCategoriaModalTitle">
+    <div class="fj-modal-backdrop" data-fj-catalogo-close aria-hidden="true"></div>
+    <div class="fj-modal-wrapper" role="document">
+        <div class="fj-modal-dialog">
+            <div class="fj-catalogo-encabezado">
+                <h2 class="fj-modal-title" id="fjCategoriaModalTitle">@(Model.IdEditar.HasValue ? "Editar Categoría" : "Nueva Categoría")</h2>
+                <button type="button" class="fj-catalogo-cerrar" data-fj-catalogo-close aria-label="Cerrar" title="Cerrar">×</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.ErrorModal))
+            {
+                <div class="fj-alert" id="fjCategoriaModalError" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                    <span>@Model.ErrorModal</span>
+                </div>
+            }
+
+            <form method="post" asp-page-handler="Guardar" class="fj-catalogo-form">
+                <input type="hidden" asp-for="IdEditar" />
+
+                <div class="fj-form-grid">
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Codigo">Código</label>
+                        <input class="fj-input fj-codigo-autogenerado" asp-for="Solicitud.Codigo" maxlength="20" readonly required />
+                    </div>
+
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Nombre">Nombre</label>
+                        <input class="fj-input" asp-for="Solicitud.Nombre" maxlength="100" required />
+                    </div>
+
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Descripcion">Descripción</label>
+                        <textarea class="fj-input fj-input-area" asp-for="Solicitud.Descripcion" maxlength="255" rows="3" placeholder="Descripción opcional de la categoría"></textarea>
+                    </div>
+                </div>
+
+                <div class="fj-form-actions">
+                    <button type="button" class="fj-btn fj-btn-ghost" data-fj-catalogo-close>Cancelar</button>
+                    <button type="submit" class="fj-btn fj-btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+                        <span id="fjCategoriaGuardarTexto">@(Model.IdEditar.HasValue ? "Guardar Cambios" : "Guardar Categoría")</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<partial name="_ConfirmModal" />
+
+@section Scripts {
+    <script>
+        (function () {
+            const modal = document.getElementById('fjCategoriaModal');
+            if (!modal) return;
+
+            const form = modal.querySelector('form');
+            const id = form.querySelector('[name="IdEditar"]');
+            const codigo = form.querySelector('[name="Solicitud.Codigo"]');
+            const nombre = form.querySelector('[name="Solicitud.Nombre"]');
+            const descripcion = form.querySelector('[name="Solicitud.Descripcion"]');
+            const tituloModal = document.getElementById('fjCategoriaModalTitle');
+            const textoGuardar = document.getElementById('fjCategoriaGuardarTexto');
+            const errorModal = document.getElementById('fjCategoriaModalError');
+            const codigoSiguiente = modal.dataset.codigoSiguiente || '';
+
+            function limpiarValidacion() {
+                if (errorModal) {
+                    errorModal.hidden = true;
+                    errorModal.textContent = '';
+                }
+
+                form.querySelectorAll('.input-validation-error, .is-invalid')
+                    .forEach(function (campo) {
+                        campo.classList.remove('input-validation-error', 'is-invalid');
+                    });
+
+                form.querySelectorAll('.fj-form-error, .field-validation-error')
+                    .forEach(function (mensaje) {
+                        mensaje.textContent = '';
+                        mensaje.classList.remove('field-validation-error');
+                        mensaje.classList.add('field-validation-valid');
+                    });
+            }
+
+            function abrir(titulo, boton) {
+                tituloModal.textContent = titulo;
+                textoGuardar.textContent = boton;
+                limpiarValidacion();
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+
+            function cerrar() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            document.querySelectorAll('[data-fj-categoria-nuevo]').forEach(function (boton) {
+                boton.addEventListener('click', function () {
+                    id.value = '';
+                    codigo.value = codigoSiguiente;
+                    nombre.value = '';
+                    descripcion.value = '';
+                    abrir('Nueva Categoría', 'Guardar Categoría');
+                    nombre.focus();
+                });
+            });
+
+            document.querySelectorAll('[data-fj-categoria-editar]').forEach(function (boton) {
+                boton.addEventListener('click', function () {
+                    id.value = boton.dataset.id || '';
+                    codigo.value = boton.dataset.codigo || '';
+                    nombre.value = boton.dataset.nombre || '';
+                    descripcion.value = boton.dataset.descripcion || '';
+                    abrir('Editar Categoría', 'Guardar Cambios');
+                    nombre.focus();
+                });
+            });
+
+            modal.querySelectorAll('[data-fj-catalogo-close]').forEach(function (boton) {
+                boton.addEventListener('click', cerrar);
+            });
+
+            modal.addEventListener('click', function (evento) {
+                if (evento.target.classList.contains('fj-modal-backdrop')) cerrar();
+            });
+
+            document.addEventListener('keydown', function (evento) {
+                if (evento.key === 'Escape' && modal.classList.contains('is-open')) cerrar();
+            });
+
+            if (modal.classList.contains('is-open')) nombre.focus();
+        })();
+    </script>
+}
