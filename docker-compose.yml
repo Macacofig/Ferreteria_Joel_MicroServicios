@@ -83,6 +83,7 @@ services:
       - "${POSTGRES_CLIENTES_PUERTO:-5433}:5432"
     volumes:
       - postgres_clientes_data:/var/lib/postgresql/data
+      - ./Scripts/03-clientes.sql:/docker-entrypoint-initdb.d/03-clientes.sql:ro
     networks:
       - ferreteria-net
     healthcheck:
@@ -231,6 +232,8 @@ services:
     depends_on:
       postgres-clientes:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     ports:
       - "${MICROSERVICIO_CLIENTES_PUERTO:-5073}:8080"
     environment:
