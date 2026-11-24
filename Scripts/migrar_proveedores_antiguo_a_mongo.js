@@ -25,7 +25,6 @@
 (function () {
   const dbProveedores = db.getSiblingDB("bdproveedores");
   const proveedores = dbProveedores.getCollection("proveedores");
-  const contadores = dbProveedores.getCollection("contadores");
 
   const datosAntiguos = [
     { _id: 1,  razonSocial: "Distribuidora Ferretera del Norte SA de CV", nit: "90000001", contacto: "Jorge Salinas", telefono: "71000001", nombreResponsable: "Joel Ríos" },

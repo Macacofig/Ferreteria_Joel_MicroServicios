@@ -1,5 +1,5 @@
-﻿using MicroServicioProveedores.Aplicacion.Contratos;
-using MicroServicioProveedores.Dominio.Entidades;
+﻿using MicroServicioProveedores.Dominio.Entidades;
+using MicroServicioProveedores.Dominio.Puertos;
 using MicroServicioProveedores.Dominio.Resultados;
 using MongoDB.Driver;
 
@@ -124,6 +124,59 @@ public class MongoProveedorRepositorio : IRepositorioProveedores
 
         var resultado = await _proveedores.UpdateOneAsync(filtro, actualizacion, cancellationToken: ct);
         return resultado.ModifiedCount > 0;
+    }
+
+    // ================== Producto genérico del Factory Method ==================
+
+    /// <summary>
+    /// Adaptador de <see cref="IGestionarRepository{T}"/>: delega en el listado
+    /// del puerto específico y materializa el resultado en <see cref="List{T}"/>.
+    /// </summary>
+    public async Task<List<Proveedor>> ObtenerTodosAsync() =>
+        (await ListarAsync(CancellationToken.None)).ToList();
+
+    /// <summary>
+    /// El identificador lo asigna el caso de uso con GenerarNuevoIdAsync antes
+    /// de crear; por eso se devuelve el que ya trae la entidad. Ante un fallo
+    /// de escritura se reporta 0 para no inventar un identificador válido.
+    /// </summary>
+    public async Task<int> InsertarAsync(Proveedor entidad)
+    {
+        Result resultado = await CrearAsync(entidad, CancellationToken.None);
+        return resultado.EsFallo ? 0 : entidad.Id;
+    }
+
+    public Task ActualizarAsync(Proveedor entidad) =>
+        ActualizarAsync(entidad, CancellationToken.None);
+
+    /// <summary>Invierte el estado actual; el id de empleado se usa como auditoría.</summary>
+    public async Task CambiarEstadoAsync(int id, int idEmpleadoResponsable)
+    {
+        Proveedor? proveedor = await ObtenerPorIdAsync(id, CancellationToken.None);
+        if (proveedor is null)
+        {
+            return;
+        }
+
+        string usuario = idEmpleadoResponsable.ToString();
+
+        if (proveedor.Estado)
+        {
+            await DarDeBajaAsync(id, usuario, CancellationToken.None);
+        }
+        else
+        {
+            await ReactivarAsync(id, usuario, CancellationToken.None);
+        }
+    }
+
+    public async Task<List<Proveedor>> MostrarActivosAsync()
+    {
+        var documentos = await _proveedores
+            .Find(p => p.Estado)
+            .ToListAsync(CancellationToken.None);
+
+        return documentos.Select(MapearADominio).ToList();
     }
 
     private static ErrorResultado TraducirDuplicado(MongoWriteException ex)

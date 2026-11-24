@@ -1,9 +1,14 @@
-﻿using MicroServicioProveedores.Dominio.Entidades;
+using MicroServicioProveedores.Dominio.Entidades;
 using MicroServicioProveedores.Dominio.Resultados;
 
-namespace MicroServicioProveedores.Aplicacion.Contratos;
+namespace MicroServicioProveedores.Dominio.Puertos;
 
-public interface IRepositorioProveedores
+/// <summary>
+/// Puerto de persistencia de proveedores. El producto genérico del Factory
+/// Method es <see cref="IGestionarRepository{T}"/>, especializado para
+/// <see cref="Proveedor"/> con las búsquedas propias del dominio.
+/// </summary>
+public interface IRepositorioProveedores : IGestionarRepository<Proveedor>
 {
     Task<IReadOnlyList<Proveedor>> ListarAsync(CancellationToken ct = default);
     Task<Proveedor?> ObtenerPorIdAsync(int id, CancellationToken ct = default);

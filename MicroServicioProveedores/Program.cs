@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
 using System.Text.Json;
 using MicroServicioProveedores.Aplicacion.CasosDeUso;
-using MicroServicioProveedores.Aplicacion.Contratos;
 using MicroServicioProveedores.Comun;
+using MicroServicioProveedores.Dominio.Puertos;
 using MicroServicioProveedores.Infraestructura.Factories;
 using MicroServicioProveedores.Infraestructura.Persistencia;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

@@ -40,11 +40,23 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
         INNER JOIN categoria c ON c.IdCategoria = p.IdCategoria
         INNER JOIN marca m ON m.IdMarca = p.IdMarca";
 
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly IMySqlUnitOfWork _unidad;
 
-    public MySqlProductoRepository(IDbConnectionFactory connectionFactory)
+    public MySqlProductoRepository(IMySqlUnitOfWork unidad)
     {
-        _connectionFactory = connectionFactory;
+        _unidad = unidad;
+    }
+
+    /// <summary>
+    /// Crea un comando en la conexión compartida y lo inscribe en la
+    /// transacción activa, si la hay. Así producto e historial quedan atómicos.
+    /// </summary>
+    private MySqlCommand CrearComando(string sql)
+    {
+        MySqlCommand command = _unidad.Connection.CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _unidad.Transaction;
+        return command;
     }
 
     public async Task<IReadOnlyList<Producto>> ListarAsync(
@@ -79,13 +91,10 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
             WHERE (@incluirInactivos = 1 OR p.Estado = 1)
             ORDER BY {orden}";
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
+        using MySqlCommand command = CrearComando(query);
 
         command.Parameters.AddWithValue(
             "@incluirInactivos", incluirInactivos ? 1 : 0);
-
-        await connection.OpenAsync(ct);
 
         using MySqlDataReader reader =
             (MySqlDataReader)await command.ExecuteReaderAsync(ct);
@@ -110,12 +119,9 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
             WHERE p.IdProducto = @id
             LIMIT 1";
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
+        using MySqlCommand command = CrearComando(query);
 
         command.Parameters.AddWithValue("@id", idProducto);
-
-        await connection.OpenAsync(ct);
 
         using MySqlDataReader reader =
             (MySqlDataReader)await command.ExecuteReaderAsync(ct);
@@ -137,15 +143,12 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
               AND (@excluirId IS NULL OR IdProducto <> @excluirId)
             LIMIT 1";
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
+        using MySqlCommand command = CrearComando(query);
 
         command.Parameters.AddWithValue("@codigo", codigo);
         command.Parameters.AddWithValue(
             "@excluirId",
             (object?)excluirIdProducto ?? DBNull.Value);
-
-        await connection.OpenAsync(ct);
 
         return await command.ExecuteScalarAsync(ct) is not null;
     }
@@ -168,10 +171,7 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
                 COALESCE(MAX(p.IdProducto), 0) AS UltimoId
             FROM producto p";
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
-
-        await connection.OpenAsync(ct);
+        using MySqlCommand command = CrearComando(query);
 
         using MySqlDataReader reader =
             (MySqlDataReader)await command.ExecuteReaderAsync(ct);
@@ -229,8 +229,7 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
         producto.FechaCreacion ??= ahora;
         producto.FechaRegistro = ahora;
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
+        using MySqlCommand command = CrearComando(query);
 
         command.Parameters.AddWithValue("@idCategoria", producto.IdCategoria);
         command.Parameters.AddWithValue("@idMarca", producto.IdMarca);
@@ -250,8 +249,6 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
         command.Parameters.AddWithValue(
             "@idEmpleadoResponsable",
             (object?)producto.IdEmpleadoResponsable ?? DBNull.Value);
-
-        await connection.OpenAsync(ct);
 
         await command.ExecuteNonQueryAsync(ct);
 
@@ -285,8 +282,7 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
         producto.FechaActualizacion = ahora;
         producto.UsuarioModificacion ??= producto.IdEmpleadoResponsable;
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
+        using MySqlCommand command = CrearComando(query);
 
         command.Parameters.AddWithValue("@id", producto.IdProducto);
         command.Parameters.AddWithValue("@idCategoria", producto.IdCategoria);
@@ -311,8 +307,6 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
             "@idEmpleadoResponsable",
             (object?)producto.IdEmpleadoResponsable ?? DBNull.Value);
 
-        await connection.OpenAsync(ct);
-
         return await command.ExecuteNonQueryAsync(ct) > 0;
     }
 
@@ -335,8 +329,7 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
 
         DateTime ahora = DateTime.Now;
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
+        using MySqlCommand command = CrearComando(query);
 
         command.Parameters.AddWithValue("@id", idProducto);
         command.Parameters.AddWithValue(
@@ -347,8 +340,6 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
         command.Parameters.AddWithValue(
             "@idEmpleadoResponsable",
             (object?)usuarioBaja ?? DBNull.Value);
-
-        await connection.OpenAsync(ct);
 
         return await command.ExecuteNonQueryAsync(ct) > 0;
     }
@@ -376,16 +367,50 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
 
         DateTime ahora = DateTime.Now;
 
-        using MySqlConnection connection = _connectionFactory.CreateConnection();
-        using MySqlCommand command = new(query, connection);
+        using MySqlCommand command = CrearComando(query);
 
         command.Parameters.AddWithValue("@id", idProducto);
         command.Parameters.AddWithValue("@ahora", ahora);
         command.Parameters.AddWithValue("@usuario", (object?)usuario ?? DBNull.Value);
 
-        await connection.OpenAsync(ct);
-
         return await command.ExecuteNonQueryAsync(ct) > 0;
+    }
+
+    // ================== Producto genérico del Factory Method ==================
+
+    /// <summary>
+    /// Adaptador de <see cref="IGestionarRepository{T}"/>: "todos" incluye
+    /// los productos dados de baja; el listado específico decide si los incluye.
+    /// </summary>
+    public async Task<List<Producto>> ObtenerTodosAsync() =>
+        (await ListarAsync(null, null, incluirInactivos: true, CancellationToken.None)).ToList();
+
+    public async Task<List<Producto>> MostrarActivosAsync() =>
+        (await ListarAsync(null, null, incluirInactivos: false, CancellationToken.None)).ToList();
+
+    public Task<int> InsertarAsync(Producto entidad) =>
+        InsertarAsync(entidad, CancellationToken.None);
+
+    public Task ActualizarAsync(Producto entidad) =>
+        ActualizarAsync(entidad, CancellationToken.None);
+
+    /// <summary>Invierte el estado actual del producto.</summary>
+    public async Task CambiarEstadoAsync(int id, int idEmpleadoResponsable)
+    {
+        Producto? producto = await ObtenerPorIdAsync(id, CancellationToken.None);
+        if (producto is null)
+        {
+            return;
+        }
+
+        if (producto.Estado == 1)
+        {
+            await DarDeBajaAsync(id, idEmpleadoResponsable, CancellationToken.None);
+        }
+        else
+        {
+            await ReactivarAsync(id, idEmpleadoResponsable, CancellationToken.None);
+        }
     }
 
     private static Producto MapearProducto(MySqlDataReader reader) => new()

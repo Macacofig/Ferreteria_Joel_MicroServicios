@@ -2,8 +2,12 @@ using MicroServicioClientes.Dominio.Entidades;
 
 namespace MicroServicioClientes.Dominio.Puertos;
 
-/// <summary>Puerto de salida: persistencia de clientes. El dominio no conoce PostgreSQL.</summary>
-public interface IClienteRepositorio
+/// <summary>
+/// Puerto de salida: persistencia de clientes. El dominio no conoce PostgreSQL.
+/// El producto del Factory Method es <see cref="IGestionarRepository{T}"/>,
+/// especializado aquí para <see cref="Cliente"/> con operaciones propias.
+/// </summary>
+public interface IClienteRepositorio : IGestionarRepository<Cliente>
 {
     Task<IReadOnlyList<Cliente>> ListarAsync(FiltroClientes filtro, CancellationToken cancelacion);
 

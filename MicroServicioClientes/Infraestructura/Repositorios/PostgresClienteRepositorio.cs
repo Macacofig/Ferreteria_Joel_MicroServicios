@@ -17,6 +17,12 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         fecha_creacion, usuario_creacion, fecha_modificacion, usuario_modificacion,
         fecha_baja, usuario_baja";
 
+    /// <summary>
+    /// Usuario usado por las operaciones del contrato genérico, que no recibe
+    /// el autor de la acción. Las operaciones específicas sí lo reciben.
+    /// </summary>
+    private const string UsuarioGenerico = "sistema";
+
     private readonly IFabricaConexion _fabrica;
 
     public PostgresClienteRepositorio(IFabricaConexion fabrica)
@@ -164,6 +170,49 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
 
     public Task<bool> ReactivarAsync(int idCliente, string usuario, CancellationToken cancelacion) =>
         CambiarEstadoAsync(idCliente, usuario, nuevoEstado: true, cancelacion);
+
+    // ================== Producto genérico del Factory Method ==================
+
+    /// <summary>
+    /// Adaptador de <see cref="IGestionarRepository{T}"/>: delega en el
+    /// listado con un filtro neutro y sin cancelación, según el contrato.
+    /// </summary>
+    public async Task<List<Cliente>> ObtenerTodosAsync() =>
+        (await ListarAsync(
+            new FiltroClientes(null, false, null, false),
+            CancellationToken.None)).ToList();
+
+    public Task<int> InsertarAsync(Cliente entidad) =>
+        InsertarAsync(entidad, UsuarioGenerico, CancellationToken.None);
+
+    public Task ActualizarAsync(Cliente entidad) =>
+        ActualizarAsync(entidad, UsuarioGenerico, CancellationToken.None);
+
+    /// <summary>Invierte el estado actual; el id de empleado se usa como auditoría.</summary>
+    public async Task CambiarEstadoAsync(int id, int idEmpleadoResponsable)
+    {
+        Cliente? cliente = await ObtenerPorIdAsync(id, CancellationToken.None);
+        if (cliente is null)
+        {
+            return;
+        }
+
+        string usuario = idEmpleadoResponsable.ToString();
+
+        if (cliente.Activo)
+        {
+            await DarDeBajaAsync(id, usuario, CancellationToken.None);
+        }
+        else
+        {
+            await ReactivarAsync(id, usuario, CancellationToken.None);
+        }
+    }
+
+    public async Task<List<Cliente>> MostrarActivosAsync() =>
+        (await ListarAsync(
+            new FiltroClientes(null, true, null, false),
+            CancellationToken.None)).ToList();
 
     private async Task<bool> CambiarEstadoAsync(
         int idCliente,
