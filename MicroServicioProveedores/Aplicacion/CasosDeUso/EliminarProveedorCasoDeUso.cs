@@ -3,6 +3,10 @@ using MicroServicioProveedores.Dominio.Resultados;
 
 namespace MicroServicioProveedores.Aplicacion.CasosDeUso;
 
+/// <summary>
+/// Caso de uso de baja lógica de proveedores. El documento se conserva en
+/// MongoDB y solo cambia su estado junto con los datos de auditoría.
+/// </summary>
 public class EliminarProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
@@ -12,14 +16,41 @@ public class EliminarProveedorCasoDeUso
         _repositorio = repositorio;
     }
 
-    public async Task<Result> EjecutarAsync(int id, CancellationToken ct = default)
+    public async Task<Result> DarDeBajaAsync(int id, string usuario, CancellationToken ct = default)
     {
-        bool eliminado = await _repositorio.EliminarAsync(id, ct);
-        if (!eliminado)
+        var proveedor = await _repositorio.ObtenerPorIdAsync(id, ct);
+        if (proveedor is null)
         {
             return Result.Fallo(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
         }
 
-        return Result.Ok();
+        if (!proveedor.Estado)
+        {
+            return Result.Fallo(ErrorResultado.Conflicto("El proveedor ya está dado de baja."));
+        }
+
+        bool dadoDeBaja = await _repositorio.DarDeBajaAsync(id, usuario, ct);
+        return dadoDeBaja
+            ? Result.Ok()
+            : Result.Fallo(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
+    }
+
+    public async Task<Result> ReactivarAsync(int id, string usuario, CancellationToken ct = default)
+    {
+        var proveedor = await _repositorio.ObtenerPorIdAsync(id, ct);
+        if (proveedor is null)
+        {
+            return Result.Fallo(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
+        }
+
+        if (proveedor.Estado)
+        {
+            return Result.Fallo(ErrorResultado.Conflicto("El proveedor ya está activo."));
+        }
+
+        bool reactivado = await _repositorio.ReactivarAsync(id, usuario, ct);
+        return reactivado
+            ? Result.Ok()
+            : Result.Fallo(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
     }
 }

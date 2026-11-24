@@ -41,7 +41,13 @@ public class AdaptadorServicioProveedores : IServicioProveedores
     public async Task<RespuestaApi<object>> EliminarAsync(string? token, int id, CancellationToken ct = default)
     {
         var respuesta = await _adaptee.EliminarAsync(token, id, ct);
-        return Traducir(respuesta, "No se pudo eliminar el proveedor.");
+        return Traducir(respuesta, "No se pudo dar de baja el proveedor.");
+    }
+
+    public async Task<RespuestaApi<object>> ReactivarAsync(string? token, int id, CancellationToken ct = default)
+    {
+        var respuesta = await _adaptee.ReactivarAsync(token, id, ct);
+        return Traducir(respuesta, "No se pudo reactivar el proveedor.");
     }
 
     private static RespuestaApi<T> Traducir<T>(RespuestaApi<T> respuesta, string mensajePorDefecto)

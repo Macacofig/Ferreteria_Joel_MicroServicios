@@ -1,8 +1,10 @@
 ﻿@page
 @model FERRETERIA__Joel.Pages.Proveedores.IndexModel
+@using System.Globalization
 @{
     ViewData["Title"] = "Proveedores";
     ViewData["ActiveMenu"] = "Proveedores";
+    var cultura = new CultureInfo("es-ES");
 }
 
 @section Styles {
@@ -14,7 +16,7 @@
     <section class="fj-page-head">
         <p class="fj-eyebrow">Módulo · Proveedores</p>
         <h1>Proveedores</h1>
-        <p class="fj-page-sub">Gestión de proveedores con listado, consulta, registro, edición y eliminación.</p>
+        <p class="fj-page-sub">Gestión de proveedores con listado, consulta, registro, edición y baja lógica.</p>
     </section>
 
     @if (TempData["Mensaje"] != null)
@@ -55,8 +57,18 @@
     </section>
 
     <section class="fj-card fj-table-card" aria-label="Listado de proveedores">
-        <div class="fj-table-wrap fj-table-wrap-scroll">
-            <table class="fj-table">
+        <div class="fj-table-wrap">
+            <table class="fj-table fj-table-proveedores">
+                <colgroup>
+                    <col style="width:4%" />
+                    <col style="width:20%" />
+                    <col style="width:10%" />
+                    <col style="width:12%" />
+                    <col style="width:7%" />
+                    <col style="width:11%" />
+                    <col style="width:18%" />
+                    <col style="width:18%" />
+                </colgroup>
                 <thead>
                     <tr>
                         <th scope="col">ID</th>
@@ -65,6 +77,7 @@
                         <th scope="col">Contacto</th>
                         <th scope="col">Teléfono</th>
                         <th scope="col">Responsable</th>
+                        <th scope="col">Auditoría</th>
                         <th scope="col" class="fj-td-acciones">Acciones</th>
                     </tr>
                 </thead>
@@ -72,7 +85,7 @@
                     @if (Model.Proveedores.Count == 0)
                     {
                         <tr>
-                            <td colspan="7" class="fj-table-vacio">
+                            <td colspan="8" class="fj-table-vacio">
                                 <div class="fj-empty">
                                     <p>Sin proveedores registrados</p>
                                     <span>Cuando existan proveedores, aparecerán aquí.</span>
@@ -90,26 +103,47 @@
                             <td class="fj-td-secundario">@proveedor.Contacto</td>
                             <td class="fj-td-secundario">@proveedor.Telefono</td>
                             <td class="fj-td-secundario">@(string.IsNullOrWhiteSpace(proveedor.NombreResponsable) ? "No registrado" : proveedor.NombreResponsable)</td>
+                            <td class="fj-auditoria">
+                                <span class="fj-pill" style="--pill: @(proveedor.Estado ? "var(--success)" : "var(--texto-ter)");">@(proveedor.Estado ? "Activo" : "Inactivo")</span>
+                                <small>Creado: @proveedor.FechaCreacion.ToString("g", cultura) · @(string.IsNullOrWhiteSpace(proveedor.UsuarioCreacion) ? "—" : proveedor.UsuarioCreacion)</small>
+                                <small>Modif.: @(proveedor.FechaModificacion?.ToString("g", cultura) ?? "—") · @(string.IsNullOrWhiteSpace(proveedor.UsuarioModificacion) ? "—" : proveedor.UsuarioModificacion)</small>
+                            </td>
                             <td class="fj-td-acciones">
                                 <div class="fj-acciones">
                                     <a class="fj-btn fj-btn-ghost fj-btn-sm" asp-page="./Detalle" asp-route-id="@proveedor.Id" title="Consultar proveedor" aria-label="Consultar proveedor">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                                        Ver
+                                        <span class="fj-accion-texto">Ver</span>
                                     </a>
                                     <a class="fj-btn fj-btn-edit fj-btn-sm" asp-page="./Editar" asp-route-id="@proveedor.Id" title="Editar proveedor" aria-label="Editar proveedor">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                        Editar
+                                        <span class="fj-accion-texto">Editar</span>
                                     </a>
-                                    <form method="post"
-                                          asp-page-handler="Eliminar"
-                                          asp-route-id="@proveedor.Id"
-                                          asp-route-orden="@Model.Orden"
-                                          class="fj-inline-form"
-                                          data-fj-confirm="¿Está seguro de eliminar al proveedor '@proveedor.RazonSocial'? Esta acción no se puede deshacer.">
-                                        <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Eliminar proveedor" aria-label="Eliminar proveedor">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                                        </button>
-                                    </form>
+                                    @if (proveedor.Estado)
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="Eliminar"
+                                              asp-route-id="@proveedor.Id"
+                                              asp-route-orden="@Model.Orden"
+                                              class="fj-inline-form"
+                                              data-fj-confirm="¿Está seguro de dar de baja al proveedor '@proveedor.RazonSocial'? Podrá reactivarlo después.">
+                                            <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Dar de baja proveedor" aria-label="Dar de baja proveedor">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="Reactivar"
+                                              asp-route-id="@proveedor.Id"
+                                              asp-route-orden="@Model.Orden"
+                                              class="fj-inline-form"
+                                              data-fj-confirm="¿Desea reactivar al proveedor '@proveedor.RazonSocial'?">
+                                            <button type="submit" class="fj-btn fj-btn-ghost fj-btn-icon" title="Reactivar proveedor" aria-label="Reactivar proveedor">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><polyline points="3 3 3 8 8 8" /></svg>
+                                            </button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>

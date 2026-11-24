@@ -54,7 +54,7 @@ public class ProveedoresController : ControllerBase
             return BadRequest(RespuestaApi<ProveedorDto>.Error("Los datos del proveedor son obligatorios."));
         }
 
-        var resultado = await _crear.EjecutarAsync(solicitud, ct);
+        var resultado = await _crear.EjecutarAsync(solicitud, UsuarioActual(), ct);
         return DesdeResultado(resultado, datos => CreatedAtAction(nameof(Obtener), new { id = datos.Id },
             RespuestaApi<ProveedorDto>.Ok(datos, "Proveedor registrado correctamente.")));
     }
@@ -67,21 +67,36 @@ public class ProveedoresController : ControllerBase
             return BadRequest(RespuestaApi<ProveedorDto>.Error("Los datos del proveedor son obligatorios."));
         }
 
-        var resultado = await _actualizar.EjecutarAsync(id, solicitud, ct);
+        var resultado = await _actualizar.EjecutarAsync(id, solicitud, UsuarioActual(), ct);
         return DesdeResultado(resultado, datos => Ok(RespuestaApi<ProveedorDto>.Ok(datos, "Proveedor actualizado correctamente.")));
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Eliminar(int id, CancellationToken ct)
+    public async Task<IActionResult> DarDeBaja(int id, CancellationToken ct)
     {
-        var resultado = await _eliminar.EjecutarAsync(id, ct);
+        var resultado = await _eliminar.DarDeBajaAsync(id, UsuarioActual(), ct);
         if (resultado.EsExitoso)
         {
-            return Ok(RespuestaApi<object>.Ok(new { id }, "Proveedor eliminado correctamente."));
+            return Ok(RespuestaApi<object>.Ok(new { id }, "Proveedor dado de baja correctamente."));
         }
 
         return DesdeFallo<object>(resultado.Error!);
     }
+
+    [HttpPatch("{id:int}/reactivar")]
+    public async Task<IActionResult> Reactivar(int id, CancellationToken ct)
+    {
+        var resultado = await _eliminar.ReactivarAsync(id, UsuarioActual(), ct);
+        if (resultado.EsExitoso)
+        {
+            return Ok(RespuestaApi<object>.Ok(new { id }, "Proveedor reactivado correctamente."));
+        }
+
+        return DesdeFallo<object>(resultado.Error!);
+    }
+
+    private string UsuarioActual()
+        => User.Identity?.Name ?? string.Empty;
 
     private IActionResult DesdeResultado<T>(Result<T> resultado, Func<T, IActionResult> exito)
     {

@@ -46,24 +46,46 @@ public class DetalleModel : PageModel
 
     public async Task<IActionResult> OnPostEliminarAsync(int id)
     {
+        return await CambiarEstadoAsync(
+            id,
+            () => _proveedores.EliminarAsync(ObtenerToken(), id),
+            "Proveedor dado de baja correctamente.",
+            "No se pudo dar de baja el proveedor.");
+    }
+
+    public async Task<IActionResult> OnPostReactivarAsync(int id)
+    {
+        return await CambiarEstadoAsync(
+            id,
+            () => _proveedores.ReactivarAsync(ObtenerToken(), id),
+            "Proveedor reactivado correctamente.",
+            "No se pudo reactivar el proveedor.");
+    }
+
+    private async Task<IActionResult> CambiarEstadoAsync(
+        int id,
+        Func<Task<RespuestaApi<object>>> operacion,
+        string mensajePorDefecto,
+        string mensajeError)
+    {
         try
         {
-            var respuesta = await _proveedores.EliminarAsync(ObtenerToken(), id);
+            var respuesta = await operacion();
             if (respuesta.Exitoso)
             {
                 TempData["Mensaje"] = string.IsNullOrWhiteSpace(respuesta.Mensaje)
-                    ? "Proveedor eliminado correctamente."
+                    ? mensajePorDefecto
                     : respuesta.Mensaje;
             }
             else
             {
-                TempData["MensajeError"] = MensajeError(respuesta, "No se pudo eliminar el proveedor.");
+                TempData["MensajeError"] = MensajeError(respuesta, mensajeError);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al eliminar proveedor {ProveedorId}.", id);
-            TempData["MensajeError"] = "Ocurrió un error inesperado al eliminar el proveedor.";
+            _logger.LogError(ex, "Error inesperado al cambiar el estado del proveedor {ProveedorId}.", id);
+            TempData["MensajeError"] = "Ocurrió un error inesperado al cambiar el estado del proveedor.";
         }
 
         return RedirectToPage("./Index");

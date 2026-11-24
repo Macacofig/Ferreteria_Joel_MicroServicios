@@ -43,6 +43,9 @@ public class ProveedoresApiCliente
     public Task<RespuestaApi<object>> EliminarAsync(string? token, int id, CancellationToken ct = default)
         => EnviarAsync<object>(HttpMethod.Delete, $"api/proveedores/{id}", token, null, ct);
 
+    public Task<RespuestaApi<object>> ReactivarAsync(string? token, int id, CancellationToken ct = default)
+        => EnviarAsync<object>(HttpMethod.Patch, $"api/proveedores/{id}/reactivar", token, null, ct);
+
     private async Task<RespuestaApi<T>> EnviarAsync<T>(HttpMethod metodo, string ruta, string? token, object? cuerpo, CancellationToken ct)
     {
         using HttpRequestMessage peticion = new(metodo, ruta);

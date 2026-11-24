@@ -7,4 +7,5 @@ public interface IServicioProveedores
     Task<RespuestaApi<ProveedorDto>> CrearAsync(string? token, ProveedorSolicitud solicitud, CancellationToken ct = default);
     Task<RespuestaApi<ProveedorDto>> ActualizarAsync(string? token, int id, ProveedorSolicitud solicitud, CancellationToken ct = default);
     Task<RespuestaApi<object>> EliminarAsync(string? token, int id, CancellationToken ct = default);
+    Task<RespuestaApi<object>> ReactivarAsync(string? token, int id, CancellationToken ct = default);
 }

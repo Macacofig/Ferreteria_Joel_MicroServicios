@@ -79,10 +79,44 @@ public class MongoProveedorRepositorio : IRepositorioProveedores
         }
     }
 
-    public async Task<bool> EliminarAsync(int id, CancellationToken ct = default)
+    // ================== Baja lógica ==================
+
+    /// <summary>Marca el proveedor como inactivo sin borrar el documento.</summary>
+    public async Task<bool> DarDeBajaAsync(int id, string usuario, CancellationToken ct = default)
     {
-        var resultado = await _proveedores.DeleteOneAsync(p => p.Id == id, ct);
-        return resultado.DeletedCount > 0;
+        DateTime ahora = DateTime.Now;
+        var filtro = Builders<ProveedorDocumento>.Filter.And(
+            Builders<ProveedorDocumento>.Filter.Eq(p => p.Id, id),
+            Builders<ProveedorDocumento>.Filter.Eq(p => p.Estado, true));
+
+        var actualizacion = Builders<ProveedorDocumento>.Update
+            .Set(p => p.Estado, false)
+            .Set(p => p.FechaBaja, ahora)
+            .Set(p => p.UsuarioBaja, usuario)
+            .Set(p => p.FechaModificacion, ahora)
+            .Set(p => p.UsuarioModificacion, usuario);
+
+        var resultado = await _proveedores.UpdateOneAsync(filtro, actualizacion, cancellationToken: ct);
+        return resultado.ModifiedCount > 0;
+    }
+
+    /// <summary>Reactiva un proveedor dado de baja y limpia los campos de baja.</summary>
+    public async Task<bool> ReactivarAsync(int id, string usuario, CancellationToken ct = default)
+    {
+        DateTime ahora = DateTime.Now;
+        var filtro = Builders<ProveedorDocumento>.Filter.And(
+            Builders<ProveedorDocumento>.Filter.Eq(p => p.Id, id),
+            Builders<ProveedorDocumento>.Filter.Eq(p => p.Estado, false));
+
+        var actualizacion = Builders<ProveedorDocumento>.Update
+            .Set(p => p.Estado, true)
+            .Set(p => p.FechaBaja, null)
+            .Set(p => p.UsuarioBaja, null)
+            .Set(p => p.FechaModificacion, ahora)
+            .Set(p => p.UsuarioModificacion, usuario);
+
+        var resultado = await _proveedores.UpdateOneAsync(filtro, actualizacion, cancellationToken: ct);
+        return resultado.ModifiedCount > 0;
     }
 
     private static ConflictoNegocioExcepcion TraducirDuplicado(MongoWriteException ex)
@@ -108,9 +142,29 @@ public class MongoProveedorRepositorio : IRepositorioProveedores
         Nit = proveedor.Nit,
         Contacto = proveedor.Contacto,
         Telefono = proveedor.Telefono,
-        NombreResponsable = proveedor.NombreResponsable
+        NombreResponsable = proveedor.NombreResponsable,
+        Estado = proveedor.Estado,
+        FechaCreacion = proveedor.FechaCreacion,
+        UsuarioCreacion = proveedor.UsuarioCreacion,
+        FechaModificacion = proveedor.FechaModificacion,
+        UsuarioModificacion = proveedor.UsuarioModificacion,
+        FechaBaja = proveedor.FechaBaja,
+        UsuarioBaja = proveedor.UsuarioBaja
     };
 
     private static Proveedor MapearADominio(ProveedorDocumento d)
-        => new(d.Id, d.RazonSocial, d.Nit, d.Contacto, d.Telefono, d.NombreResponsable ?? string.Empty);
+        => new(
+            d.Id,
+            d.RazonSocial,
+            d.Nit,
+            d.Contacto,
+            d.Telefono,
+            d.NombreResponsable ?? string.Empty,
+            d.Estado,
+            d.FechaCreacion,
+            d.UsuarioCreacion ?? string.Empty,
+            d.FechaModificacion,
+            d.UsuarioModificacion,
+            d.FechaBaja,
+            d.UsuarioBaja);
 }

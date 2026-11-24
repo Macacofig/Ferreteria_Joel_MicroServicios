@@ -36,6 +36,21 @@ public class MongoInicializadorProveedores
             throw;
         }
 
+        // Backfill de auditoría para documentos creados antes de estos campos.
+        DateTime ahoraBackfill = DateTime.Now;
+        await proveedores.UpdateManyAsync(
+            Builders<ProveedorDocumento>.Filter.Exists(p => p.Estado, false),
+            Builders<ProveedorDocumento>.Update.Set(p => p.Estado, true),
+            cancellationToken: ct);
+        await proveedores.UpdateManyAsync(
+            Builders<ProveedorDocumento>.Filter.Exists(p => p.FechaCreacion, false),
+            Builders<ProveedorDocumento>.Update.Set(p => p.FechaCreacion, ahoraBackfill),
+            cancellationToken: ct);
+        await proveedores.UpdateManyAsync(
+            Builders<ProveedorDocumento>.Filter.Exists(p => p.UsuarioCreacion, false),
+            Builders<ProveedorDocumento>.Update.Set(p => p.UsuarioCreacion, "jrios"),
+            cancellationToken: ct);
+
         // Sincroniza el contador con el máximo Id existente para garantizar generación sin colisiones.
         var ultimo = await proveedores.Find(FilterDefinition<ProveedorDocumento>.Empty)
             .SortByDescending(p => p.Id)
@@ -71,11 +86,12 @@ public class MongoInicializadorProveedores
         CancellationToken ct)
     {
         // Datos de ejemplo para facilitar la verificación de listado/ordenación con varios registros.
+        DateTime ahora = DateTime.Now;
         var semilla = new[]
         {
-            new ProveedorDocumento { Id = 1, RazonSocial = "Ferreteria Central SA", Nit = "100200300", Contacto = "Jorge Vargas", Telefono = "70011111", NombreResponsable = "Joel Ríos" },
-            new ProveedorDocumento { Id = 2, RazonSocial = "Importadora Andina Ltda", Nit = "200300400", Contacto = "Lucia Paredes", Telefono = "70022222", NombreResponsable = "Joel Ríos" },
-            new ProveedorDocumento { Id = 3, RazonSocial = "Distribuidora El Tornillo", Nit = "300400500", Contacto = "Pedro Chavez", Telefono = "70033333", NombreResponsable = "Joel Ríos" }
+            new ProveedorDocumento { Id = 1, RazonSocial = "Ferreteria Central SA", Nit = "100200300", Contacto = "Jorge Vargas", Telefono = "70011111", NombreResponsable = "Joel Ríos", Estado = true, FechaCreacion = ahora, UsuarioCreacion = "jrios" },
+            new ProveedorDocumento { Id = 2, RazonSocial = "Importadora Andina Ltda", Nit = "200300400", Contacto = "Lucia Paredes", Telefono = "70022222", NombreResponsable = "Joel Ríos", Estado = true, FechaCreacion = ahora, UsuarioCreacion = "jrios" },
+            new ProveedorDocumento { Id = 3, RazonSocial = "Distribuidora El Tornillo", Nit = "300400500", Contacto = "Pedro Chavez", Telefono = "70033333", NombreResponsable = "Joel Ríos", Estado = true, FechaCreacion = ahora, UsuarioCreacion = "jrios" }
         };
 
         await proveedores.InsertManyAsync(semilla, cancellationToken: ct);

@@ -14,7 +14,7 @@ public class CrearProveedorCasoDeUso
         _repositorio = repositorio;
     }
 
-    public async Task<Result<ProveedorDto>> EjecutarAsync(CrearProveedorSolicitud solicitud, CancellationToken ct = default)
+    public async Task<Result<ProveedorDto>> EjecutarAsync(CrearProveedorSolicitud solicitud, string usuario, CancellationToken ct = default)
     {
         string nitNormalizado = Proveedor.NormalizarNit(solicitud.Nit);
         if (!string.IsNullOrWhiteSpace(nitNormalizado))
@@ -30,7 +30,14 @@ public class CrearProveedorCasoDeUso
 
         // Se genera el identificador entero de forma atómica en persistencia para evitar colisiones bajo concurrencia.
         int nuevoId = await _repositorio.GenerarNuevoIdAsync(ct);
-        var resultadoCreacion = Proveedor.CrearNuevo(nuevoId, solicitud.RazonSocial, solicitud.Nit, solicitud.Contacto, solicitud.Telefono, solicitud.NombreResponsable);
+        var resultadoCreacion = Proveedor.CrearNuevo(
+            nuevoId,
+            solicitud.RazonSocial,
+            solicitud.Nit,
+            solicitud.Contacto,
+            solicitud.Telefono,
+            solicitud.NombreResponsable,
+            usuario);
         if (resultadoCreacion.EsFallo)
         {
             return Result.Fallo<ProveedorDto>(resultadoCreacion.Error!);

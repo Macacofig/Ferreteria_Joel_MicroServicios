@@ -12,6 +12,13 @@ public static class MapeadorProveedor
         Nit = proveedor.Nit,
         Contacto = proveedor.Contacto,
         Telefono = proveedor.Telefono,
-        NombreResponsable = proveedor.NombreResponsable
+        NombreResponsable = proveedor.NombreResponsable,
+        Estado = proveedor.Estado,
+        FechaCreacion = proveedor.FechaCreacion,
+        UsuarioCreacion = proveedor.UsuarioCreacion,
+        FechaModificacion = proveedor.FechaModificacion,
+        UsuarioModificacion = proveedor.UsuarioModificacion,
+        FechaBaja = proveedor.FechaBaja,
+        UsuarioBaja = proveedor.UsuarioBaja
     };
 }

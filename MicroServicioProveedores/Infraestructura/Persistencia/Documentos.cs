@@ -21,6 +21,27 @@ internal class ProveedorDocumento
 
     [BsonElement("nombreResponsable")]
     public string NombreResponsable { get; set; } = string.Empty;
+
+    [BsonElement("estado")]
+    public bool Estado { get; set; } = true;
+
+    [BsonElement("fechaCreacion")]
+    public DateTime FechaCreacion { get; set; }
+
+    [BsonElement("usuarioCreacion")]
+    public string UsuarioCreacion { get; set; } = string.Empty;
+
+    [BsonElement("fechaModificacion")]
+    public DateTime? FechaModificacion { get; set; }
+
+    [BsonElement("usuarioModificacion")]
+    public string? UsuarioModificacion { get; set; }
+
+    [BsonElement("fechaBaja")]
+    public DateTime? FechaBaja { get; set; }
+
+    [BsonElement("usuarioBaja")]
+    public string? UsuarioBaja { get; set; }
 }
 
 internal class ContadorDocumento

@@ -10,5 +10,6 @@ public interface IRepositorioProveedores
     Task<int> GenerarNuevoIdAsync(CancellationToken ct = default);
     Task CrearAsync(Proveedor proveedor, CancellationToken ct = default);
     Task<bool> ActualizarAsync(Proveedor proveedor, CancellationToken ct = default);
-    Task<bool> EliminarAsync(int id, CancellationToken ct = default);
+    Task<bool> DarDeBajaAsync(int id, string usuario, CancellationToken ct = default);
+    Task<bool> ReactivarAsync(int id, string usuario, CancellationToken ct = default);
 }

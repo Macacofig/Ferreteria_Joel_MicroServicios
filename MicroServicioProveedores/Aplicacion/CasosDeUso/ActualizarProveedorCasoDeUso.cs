@@ -14,7 +14,7 @@ public class ActualizarProveedorCasoDeUso
         _repositorio = repositorio;
     }
 
-    public async Task<Result<ProveedorDto>> EjecutarAsync(int id, ActualizarProveedorSolicitud solicitud, CancellationToken ct = default)
+    public async Task<Result<ProveedorDto>> EjecutarAsync(int id, ActualizarProveedorSolicitud solicitud, string usuario, CancellationToken ct = default)
     {
         var proveedor = await _repositorio.ObtenerPorIdAsync(id, ct);
         if (proveedor is null)
@@ -34,7 +34,13 @@ public class ActualizarProveedorCasoDeUso
             }
         }
 
-        var resultadoActualizacion = proveedor.Actualizar(solicitud.RazonSocial, solicitud.Nit, solicitud.Contacto, solicitud.Telefono, solicitud.NombreResponsable);
+        var resultadoActualizacion = proveedor.Actualizar(
+            solicitud.RazonSocial,
+            solicitud.Nit,
+            solicitud.Contacto,
+            solicitud.Telefono,
+            solicitud.NombreResponsable,
+            usuario);
         if (resultadoActualizacion.EsFallo)
         {
             return Result.Fallo<ProveedorDto>(resultadoActualizacion.Error!);

@@ -14,10 +14,30 @@ public class Proveedor
     public string Contacto { get; private set; } = string.Empty;
     public string Telefono { get; private set; } = string.Empty;
     public string NombreResponsable { get; private set; } = string.Empty;
+    public bool Estado { get; private set; }
+    public DateTime FechaCreacion { get; private set; }
+    public string UsuarioCreacion { get; private set; } = string.Empty;
+    public DateTime? FechaModificacion { get; private set; }
+    public string? UsuarioModificacion { get; private set; }
+    public DateTime? FechaBaja { get; private set; }
+    public string? UsuarioBaja { get; private set; }
 
     private Proveedor() { }
 
-    public Proveedor(int id, string razonSocial, string nit, string contacto, string telefono, string nombreResponsable = "")
+    public Proveedor(
+        int id,
+        string razonSocial,
+        string nit,
+        string contacto,
+        string telefono,
+        string nombreResponsable = "",
+        bool estado = true,
+        DateTime? fechaCreacion = null,
+        string usuarioCreacion = "",
+        DateTime? fechaModificacion = null,
+        string? usuarioModificacion = null,
+        DateTime? fechaBaja = null,
+        string? usuarioBaja = "")
     {
         Id = id;
         RazonSocial = razonSocial;
@@ -25,9 +45,23 @@ public class Proveedor
         Contacto = contacto;
         Telefono = telefono;
         NombreResponsable = nombreResponsable;
+        Estado = estado;
+        FechaCreacion = fechaCreacion ?? DateTime.Now;
+        UsuarioCreacion = usuarioCreacion;
+        FechaModificacion = fechaModificacion;
+        UsuarioModificacion = string.IsNullOrWhiteSpace(usuarioModificacion) ? null : usuarioModificacion;
+        FechaBaja = fechaBaja;
+        UsuarioBaja = string.IsNullOrWhiteSpace(usuarioBaja) ? null : usuarioBaja;
     }
 
-    public static Result<Proveedor> CrearNuevo(int id, string razonSocial, string nit, string contacto, string telefono, string nombreResponsable)
+    public static Result<Proveedor> CrearNuevo(
+        int id,
+        string razonSocial,
+        string nit,
+        string contacto,
+        string telefono,
+        string nombreResponsable,
+        string usuarioCreacion)
     {
         var errores = ValidarCampos(razonSocial, nit, contacto, telefono);
         if (errores.Count > 0)
@@ -43,10 +77,19 @@ public class Proveedor
             NormalizarNit(nit),
             NormalizarTexto(contacto),
             NormalizarTelefono(telefono),
-            NormalizarTexto(nombreResponsable)));
+            NormalizarTexto(nombreResponsable),
+            estado: true,
+            fechaCreacion: DateTime.Now,
+            usuarioCreacion: NormalizarTexto(usuarioCreacion)));
     }
 
-    public Result Actualizar(string razonSocial, string nit, string contacto, string telefono, string nombreResponsable)
+    public Result Actualizar(
+        string razonSocial,
+        string nit,
+        string contacto,
+        string telefono,
+        string nombreResponsable,
+        string usuarioModificacion)
     {
         var errores = ValidarCampos(razonSocial, nit, contacto, telefono);
         if (errores.Count > 0)
@@ -61,6 +104,40 @@ public class Proveedor
         Contacto = NormalizarTexto(contacto);
         Telefono = NormalizarTelefono(telefono);
         NombreResponsable = NormalizarTexto(nombreResponsable);
+        FechaModificacion = DateTime.Now;
+        UsuarioModificacion = NormalizarTexto(usuarioModificacion);
+        return Result.Ok();
+    }
+
+    /// <summary>Baja lógica: conserva el documento y registra quién y cuándo lo dio de baja.</summary>
+    public Result DarDeBaja(string usuarioBaja)
+    {
+        if (!Estado)
+        {
+            return Result.Fallo(ErrorResultado.Conflicto("El proveedor ya está dado de baja."));
+        }
+
+        Estado = false;
+        FechaBaja = DateTime.Now;
+        UsuarioBaja = NormalizarTexto(usuarioBaja);
+        FechaModificacion = FechaBaja;
+        UsuarioModificacion = UsuarioBaja;
+        return Result.Ok();
+    }
+
+    /// <summary>Reactiva un proveedor dado de baja y limpia los campos de baja.</summary>
+    public Result Reactivar(string usuarioModificacion)
+    {
+        if (Estado)
+        {
+            return Result.Fallo(ErrorResultado.Conflicto("El proveedor ya está activo."));
+        }
+
+        Estado = true;
+        FechaBaja = null;
+        UsuarioBaja = null;
+        FechaModificacion = DateTime.Now;
+        UsuarioModificacion = NormalizarTexto(usuarioModificacion);
         return Result.Ok();
     }
 
