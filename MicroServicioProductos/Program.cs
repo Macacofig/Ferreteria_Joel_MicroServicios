@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using MicroServicioProductos.Aplicacion.Puertos;
 using MicroServicioProductos.Aplicacion.Servicios;
 using MicroServicioProductos.Dominio.Puertos;
 using MicroServicioProductos.Infraestructura.Conexion;
@@ -29,22 +30,16 @@ builder.Services.AddSingleton<IDbConnectionFactory, MySqlConnectionFactory>();
 
 builder.Services.AddScoped<RepositoryCreator<IRepositoryProducto>,
     ProductoRepositoryCreator>();
-builder.Services.AddScoped<RepositoryCreator<IRepositoryCatalogoAuxiliar>,
-    CatalogoAuxiliarRepositoryCreator>();
+builder.Services.AddScoped<RepositoryCreator<IRepositoryCategoria>,
+    CategoriaRepositoryCreator>();
+builder.Services.AddScoped<RepositoryCreator<IRepositoryMarca>,
+    MarcaRepositoryCreator>();
 builder.Services.AddScoped<RepositoryCreator<IRepositoryHistoricoProducto>,
     HistoricoProductoRepositoryCreator>();
 
-builder.Services.AddScoped<IRepositoryProducto>(sp =>
-    sp.GetRequiredService<RepositoryCreator<IRepositoryProducto>>()
-        .CreateRepository());
-builder.Services.AddScoped<IRepositoryCatalogoAuxiliar>(sp =>
-    sp.GetRequiredService<RepositoryCreator<IRepositoryCatalogoAuxiliar>>()
-        .CreateRepository());
-builder.Services.AddScoped<IRepositoryHistoricoProducto>(sp =>
-    sp.GetRequiredService<RepositoryCreator<IRepositoryHistoricoProducto>>()
-        .CreateRepository());
-
-builder.Services.AddScoped<ServicioProductos>();
+builder.Services.AddScoped<IServicioProductos, ServicioProductos>();
+builder.Services.AddScoped<IServicioCategorias, ServicioCategorias>();
+builder.Services.AddScoped<IServicioMarcas, ServicioMarcas>();
 
 // Identidad resuelta desde el JWT validado.
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuarioJwt>();
