@@ -23,8 +23,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 
 // ---------------------------------------------------------------------------
-// Persistencia MySQL (bdproductos) con patrón Factory Method. Los servicios
-// reciben los contratos del dominio resueltos a través de sus creadores.
+// Persistencia MySQL (bdproductos) con patrón Factory Method. Aplicación
+// inyecta directamente el creador abstracto y llama a CreateRepository();
+// por eso no se registran repositorios sueltos en el contenedor.
 // ---------------------------------------------------------------------------
 builder.Services.AddSingleton<IDbConnectionFactory, MySqlConnectionFactory>();
 
@@ -35,15 +36,6 @@ builder.Services.AddScoped<RepositoryCreator<IRepositoryCatalogoAuxiliar>,
 builder.Services.AddScoped<RepositoryCreator<IRepositoryHistoricoProducto>,
     HistoricoProductoRepositoryCreator>();
 
-builder.Services.AddScoped<IRepositoryProducto>(sp =>
-    sp.GetRequiredService<RepositoryCreator<IRepositoryProducto>>()
-        .CreateRepository());
-builder.Services.AddScoped<IRepositoryCatalogoAuxiliar>(sp =>
-    sp.GetRequiredService<RepositoryCreator<IRepositoryCatalogoAuxiliar>>()
-        .CreateRepository());
-builder.Services.AddScoped<IRepositoryHistoricoProducto>(sp =>
-    sp.GetRequiredService<RepositoryCreator<IRepositoryHistoricoProducto>>()
-        .CreateRepository());
 
 // Puerto de entrada: el controlador depende de IServicioProductos, nunca de
 // la clase concreta ServicioProductos.

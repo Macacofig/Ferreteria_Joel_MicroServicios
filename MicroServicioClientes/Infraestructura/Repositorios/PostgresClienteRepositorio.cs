@@ -14,7 +14,8 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
 {
     private const string Columnas = @"
         id_cliente, ci, nombre, apellido, correo, telefono, direccion, activo,
-        fecha_creacion, usuario_creacion, fecha_modificacion, usuario_modificacion";
+        fecha_creacion, usuario_creacion, fecha_modificacion, usuario_modificacion,
+        fecha_baja, usuario_baja";
 
     private readonly IFabricaConexion _fabrica;
 
@@ -170,11 +171,24 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         bool nuevoEstado,
         CancellationToken cancelacion)
     {
-        const string sql = @"
+        // La baja lógica registra quién y cuándo; la reactivación limpia esos
+        // campos para que el estado y la auditoría nunca se contradigan.
+        string sql = nuevoEstado
+            ? @"
             UPDATE cliente
                SET activo = @estado,
                    fecha_modificacion = NOW(),
-                   usuario_modificacion = @usuario
+                   usuario_modificacion = @usuario,
+                   fecha_baja = NULL,
+                   usuario_baja = NULL
+             WHERE id_cliente = @id AND activo <> @estado"
+            : @"
+            UPDATE cliente
+               SET activo = @estado,
+                   fecha_modificacion = NOW(),
+                   usuario_modificacion = @usuario,
+                   fecha_baja = NOW(),
+                   usuario_baja = @usuario
              WHERE id_cliente = @id AND activo <> @estado";
 
         await using NpgsqlConnection conexion = _fabrica.Crear();
@@ -211,7 +225,9 @@ public sealed class PostgresClienteRepositorio : IClienteRepositorio
         FechaCreacion = lector.GetDateTime(8),
         UsuarioCreacion = lector.GetString(9),
         FechaModificacion = lector.IsDBNull(10) ? null : lector.GetDateTime(10),
-        UsuarioModificacion = lector.IsDBNull(11) ? null : lector.GetString(11)
+        UsuarioModificacion = lector.IsDBNull(11) ? null : lector.GetString(11),
+        FechaBaja = lector.IsDBNull(12) ? null : lector.GetDateTime(12),
+        UsuarioBaja = lector.IsDBNull(13) ? null : lector.GetString(13)
     };
 
     private static string EscaparComodines(string texto) =>

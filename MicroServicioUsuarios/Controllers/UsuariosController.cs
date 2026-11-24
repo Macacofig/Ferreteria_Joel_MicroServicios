@@ -131,7 +131,7 @@ namespace FERRETERIA__Joel.ServicioUsuarios.Controllers
             if (!resultado.Exitoso)
             {
                 return BadRequest(RespuestaApi<UsuarioDto>
-                    .ConErrores(resultado.ErroresCampo, "No se pudo crear el empleado."));
+                    .ConErrores(resultado.ErroresCampo, resultado.Mensaje));
             }
 
             Empleado? empleado =
@@ -146,7 +146,7 @@ namespace FERRETERIA__Joel.ServicioUsuarios.Controllers
                     resultado.NombreUsuario,
                     resultado.EnlaceActivacion,
                     Usuario = empleado is null ? null : MapeosDto.AUsuario(empleado)
-                }, "Empleado registrado. Se envió el enlace de activación a su correo."));
+                }, resultado.Mensaje));
         }
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace FERRETERIA__Joel.ServicioUsuarios.Controllers
             if (!resultado.Exitoso)
             {
                 return BadRequest(RespuestaApi<UsuarioDto>
-                    .ConErrores(resultado.ErroresCampo, "No se pudo actualizar el empleado."));
+                    .ConErrores(resultado.ErroresCampo, resultado.Mensaje));
             }
 
             Empleado? empleado =
@@ -196,7 +196,7 @@ namespace FERRETERIA__Joel.ServicioUsuarios.Controllers
 
             return Ok(RespuestaApi<UsuarioDto>.Ok(
                 MapeosDto.AUsuario(empleado!),
-                "Empleado actualizado."));
+                resultado.Mensaje));
         }
 
         /// <summary>

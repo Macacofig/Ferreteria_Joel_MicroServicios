@@ -1,3 +1,4 @@
+using MicroServicioProductos.Aplicacion.Puertos;
 using MicroServicioProductos.Dominio.Puertos;
 using MicroServicioProductos.Infraestructura.Conexion;
 using MicroServicioProductos.Infraestructura.Repositorios;
@@ -5,14 +6,9 @@ using MicroServicioProductos.Infraestructura.Repositorios;
 namespace MicroServicioProductos.Infraestructura.Factories;
 
 /// <summary>
-/// Factory Method de repositorios: la aplicación conoce solo el contrato del
-/// dominio y el creador concreto decide qué adaptador MySQL instantiar.
+/// Creadores concretos del Factory Method. Heredan del creador abstracto de
+/// Aplicación y son los únicos que conocen los adaptadores MySQL.
 /// </summary>
-public abstract class RepositoryCreator<TRepository>
-{
-    public abstract TRepository CreateRepository();
-}
-
 public sealed class ProductoRepositoryCreator : RepositoryCreator<IRepositoryProducto>
 {
     private readonly IDbConnectionFactory _connectionFactory;

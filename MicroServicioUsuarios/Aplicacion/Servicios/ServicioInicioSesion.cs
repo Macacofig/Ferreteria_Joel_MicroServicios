@@ -139,6 +139,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
             return new ResultadoInicioSesion
             {
                 Exitoso = true,
+                Mensaje = "Sesión iniciada correctamente.",
                 Token = autenticacion.Valor.Token,
                 RefreshToken = autenticacion.Valor.RefreshToken,
                 Expira = autenticacion.Valor.Expira,

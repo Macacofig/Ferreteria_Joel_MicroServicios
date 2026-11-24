@@ -9,7 +9,7 @@ public class ActualizarProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public ActualizarProveedorCasoDeUso(IRepositoryCreator<IRepositorioProveedores> creadorRepositorio)
+    public ActualizarProveedorCasoDeUso(RepositoryCreatorBase<IRepositorioProveedores> creadorRepositorio)
     {
         _repositorio = creadorRepositorio.CreateRepository();
     }
@@ -46,22 +46,14 @@ public class ActualizarProveedorCasoDeUso
             return Result.Fallo<ProveedorDto>(resultadoActualizacion.Error!);
         }
 
-        try
+        Result actualizado = await _repositorio.ActualizarAsync(proveedor, ct);
+        if (actualizado.EsFallo)
         {
-            bool actualizado = await _repositorio.ActualizarAsync(proveedor, ct);
-            if (!actualizado)
-            {
-                return Result.Fallo<ProveedorDto>(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
-            }
-        }
-        catch (ConflictoNegocioExcepcion ex)
-        {
-            var errores = string.IsNullOrWhiteSpace(ex.Campo)
-                ? null
-                : new Dictionary<string, string> { [ex.Campo] = ex.Message };
-            return Result.Fallo<ProveedorDto>(ErrorResultado.Conflicto(ex.Message, errores));
+            return Result.Fallo<ProveedorDto>(actualizado.Error!);
         }
 
-        return Result.Ok(MapeadorProveedor.ADto(proveedor));
+        return Result.OkConMensaje(
+            MapeadorProveedor.ADto(proveedor),
+            "Proveedor actualizado correctamente.");
     }
 }

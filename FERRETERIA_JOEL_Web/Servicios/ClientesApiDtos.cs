@@ -29,6 +29,10 @@ namespace FERRETERIA__Joel.Servicios
         public DateTime? FechaModificacion { get; set; }
 
         public string? UsuarioModificacion { get; set; }
+
+        public DateTime? FechaBaja { get; set; }
+
+        public string? UsuarioBaja { get; set; }
     }
 
     /// <summary>Datos del formulario de alta y edición de un cliente.</summary>

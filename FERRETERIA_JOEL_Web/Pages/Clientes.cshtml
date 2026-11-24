@@ -137,6 +137,10 @@
                                 {
                                     <span class="fj-nombre-sub">Modif: @cliente.FechaModificacion.Value.ToString("dd/MM/yyyy") · @cliente.UsuarioModificacion</span>
                                 }
+                                @if (cliente.FechaBaja is DateTime fechaBaja)
+                                {
+                                    <span class="fj-nombre-sub">Baja: @fechaBaja.ToString("dd/MM/yyyy") · @cliente.UsuarioBaja</span>
+                                }
                             </td>
 
                             <td class="fj-auditoria">

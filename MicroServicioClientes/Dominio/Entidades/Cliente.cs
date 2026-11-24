@@ -28,4 +28,10 @@ public sealed class Cliente
     public DateTime? FechaModificacion { get; set; }
 
     public string? UsuarioModificacion { get; set; }
+
+    /// <summary>Fecha de la baja lógica; <c>null</c> mientras está activo.</summary>
+    public DateTime? FechaBaja { get; set; }
+
+    /// <summary>Usuario que realizó la baja lógica.</summary>
+    public string? UsuarioBaja { get; set; }
 }

@@ -24,8 +24,14 @@ public sealed class InicializadorEsquema : IHostedService
             fecha_creacion       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
             usuario_creacion     VARCHAR(100) NOT NULL DEFAULT 'sistema',
             fecha_modificacion   TIMESTAMPTZ,
-            usuario_modificacion VARCHAR(100)
+            usuario_modificacion VARCHAR(100),
+            fecha_baja           TIMESTAMPTZ,
+            usuario_baja         VARCHAR(100)
         );
+
+        -- Bases creadas antes de RF-08: la baja lógica también se audita.
+        ALTER TABLE cliente ADD COLUMN IF NOT EXISTS fecha_baja TIMESTAMPTZ;
+        ALTER TABLE cliente ADD COLUMN IF NOT EXISTS usuario_baja VARCHAR(100);
 
         -- La CI es opcional, pero cuando existe no puede repetirse (los NULL no chocan).
         CREATE UNIQUE INDEX IF NOT EXISTS ux_cliente_ci

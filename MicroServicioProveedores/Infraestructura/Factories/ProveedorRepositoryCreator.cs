@@ -5,10 +5,11 @@ using MongoDB.Driver;
 namespace MicroServicioProveedores.Infraestructura.Factories;
 
 /// <summary>
-/// Creador concreto de proveedores. Es el único lugar que referencia al
-/// repositorio Mongo; Aplicación solo conoce <see cref="IRepositoryCreator{TContrato}"/>.
+/// Creador concreto del Factory Method. Hereda del creador abstracto de
+/// Aplicación y es el único lugar que referencia al repositorio Mongo.
 /// </summary>
-public sealed class ProveedorRepositoryCreator : RepositoryCreator<IRepositorioProveedores>
+public sealed class ProveedorRepositoryCreator
+    : RepositoryCreatorBase<IRepositorioProveedores>
 {
     private readonly IMongoDatabase _database;
 
@@ -17,6 +18,7 @@ public sealed class ProveedorRepositoryCreator : RepositoryCreator<IRepositorioP
         _database = database;
     }
 
-    public override IRepositorioProveedores CreateRepository()
+    /// <summary>Implementación concreta del método de fábrica.</summary>
+    protected override IRepositorioProveedores FactoryMethod()
         => new MongoProveedorRepositorio(_database);
 }

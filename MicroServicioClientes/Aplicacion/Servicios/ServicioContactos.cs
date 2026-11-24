@@ -42,8 +42,14 @@ public sealed class ServicioContactos : IServicioContactos
         }
 
         var contactos = await _contactos.ListarPorClienteAsync(idCliente, soloActivos, cancelacion);
-        return Resultado<IReadOnlyList<ContactoRespuesta>>.Exito(
-            contactos.Select(ContactoRespuesta.Desde).ToList());
+        IReadOnlyList<ContactoRespuesta> datos =
+            contactos.Select(ContactoRespuesta.Desde).ToList();
+
+        string mensaje = datos.Count == 0
+            ? "El cliente no tiene contactos registrados con los criterios indicados."
+            : $"Se encontraron {datos.Count} contacto(s).";
+
+        return Resultado<IReadOnlyList<ContactoRespuesta>>.Exito(datos, mensaje);
     }
 
     public async Task<Resultado<ContactoRespuesta>> ObtenerAsync(
@@ -52,7 +58,8 @@ public sealed class ServicioContactos : IServicioContactos
         ClienteContacto? contacto = await _contactos.ObtenerPorIdAsync(idContacto, cancelacion);
         return contacto is null
             ? NoEncontrado()
-            : Resultado<ContactoRespuesta>.Exito(ContactoRespuesta.Desde(contacto));
+            : Resultado<ContactoRespuesta>.Exito(
+                ContactoRespuesta.Desde(contacto), "Contacto obtenido correctamente.");
     }
 
     public async Task<Resultado<ContactoRespuesta>> CrearAsync(

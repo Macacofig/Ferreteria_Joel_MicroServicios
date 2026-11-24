@@ -15,7 +15,9 @@ public sealed record ClienteRespuesta(
     DateTime FechaCreacion,
     string UsuarioCreacion,
     DateTime? FechaModificacion,
-    string? UsuarioModificacion)
+    string? UsuarioModificacion,
+    DateTime? FechaBaja,
+    string? UsuarioBaja)
 {
     public static ClienteRespuesta Desde(Cliente c) => new(
         c.IdCliente,
@@ -29,6 +31,8 @@ public sealed record ClienteRespuesta(
         c.FechaCreacion,
         c.UsuarioCreacion,
         c.FechaModificacion,
-        c.UsuarioModificacion);
+        c.UsuarioModificacion,
+        c.FechaBaja,
+        c.UsuarioBaja);
 }
 

@@ -60,7 +60,7 @@ En **Usuarios**, **Productos** y **Clientes** el dominio expone contratos como `
 
 La arquitectura limpia organiza el código en capas concéntricas: entidades, casos de uso, interfaces de aplicación e infraestructura. La regla de dependencia exige que las capas internas no conozcan a las externas.
 
-**MicroServicioProveedores** materializa este estilo con las carpetas `Dominio`, `Aplicacion`, `Infraestructura`, `Comun` y `Controllers`. En `Aplicacion.Contratos` se declara `IRepositoryCreator<TContrato>`, mientras que `Infraestructura.Factories` contiene `ProveedorRepositoryCreator`, que devuelve `MongoProveedorRepositorio`. El dominio permanece independiente del driver de MongoDB.
+**MicroServicioProveedores** materializa este estilo con las carpetas `Dominio`, `Aplicacion`, `Infraestructura`, `Comun` y `Controllers`. En `Aplicacion.Contratos` se declaran `IRepositoryCreator<TContrato>` y el creador abstracto `RepositoryCreatorBase<TContrato>`; `Infraestructura.Factories` contiene el creador concreto `ProveedorRepositoryCreator`, que sobrescribe `FactoryMethod()` y devuelve `MongoProveedorRepositorio`. Los casos de uso inyectan directamente el creador abstracto, de modo que el dominio permanece independiente del driver de MongoDB.
 
 #### 2.2.3 API Gateway
 
@@ -71,8 +71,8 @@ El patrón API Gateway concentra en un único punto las responsabilidades transv
 | Patrón | Clasificación | Evidencia en la solución |
 |---|---|---|
 | Adapter | Estructural | `AdaptadorServicioUsuarios`, `AdaptadorServicioProductos`, `AdaptadorServicioClientes` y `AdaptadorServicioProveedores` adaptan clientes HTTP al contrato consumido por las Razor Pages. |
-| Result | Transaccional y de dominio | `Result`, `Result<T>` y `ErrorResultado` transportan éxito, error, tipo de error y errores por campo sin lanzar excepciones para reglas de negocio. |
-| Factory Method | Creacional | `RepositoryCreator<T>` y sus creadores concretos, incluidos `ProductoRepositoryCreator`, `CatalogoAuxiliarRepositoryCreator`, `HistoricoProductoRepositoryCreator` y `ProveedorRepositoryCreator`. |
+| Result | Transaccional y de dominio | `Result`, `Result<T>` y `ErrorResultado` transportan éxito, mensaje de éxito, error, tipo de error y errores por campo sin lanzar excepciones para reglas de negocio. |
+| Factory Method | Creacional | Creadores abstractos en `Aplicacion.Puertos` (Productos) y `Aplicacion.Contratos` (Proveedores), con creadores concretos `ProductoRepositoryCreator`, `CatalogoAuxiliarRepositoryCreator`, `HistoricoProductoRepositoryCreator` y `ProveedorRepositoryCreator`, inyectados directamente por Aplicación. |
 | Repository | Persistencia | Repositorios MySQL, PostgreSQL y MongoDB encapsulan el acceso a datos tras contratos del dominio. |
 | Facade | Estructural | El gateway actúa como fachada del sistema; los adaptadores también simplifican la interfaz de los clientes HTTP para la capa de presentación. |
 | Unit of Work | Persistencia | La coordinación de lecturas y escrituras relacionadas se concentra en los servicios de aplicación y repositorios, manteniendo una unidad lógica de trabajo por caso de uso. |
@@ -86,11 +86,13 @@ El adaptador envuelve al *adaptee* —el cliente HTTP— y expone el contrato es
 
 #### 2.3.2 Result
 
-El tipo `Result<T>` evita usar excepciones para flujos esperados de validación. Expone `EsExitoso`, `EsFallo` y `Valor`, con factorías `Ok`, `Fallo`, `Ok<T>` y `Fallo<T>`. En Proveedores, `ErrorResultado` adopta además un `TipoError` —`Validacion`, `NoEncontrado`, `Conflicto` o `NoAutorizado`— y errores por campo para que el adaptador HTTP elija el código de respuesta adecuado. En Productos, `ValorRequerido` garantiza el valor cuando el resultado es exitoso.
+El tipo `Result<T>` evita usar excepciones para flujos esperados de validación. Expone `EsExitoso`, `EsFallo`, `Valor` y `Mensaje`, con factorías `Ok`, `OkConMensaje`, `Fallo`, `Ok<T>`, `OkConMensaje<T>` y `Fallo<T>`. En Proveedores, `ErrorResultado` adopta además un `TipoError` —`Validacion`, `NoEncontrado`, `Conflicto` o `NoAutorizado`— y errores por campo para que el adaptador HTTP elija el código de respuesta adecuado. Los casos de uso validan `EsFallo` antes de leer `Valor`, de modo que no existe un descriptor que lance excepciones de negocio. Las excepciones que quedan son técnicas —conexión a MySQL/PostgreSQL/Mongo, configuración de Keycloak o hash Argon2— y no representan reglas de negocio.
+
+El mensaje de éxito llega al adaptador HTTP: Clientes, Proveedores y Usuarios lo publican en el campo `mensaje` de `RespuestaApi`, y Productos lo publica en el cuerpo de las mutaciones y en el encabezado `X-Mensaje` de las consultas, sin cambiar el formato de datos que consume el front.
 
 #### 2.3.3 Factory Method
 
-El creador abstracto declara `CreateRepository()`. Cada creador concreto decide qué repositorio instanciar; las capas superiores dependen solo del contrato devuelto, no de la clase concreta.
+El creador abstracto declara la operación `CreateRepository()`. En Proveedores, `RepositoryCreatorBase<T>` implementa esa operación delegando en el método de fábrica protegido `FactoryMethod()`, que es sobrescrito por `ProveedorRepositoryCreator`. En Productos, los servicios de Aplicación inyectan directamente `RepositoryCreator<T>` y cada caso de uso obtiene su repositorio mediante `CreateRepository()`. Las capas superiores dependen solo del creador abstracto y del contrato devuelto, nunca de la clase concreta.
 
 #### 2.3.4 Repository
 
@@ -246,7 +248,7 @@ graph TB
     Cliente["ApiGateway"]
     Controller["ProveedoresController<br/>Controllers"]
     Casos["Casos de uso<br/>Listar, obtener, crear, actualizar, eliminar"]
-    Contratos["Aplicacion.Contratos<br/>IRepositorioProveedores<br/>IRepositoryCreator"]
+    Contratos["Aplicacion.Contratos<br/>IRepositorioProveedores<br/>RepositoryCreatorBase"]
     Entidad["Dominio.Entidades<br/>Proveedor"]
     Resultado["Dominio.Resultados<br/>Result y ErrorResultado"]
     Creador["Infraestructura.Factories<br/>ProveedorRepositoryCreator"]
@@ -273,7 +275,7 @@ La lectura combinada permite seguir una petición desde el navegador, pasando po
 
 ### 4.5 Diagramas de clases
 
-El siguiente diagrama representa los tipos transversales `Result<T>`, `IRepositoryCreator<T>`, los adaptadores web y las entidades con auditoría.
+El siguiente diagrama representa los tipos transversales `Result<T>`, el creador abstracto `RepositoryCreatorBase<T>`, los adaptadores web y las entidades con auditoría.
 
 ```mermaid
 classDiagram
@@ -281,8 +283,10 @@ classDiagram
         +bool EsExitoso
         +bool EsFallo
         +T Valor
+        +string Mensaje
         +ErrorResultado Error
         +Result Ok()
+        +Result OkConMensaje(string mensaje)
         +Result Fallo(ErrorResultado error)
     }
 
@@ -300,13 +304,14 @@ classDiagram
         +CreateRepository() TContrato
     }
 
-    class RepositoryCreator~TContrato~ {
+    class RepositoryCreatorBase~TContrato~ {
         <<abstract>>
         +CreateRepository() TContrato
+        #FactoryMethod() TContrato
     }
 
     class ProveedorRepositoryCreator {
-        +CreateRepository() IRepositorioProveedores
+        #FactoryMethod() IRepositorioProveedores
     }
 
     class AdaptadorServicioProveedores {
@@ -344,6 +349,8 @@ classDiagram
         +string UsuarioCreacion
         +DateTime FechaModificacion
         +string UsuarioModificacion
+        +DateTime FechaBaja
+        +string UsuarioBaja
     }
 
     class Producto {
@@ -369,8 +376,8 @@ classDiagram
     }
 
     Result~T~ --> ErrorResultado
-    IRepositoryCreator~TContrato~ <|.. RepositoryCreator~TContrato~
-    RepositoryCreator~TContrato~ <|-- ProveedorRepositoryCreator
+    IRepositoryCreator~TContrato~ <|.. RepositoryCreatorBase~TContrato~
+    RepositoryCreatorBase~TContrato~ <|-- ProveedorRepositoryCreator
     AdaptadorServicioProveedores ..> ProveedoresApiCliente
     ProveedorRepositoryCreator ..> Proveedor
     Proveedor ..> Result~T~
@@ -428,39 +435,49 @@ public class Result
     public bool EsFallo => !EsExitoso;
     public ErrorResultado? Error { get; }
 
-    protected Result(bool esExitoso, ErrorResultado? error)
+    /// <summary>Mensaje de éxito; cadena vacía cuando la operación falló.</summary>
+    public string Mensaje { get; }
+
+    protected Result(bool esExitoso, ErrorResultado? error, string mensaje)
     {
         EsExitoso = esExitoso;
         Error = error;
+        Mensaje = mensaje;
     }
 
-    public static Result Ok() => new(true, null);
-    public static Result Fallo(ErrorResultado error) => new(false, error);
+    public static Result Ok() => new(true, null, string.Empty);
+    public static Result OkConMensaje(string mensaje) => new(true, null, mensaje);
+    public static Result Fallo(ErrorResultado error) => new(false, error, string.Empty);
 
-    public static Result<T> Ok<T>(T valor) => new(valor, true, null);
-    public static Result<T> Fallo<T>(ErrorResultado error) => new(default, false, error);
+    public static Result<T> Ok<T>(T valor) => new(valor, true, null, string.Empty);
+    public static Result<T> OkConMensaje<T>(T valor, string mensaje) =>
+        new(valor, true, null, mensaje);
+    public static Result<T> Fallo<T>(ErrorResultado error) =>
+        new(default, false, error, string.Empty);
 }
 
 public sealed class Result<T> : Result
 {
     public T? Valor { get; }
 
-    internal Result(T? valor, bool esExitoso, ErrorResultado? error)
-        : base(esExitoso, error)
+    internal Result(T? valor, bool esExitoso, ErrorResultado? error, string mensaje)
+        : base(esExitoso, error, mensaje)
     {
         Valor = valor;
     }
 }
 ```
 
-#### Captura 3: Factory Method en `MicroServicioProductos/Infraestructura/Factories/RepositoryCreator.cs`
+#### Captura 3: Factory Method en `MicroServicioProductos` (creador abstracto en Aplicación y concretos en Infraestructura)
 
 ```csharp
+// Aplicacion/Puertos/RepositoryCreator.cs
 public abstract class RepositoryCreator<TRepository>
 {
     public abstract TRepository CreateRepository();
 }
 
+// Infraestructura/Factories/RepositoryCreator.cs
 public sealed class ProductoRepositoryCreator : RepositoryCreator<IRepositoryProducto>
 {
     private readonly IDbConnectionFactory _connectionFactory;
@@ -489,10 +506,36 @@ public sealed class HistoricoProductoRepositoryCreator
 }
 ```
 
-#### Captura 4: Factory Method en `MicroServicioProveedores/Infraestructura/Factories/ProveedorRepositoryCreator.cs`
+Aplicación utiliza el creador abstracto directamente en su composición de casos de uso:
 
 ```csharp
-public sealed class ProveedorRepositoryCreator : RepositoryCreator<IRepositorioProveedores>
+// Aplicacion/Servicios/ServicioProductos.cs
+public ServicioProductos(
+    RepositoryCreator<IRepositoryProducto> creadorProductos,
+    RepositoryCreator<IRepositoryCatalogoAuxiliar> creadorCatalogo,
+    RepositoryCreator<IRepositoryHistoricoProducto> creadorHistorico,
+    IContextoUsuario contextoUsuario)
+{
+    _productos = creadorProductos.CreateRepository();
+    _catalogo = creadorCatalogo.CreateRepository();
+    _historico = creadorHistorico.CreateRepository();
+    _contextoUsuario = contextoUsuario;
+}
+```
+
+#### Captura 4: Factory Method en `MicroServicioProveedores` (creador abstracto y concreto)
+
+```csharp
+// Aplicacion/Contratos/RepositoryCreatorBase.cs
+public abstract class RepositoryCreatorBase<TContrato> : IRepositoryCreator<TContrato>
+{
+    public TContrato CreateRepository() => FactoryMethod();
+    protected abstract TContrato FactoryMethod();
+}
+
+// Infraestructura/Factories/ProveedorRepositoryCreator.cs
+public sealed class ProveedorRepositoryCreator
+    : RepositoryCreatorBase<IRepositorioProveedores>
 {
     private readonly IMongoDatabase _database;
 
@@ -501,7 +544,7 @@ public sealed class ProveedorRepositoryCreator : RepositoryCreator<IRepositorioP
         _database = database;
     }
 
-    public override IRepositorioProveedores CreateRepository()
+    protected override IRepositorioProveedores FactoryMethod()
         => new MongoProveedorRepositorio(_database);
 }
 ```
@@ -642,9 +685,9 @@ builder.Services.AddScoped<IContextoUsuario, ContextoUsuarioJwt>();
 builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(cadenaMongo));
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<IMongoClient>().GetDatabase(nombreBd));
-// Factory Method: Aplicacion solo conoce IRepositoryCreator<T>; el creador
+// Factory Method: Aplicacion inyecta el creador abstracto; el creador
 // concreto es el unico que referencia al repositorio Mongo.
-builder.Services.AddScoped<IRepositoryCreator<IRepositorioProveedores>,
+builder.Services.AddScoped<RepositoryCreatorBase<IRepositorioProveedores>,
     ProveedorRepositoryCreator>();
 builder.Services.AddScoped<MongoInicializadorProveedores>();
 
@@ -781,6 +824,8 @@ erDiagram
         string UsuarioCreacion
         datetime FechaModificacion
         string UsuarioModificacion
+        datetime FechaBaja
+        string UsuarioBaja
     }
 
     CLIENTE_CONTACTO {
@@ -802,7 +847,7 @@ erDiagram
     CLIENTE ||--o{ CLIENTE_CONTACTO : posee
 ```
 
-La tabla `cliente_contacto` completa el modelo de clientes con contactos por cliente, baja lógica y auditoría de creación, modificación y baja.
+La tabla `cliente` registra auditoría de creación, modificación y baja lógica mediante `fecha_creacion`, `usuario_creacion`, `fecha_modificacion`, `usuario_modificacion`, `fecha_baja` y `usuario_baja`. La tabla `cliente_contacto` completa el modelo de clientes con contactos por cliente y la misma auditoría completa; ambos esquemas y sus datos semilla están en `Scripts/03-clientes.sql`.
 
 #### 4.8.4 Esquema documental de MongoDB — `bdproveedores`
 
@@ -875,7 +920,7 @@ El gateway normaliza los roles de `realm_access.roles` a `ClaimTypes.Role` y el 
 - **Argon2:** se conserva un hash de credencial como respaldo local en `empleado`.
 - **AES-GCM:** el enlace de activación se cifra con una clave compartida entre la web y el microservicio de usuarios.
 - **Baja lógica:** las entidades principales conservan `Estado`, `FechaBaja` y `UsuarioBaja`.
-- **Auditoría:** cada tabla o documento registra usuario y fecha de creación y modificación.
+- **Auditoría:** cada tabla o documento registra usuario y fecha de creación, modificación y baja lógica; los datos semilla del script de clientes incluyen valores explícitos para esos campos.
 - **Configuración sensible:** contraseñas, claves y parámetros SMTP se leen desde variables de entorno y `.env`, que no se versiona.
 
 ---

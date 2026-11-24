@@ -8,6 +8,23 @@
     {
         public bool Exitoso { get; init; }
 
+        private string? _mensaje;
+
+        /// <summary>
+        /// Mensaje de éxito o de error principal de la operación. Si el caso de
+        /// uso no lo fija explícitamente, se deriva del estado del resultado
+        /// para que ninguna respuesta HTTP quede sin mensaje.
+        /// </summary>
+        public string Mensaje
+        {
+            get => !string.IsNullOrWhiteSpace(_mensaje)
+                ? _mensaje
+                : Exitoso
+                    ? "Operación realizada correctamente."
+                    : Errores.FirstOrDefault() ?? "No se pudo completar la operación.";
+            init => _mensaje = value;
+        }
+
         public int Id { get; init; }
 
         /// <summary>Nombre de usuario generado automáticamente en el alta.</summary>

@@ -8,7 +8,7 @@ public class ObtenerProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public ObtenerProveedorCasoDeUso(IRepositoryCreator<IRepositorioProveedores> creadorRepositorio)
+    public ObtenerProveedorCasoDeUso(RepositoryCreatorBase<IRepositorioProveedores> creadorRepositorio)
     {
         _repositorio = creadorRepositorio.CreateRepository();
     }
@@ -21,6 +21,8 @@ public class ObtenerProveedorCasoDeUso
             return Result.Fallo<ProveedorDto>(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
         }
 
-        return Result.Ok(MapeadorProveedor.ADto(proveedor));
+        return Result.OkConMensaje(
+            MapeadorProveedor.ADto(proveedor),
+            "Proveedor obtenido correctamente.");
     }
 }

@@ -95,6 +95,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
                 {
                     Exitoso = true,
                     NombreEmpleado = nombreEmpleado,
+                    Mensaje = "Revise los campos señalados.",
                     ErroresCampo = errores
                 };
             }
@@ -108,7 +109,12 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
             // el usuario en el realm con la contraseña elegida y su rol.
             await SincronizarConKeycloakAsync(empleado, solicitud.Contrasena);
 
-            return ResultadoActivacion.Valido(nombreEmpleado);
+            return new ResultadoActivacion
+            {
+                Exitoso = true,
+                NombreEmpleado = nombreEmpleado,
+                Mensaje = "Cuenta activada correctamente. Ya puede iniciar sesión."
+            };
         }
 
         private async Task SincronizarConKeycloakAsync(

@@ -120,7 +120,7 @@ namespace FERRETERIA__Joel.ServicioUsuarios.Controllers
                     }
             };
 
-            return Ok(RespuestaApi<LoginResponse>.Ok(respuesta));
+            return Ok(RespuestaApi<LoginResponse>.Ok(respuesta, resultado.Mensaje));
         }
 
         /// <summary>

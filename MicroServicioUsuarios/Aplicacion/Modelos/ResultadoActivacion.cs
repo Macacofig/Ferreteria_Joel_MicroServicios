@@ -20,7 +20,8 @@
             return new ResultadoActivacion
             {
                 Exitoso = true,
-                NombreEmpleado = nombreEmpleado
+                NombreEmpleado = nombreEmpleado,
+                Mensaje = "Token válido. Puede continuar con la activación de su cuenta."
             };
         }
 

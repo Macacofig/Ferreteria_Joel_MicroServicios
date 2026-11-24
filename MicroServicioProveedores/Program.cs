@@ -29,9 +29,9 @@ string nombreBd = builder.Configuration["Mongo:BaseDatos"]
 
 builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(cadenaMongo));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IMongoClient>().GetDatabase(nombreBd));
-// Factory Method: Aplicación solo conoce IRepositoryCreator<T>; el creador
-// concreto es el único que referencia al repositorio Mongo.
-builder.Services.AddScoped<IRepositoryCreator<IRepositorioProveedores>, ProveedorRepositoryCreator>();
+// Factory Method: Aplicación inyecta el creador abstracto y el creador
+// concreto (Infraestructura) es el único que referencia al repositorio Mongo.
+builder.Services.AddScoped<RepositoryCreatorBase<IRepositorioProveedores>, ProveedorRepositoryCreator>();
 builder.Services.AddScoped<MongoInicializadorProveedores>();
 
 // ---------------------------------------------------------------------------
