@@ -16,6 +16,9 @@ public sealed class PostgresClienteContactoRepositorio : IClienteContactoReposit
         fecha_creacion, usuario_creacion, fecha_modificacion, usuario_modificacion,
         fecha_baja, usuario_baja";
 
+    /// <summary>Usuario usado por las operaciones del contrato genérico.</summary>
+    private const string UsuarioGenerico = "sistema";
+
     private readonly IFabricaConexion _fabrica;
 
     public PostgresClienteContactoRepositorio(IFabricaConexion fabrica)
@@ -128,6 +131,68 @@ public sealed class PostgresClienteContactoRepositorio : IClienteContactoReposit
     public Task<bool> ReactivarAsync(
         int idContacto, string usuario, CancellationToken cancelacion) =>
         CambiarEstadoAsync(idContacto, usuario, nuevoEstado: true, cancelacion);
+
+    // ================== Producto genérico del Factory Method ==================
+
+    /// <summary>
+    /// Adaptador de <see cref="IGestionarRepository{T}"/>: el listado
+    /// específico exige un cliente, aquí se listan todos los contactos.
+    /// </summary>
+    public Task<List<ClienteContacto>> ObtenerTodosAsync() =>
+        ListarTodosAsync(soloActivos: false, CancellationToken.None);
+
+    public Task<List<ClienteContacto>> MostrarActivosAsync() =>
+        ListarTodosAsync(soloActivos: true, CancellationToken.None);
+
+    public Task<int> InsertarAsync(ClienteContacto entidad) =>
+        InsertarAsync(entidad, UsuarioGenerico, CancellationToken.None);
+
+    public Task ActualizarAsync(ClienteContacto entidad) =>
+        ActualizarAsync(entidad, UsuarioGenerico, CancellationToken.None);
+
+    /// <summary>Invierte el estado actual; el id de empleado se usa como auditoría.</summary>
+    public async Task CambiarEstadoAsync(int id, int idEmpleadoResponsable)
+    {
+        ClienteContacto? contacto = await ObtenerPorIdAsync(id, CancellationToken.None);
+        if (contacto is null)
+        {
+            return;
+        }
+
+        string usuario = idEmpleadoResponsable.ToString();
+
+        if (contacto.Activo)
+        {
+            await DarDeBajaAsync(id, usuario, CancellationToken.None);
+        }
+        else
+        {
+            await ReactivarAsync(id, usuario, CancellationToken.None);
+        }
+    }
+
+    private async Task<List<ClienteContacto>> ListarTodosAsync(
+        bool soloActivos, CancellationToken cancelacion)
+    {
+        string where = soloActivos ? "WHERE activo = TRUE" : string.Empty;
+
+        await using NpgsqlConnection conexion = _fabrica.Crear();
+        await conexion.OpenAsync(cancelacion);
+
+        await using var comando = new NpgsqlCommand(
+            $"SELECT {Columnas} FROM cliente_contacto {where} " +
+            "ORDER BY nombre ASC, id_contacto ASC",
+            conexion);
+
+        var contactos = new List<ClienteContacto>();
+        await using NpgsqlDataReader lector = await comando.ExecuteReaderAsync(cancelacion);
+        while (await lector.ReadAsync(cancelacion))
+        {
+            contactos.Add(Leer(lector));
+        }
+
+        return contactos;
+    }
 
     private async Task<bool> CambiarEstadoAsync(
         int idContacto,
