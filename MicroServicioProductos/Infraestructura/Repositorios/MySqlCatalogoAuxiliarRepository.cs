@@ -35,13 +35,14 @@ public sealed class MySqlCatalogoAuxiliarRepository : IRepositoryCatalogoAuxilia
 
     // ===================== Consultas =====================
 
-    public async Task<IReadOnlyList<Categoria>> ListarCategoriasActivasAsync(
+    public async Task<IReadOnlyList<Categoria>> ListarCategoriasAsync(
+        bool incluirInactivos = false,
         CancellationToken ct = default)
     {
         string query = $@"
             SELECT {ColumnasCategoria}
             FROM categoria
-            WHERE Estado = 1
+            {(incluirInactivos ? string.Empty : "WHERE Estado = 1")}
             ORDER BY Nombre ASC";
 
         using MySqlConnection connection = _connectionFactory.CreateConnection();
@@ -62,13 +63,14 @@ public sealed class MySqlCatalogoAuxiliarRepository : IRepositoryCatalogoAuxilia
         return categorias;
     }
 
-    public async Task<IReadOnlyList<Marca>> ListarMarcasActivasAsync(
+    public async Task<IReadOnlyList<Marca>> ListarMarcasAsync(
+        bool incluirInactivos = false,
         CancellationToken ct = default)
     {
         string query = $@"
             SELECT {ColumnasMarca}
             FROM marca
-            WHERE Estado = 1
+            {(incluirInactivos ? string.Empty : "WHERE Estado = 1")}
             ORDER BY Nombre ASC";
 
         using MySqlConnection connection = _connectionFactory.CreateConnection();
@@ -91,12 +93,16 @@ public sealed class MySqlCatalogoAuxiliarRepository : IRepositoryCatalogoAuxilia
 
     public async Task<Categoria?> ObtenerCategoriaPorIdAsync(
         short idCategoria,
+        bool incluirInactivos = false,
         CancellationToken ct = default)
     {
+        string condicion = incluirInactivos
+            ? "IdCategoria = @id"
+            : "IdCategoria = @id AND Estado = 1";
         string query = $@"
             SELECT {ColumnasCategoria}
             FROM categoria
-            WHERE IdCategoria = @id AND Estado = 1
+            WHERE {condicion}
             LIMIT 1";
 
         using MySqlConnection connection = _connectionFactory.CreateConnection();
@@ -114,12 +120,16 @@ public sealed class MySqlCatalogoAuxiliarRepository : IRepositoryCatalogoAuxilia
 
     public async Task<Marca?> ObtenerMarcaPorIdAsync(
         short idMarca,
+        bool incluirInactivos = false,
         CancellationToken ct = default)
     {
+        string condicion = incluirInactivos
+            ? "IdMarca = @id"
+            : "IdMarca = @id AND Estado = 1";
         string query = $@"
             SELECT {ColumnasMarca}
             FROM marca
-            WHERE IdMarca = @id AND Estado = 1
+            WHERE {condicion}
             LIMIT 1";
 
         using MySqlConnection connection = _connectionFactory.CreateConnection();
@@ -392,6 +402,38 @@ public sealed class MySqlCatalogoAuxiliarRepository : IRepositoryCatalogoAuxilia
         return await command.ExecuteNonQueryAsync(ct) > 0;
     }
 
+    /// <summary>
+    /// Reactiva una categoría dada de baja sin borrar la fila y limpiando
+    /// los campos de baja, igual que el patrón de Proveedores.
+    /// </summary>
+    public async Task<bool> ReactivarCategoriaAsync(
+        short idCategoria,
+        int? idEmpleadoResponsable,
+        CancellationToken ct = default)
+    {
+        const string query = @"
+            UPDATE categoria
+            SET Estado = 1,
+                FechaActualizacion = @ahora,
+                UsuarioModificacion = @usuario,
+                FechaModificacion = @ahora,
+                UsuarioBaja = NULL,
+                FechaBaja = NULL,
+                IdEmpleadoResponsable = @usuario
+            WHERE IdCategoria = @id AND Estado = 0";
+
+        using MySqlConnection connection = _connectionFactory.CreateConnection();
+        using MySqlCommand command = new(query, connection);
+
+        AgregarParametro(command, "@id", idCategoria);
+        AgregarParametro(command, "@ahora", DateTime.Now);
+        AgregarParametro(command, "@usuario", idEmpleadoResponsable);
+
+        await connection.OpenAsync(ct);
+
+        return await command.ExecuteNonQueryAsync(ct) > 0;
+    }
+
     // ===================== Marcas =====================
 
     public async Task<short> InsertarMarcaAsync(
@@ -485,6 +527,38 @@ public sealed class MySqlCatalogoAuxiliarRepository : IRepositoryCatalogoAuxilia
                 FechaBaja = @ahora,
                 IdEmpleadoResponsable = @usuario
             WHERE IdMarca = @id AND Estado = 1";
+
+        using MySqlConnection connection = _connectionFactory.CreateConnection();
+        using MySqlCommand command = new(query, connection);
+
+        AgregarParametro(command, "@id", idMarca);
+        AgregarParametro(command, "@ahora", DateTime.Now);
+        AgregarParametro(command, "@usuario", idEmpleadoResponsable);
+
+        await connection.OpenAsync(ct);
+
+        return await command.ExecuteNonQueryAsync(ct) > 0;
+    }
+
+    /// <summary>
+    /// Reactiva una marca dada de baja sin borrar la fila y limpiando
+    /// los campos de baja, igual que el patrón de Proveedores.
+    /// </summary>
+    public async Task<bool> ReactivarMarcaAsync(
+        short idMarca,
+        int? idEmpleadoResponsable,
+        CancellationToken ct = default)
+    {
+        const string query = @"
+            UPDATE marca
+            SET Estado = 1,
+                FechaActualizacion = @ahora,
+                UsuarioModificacion = @usuario,
+                FechaModificacion = @ahora,
+                UsuarioBaja = NULL,
+                FechaBaja = NULL,
+                IdEmpleadoResponsable = @usuario
+            WHERE IdMarca = @id AND Estado = 0";
 
         using MySqlConnection connection = _connectionFactory.CreateConnection();
         using MySqlCommand command = new(query, connection);

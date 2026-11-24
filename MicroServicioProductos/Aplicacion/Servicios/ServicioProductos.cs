@@ -83,19 +83,21 @@ public sealed class ServicioProductos
     }
 
     public async Task<Result<IReadOnlyList<Categoria>>> ListarCategoriasAsync(
+        bool incluirInactivos = false,
         CancellationToken ct = default)
     {
         IReadOnlyList<Categoria> categorias =
-            await _catalogo.ListarCategoriasActivasAsync(ct);
+            await _catalogo.ListarCategoriasAsync(incluirInactivos, ct);
 
         return Result.Ok(categorias);
     }
 
     public async Task<Result<IReadOnlyList<Marca>>> ListarMarcasAsync(
+        bool incluirInactivos = false,
         CancellationToken ct = default)
     {
         IReadOnlyList<Marca> marcas =
-            await _catalogo.ListarMarcasActivasAsync(ct);
+            await _catalogo.ListarMarcasAsync(incluirInactivos, ct);
 
         return Result.Ok(marcas);
     }
@@ -338,6 +340,51 @@ public sealed class ServicioProductos
         return Result.Ok();
     }
 
+    /// <summary>Reactiva un producto dado de baja, conservando su historial.</summary>
+    public async Task<Result> ReactivarAsync(
+        int idProducto,
+        CancellationToken ct = default)
+    {
+        Producto? actual = await _productos.ObtenerPorIdAsync(idProducto, ct);
+
+        if (actual is null)
+        {
+            return Result.Fallo(
+                PrefijoNoEncontrado + "El producto no existe.");
+        }
+
+        if (actual.Estado == 1)
+        {
+            return Result.Fallo(PrefijoConflicto + "El producto ya está activo.");
+        }
+
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+        string usuario = _contextoUsuario.NombreUsuarioActual;
+        DateTime ahora = DateTime.Now;
+
+        bool reactivado = await _productos.ReactivarAsync(
+            idProducto, idEmpleado, ct);
+
+        if (!reactivado)
+        {
+            return Result.Fallo(
+                PrefijoNoEncontrado + "El producto no existe o ya está activo.");
+        }
+
+        await _historico.RegistrarAsync(new HistoricoProducto
+        {
+            IdProducto = idProducto,
+            Accion = "REACTIVAR",
+            PrecioAnterior = actual.PrecioVenta,
+            StockAnterior = actual.CantidadStock,
+            Detalle = $"Reactivación de producto realizada por {usuario}.",
+            FechaCambio = ahora,
+            IdEmpleadoResponsable = idEmpleado
+        }, ct);
+
+        return Result.Ok();
+    }
+
     // ===================== Categorías =====================
 
     public async Task<Result<Categoria>> ObtenerCategoriaPorIdAsync(
@@ -345,7 +392,7 @@ public sealed class ServicioProductos
         CancellationToken ct = default)
     {
         Categoria? categoria =
-            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, ct);
+            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, false, ct);
 
         return categoria is null
             ? Result.Fallo<Categoria>(
@@ -438,7 +485,7 @@ public sealed class ServicioProductos
         }
 
         Categoria? actual =
-            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, ct);
+            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, false, ct);
 
         if (actual is null || actual.Estado != 1)
         {
@@ -496,7 +543,7 @@ public sealed class ServicioProductos
         CancellationToken ct = default)
     {
         Categoria? actual =
-            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, ct);
+            await _catalogo.ObtenerCategoriaPorIdAsync(idCategoria, false, ct);
 
         if (actual is null || actual.Estado != 1)
         {
@@ -522,13 +569,44 @@ public sealed class ServicioProductos
                 PrefijoNoEncontrado + "La categoría no existe o no está activa.");
     }
 
+    /// <summary>Reactiva una categoría dada de baja.</summary>
+    public async Task<Result> ReactivarCategoriaAsync(
+        short idCategoria,
+        CancellationToken ct = default)
+    {
+        Categoria? actual =
+            await _catalogo.ObtenerCategoriaPorIdAsync(
+                idCategoria, incluirInactivos: true, ct);
+
+        if (actual is null)
+        {
+            return Result.Fallo(
+                PrefijoNoEncontrado + "La categoría no existe.");
+        }
+
+        if (actual.Estado == 1)
+        {
+            return Result.Fallo(PrefijoConflicto + "La categoría ya está activa.");
+        }
+
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+
+        bool reactivada = await _catalogo.ReactivarCategoriaAsync(
+            idCategoria, idEmpleado, ct);
+
+        return reactivada
+            ? Result.Ok()
+            : Result.Fallo(
+                PrefijoNoEncontrado + "La categoría no existe o ya está activa.");
+    }
+
     // ===================== Marcas =====================
 
     public async Task<Result<Marca>> ObtenerMarcaPorIdAsync(
         short idMarca,
         CancellationToken ct = default)
     {
-        Marca? marca = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, ct);
+        Marca? marca = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, false, ct);
 
         return marca is null
             ? Result.Fallo<Marca>(
@@ -586,7 +664,7 @@ public sealed class ServicioProductos
             return Result.Fallo("Los datos de la marca son obligatorios.");
         }
 
-        Marca? actual = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, ct);
+        Marca? actual = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, false, ct);
 
         if (actual is null || actual.Estado != 1)
         {
@@ -638,7 +716,7 @@ public sealed class ServicioProductos
         short idMarca,
         CancellationToken ct = default)
     {
-        Marca? actual = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, ct);
+        Marca? actual = await _catalogo.ObtenerMarcaPorIdAsync(idMarca, false, ct);
 
         if (actual is null || actual.Estado != 1)
         {
@@ -662,6 +740,35 @@ public sealed class ServicioProductos
             ? Result.Ok()
             : Result.Fallo(
                 PrefijoNoEncontrado + "La marca no existe o no está activa.");
+    }
+
+    /// <summary>Reactiva una marca dada de baja.</summary>
+    public async Task<Result> ReactivarMarcaAsync(
+        short idMarca,
+        CancellationToken ct = default)
+    {
+        Marca? actual = await _catalogo.ObtenerMarcaPorIdAsync(
+            idMarca, incluirInactivos: true, ct);
+
+        if (actual is null)
+        {
+            return Result.Fallo(PrefijoNoEncontrado + "La marca no existe.");
+        }
+
+        if (actual.Estado == 1)
+        {
+            return Result.Fallo(PrefijoConflicto + "La marca ya está activa.");
+        }
+
+        int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
+
+        bool reactivada = await _catalogo.ReactivarMarcaAsync(
+            idMarca, idEmpleado, ct);
+
+        return reactivada
+            ? Result.Ok()
+            : Result.Fallo(
+                PrefijoNoEncontrado + "La marca no existe o ya está activa.");
     }
 
     private async Task<string> GenerarCodigoDisponibleAsync(

@@ -32,9 +32,6 @@ namespace FERRETERIA__Joel.Pages
         [BindProperty(SupportsGet = true)]
         public bool Descendente { get; set; }
 
-        [BindProperty(SupportsGet = true)]
-        public bool IncluirInactivos { get; set; }
-
         public List<ClienteApi> Clientes { get; private set; } = new();
 
         public bool EsAdministrador => User.IsInRole(RolesSistema.Administrador);
@@ -46,7 +43,7 @@ namespace FERRETERIA__Joel.Pages
             try
             {
                 RespuestaApi<List<ClienteApi>> respuesta = await _api.ListarAsync(
-                    ObtenerToken(), Buscar, !IncluirInactivos, OrdenarPor, Descendente);
+                    ObtenerToken(), Buscar, false, OrdenarPor, Descendente);
 
                 if (respuesta.Exitoso && respuesta.Datos is not null)
                 {

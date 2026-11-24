@@ -46,10 +46,12 @@ public sealed class ProductosController : ControllerBase
     }
 
     [HttpGet("categorias")]
-    public async Task<IActionResult> ListarCategorias(CancellationToken ct = default)
+    public async Task<IActionResult> ListarCategorias(
+        [FromQuery] bool incluirInactivos = false,
+        CancellationToken ct = default)
     {
         Result<IReadOnlyList<Dominio.Entidades.Categoria>> resultado =
-            await _servicio.ListarCategoriasAsync(ct);
+            await _servicio.ListarCategoriasAsync(incluirInactivos, ct);
 
         if (resultado.EsFallo)
         {
@@ -77,10 +79,12 @@ public sealed class ProductosController : ControllerBase
     }
 
     [HttpGet("marcas")]
-    public async Task<IActionResult> ListarMarcas(CancellationToken ct = default)
+    public async Task<IActionResult> ListarMarcas(
+        [FromQuery] bool incluirInactivos = false,
+        CancellationToken ct = default)
     {
         Result<IReadOnlyList<Dominio.Entidades.Marca>> resultado =
-            await _servicio.ListarMarcasAsync(ct);
+            await _servicio.ListarMarcasAsync(incluirInactivos, ct);
 
         if (resultado.EsFallo)
         {
@@ -224,6 +228,21 @@ public sealed class ProductosController : ControllerBase
         return Ok(new { mensaje = "Producto dado de baja correctamente." });
     }
 
+    [HttpPatch("{id:int}/reactivar")]
+    public async Task<IActionResult> Reactivar(
+        int id,
+        CancellationToken ct = default)
+    {
+        Result resultado = await _servicio.ReactivarAsync(id, ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(new { mensaje = "Producto reactivado correctamente." });
+    }
+
     // ===================== Categorías =====================
 
     [HttpPost("categorias")]
@@ -284,6 +303,22 @@ public sealed class ProductosController : ControllerBase
         return Ok(new { mensaje = "Categoría dada de baja correctamente." });
     }
 
+    [HttpPatch("categorias/{id:int}/reactivar")]
+    public async Task<IActionResult> ReactivarCategoria(
+        int id,
+        CancellationToken ct = default)
+    {
+        Result resultado =
+            await _servicio.ReactivarCategoriaAsync(ConvertirIdCatalogo(id), ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(new { mensaje = "Categoría reactivada correctamente." });
+    }
+
     // ===================== Marcas =====================
 
     [HttpPost("marcas")]
@@ -341,6 +376,22 @@ public sealed class ProductosController : ControllerBase
         }
 
         return Ok(new { mensaje = "Marca dada de baja correctamente." });
+    }
+
+    [HttpPatch("marcas/{id:int}/reactivar")]
+    public async Task<IActionResult> ReactivarMarca(
+        int id,
+        CancellationToken ct = default)
+    {
+        Result resultado =
+            await _servicio.ReactivarMarcaAsync(ConvertirIdCatalogo(id), ct);
+
+        if (resultado.EsFallo)
+        {
+            return ResponderFallo(resultado);
+        }
+
+        return Ok(new { mensaje = "Marca reactivada correctamente." });
     }
 
     // ===================== Traducción Result → HTTP =====================

@@ -10,13 +10,23 @@ public interface IRepositoryCatalogoAuxiliar
 {
     // ===================== Consultas =====================
 
-    Task<IReadOnlyList<Categoria>> ListarCategoriasActivasAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Categoria>> ListarCategoriasAsync(
+        bool incluirInactivos = false,
+        CancellationToken ct = default);
 
-    Task<IReadOnlyList<Marca>> ListarMarcasActivasAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Marca>> ListarMarcasAsync(
+        bool incluirInactivos = false,
+        CancellationToken ct = default);
 
-    Task<Categoria?> ObtenerCategoriaPorIdAsync(short idCategoria, CancellationToken ct = default);
+    Task<Categoria?> ObtenerCategoriaPorIdAsync(
+        short idCategoria,
+        bool incluirInactivos = false,
+        CancellationToken ct = default);
 
-    Task<Marca?> ObtenerMarcaPorIdAsync(short idMarca, CancellationToken ct = default);
+    Task<Marca?> ObtenerMarcaPorIdAsync(
+        short idMarca,
+        bool incluirInactivos = false,
+        CancellationToken ct = default);
 
     Task<bool> ExisteCategoriaActivaAsync(short idCategoria, CancellationToken ct = default);
 
@@ -63,6 +73,11 @@ public interface IRepositoryCatalogoAuxiliar
         int? idEmpleadoResponsable,
         CancellationToken ct = default);
 
+    Task<bool> ReactivarCategoriaAsync(
+        short idCategoria,
+        int? idEmpleadoResponsable,
+        CancellationToken ct = default);
+
     // ===================== Marcas =====================
 
     Task<short> InsertarMarcaAsync(Marca marca, CancellationToken ct = default);
@@ -70,6 +85,11 @@ public interface IRepositoryCatalogoAuxiliar
     Task<bool> ActualizarMarcaAsync(Marca marca, CancellationToken ct = default);
 
     Task<bool> DarDeBajaMarcaAsync(
+        short idMarca,
+        int? idEmpleadoResponsable,
+        CancellationToken ct = default);
+
+    Task<bool> ReactivarMarcaAsync(
         short idMarca,
         int? idEmpleadoResponsable,
         CancellationToken ct = default);

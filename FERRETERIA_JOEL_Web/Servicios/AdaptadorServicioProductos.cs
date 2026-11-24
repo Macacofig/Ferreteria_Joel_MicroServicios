@@ -40,12 +40,16 @@ namespace FERRETERIA__Joel.Servicios
                 cancelacion);
 
         public Task<ResultadoApi<List<CategoriaApi>>> ListarCategoriasAsync(
+            bool incluirInactivos = false,
             CancellationToken cancelacion = default) =>
-            _adaptee.ListarCategoriasAsync(ObtenerToken(), cancelacion);
+            _adaptee.ListarCategoriasAsync(
+                ObtenerToken(), incluirInactivos, cancelacion);
 
         public Task<ResultadoApi<List<MarcaApi>>> ListarMarcasAsync(
+            bool incluirInactivos = false,
             CancellationToken cancelacion = default) =>
-            _adaptee.ListarMarcasAsync(ObtenerToken(), cancelacion);
+            _adaptee.ListarMarcasAsync(
+                ObtenerToken(), incluirInactivos, cancelacion);
 
         public Task<ResultadoApi<ProductoApi>> ObtenerAsync(
             int idProducto,
@@ -73,6 +77,11 @@ namespace FERRETERIA__Joel.Servicios
             int idProducto,
             CancellationToken cancelacion = default) =>
             _adaptee.DarDeBajaAsync(ObtenerToken(), idProducto, cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ReactivarAsync(
+            int idProducto,
+            CancellationToken cancelacion = default) =>
+            _adaptee.ReactivarAsync(ObtenerToken(), idProducto, cancelacion);
 
         public Task<ResultadoApi<List<HistoricoProductoApi>>> ListarHistoricoAsync(
             int idProducto,
@@ -107,6 +116,12 @@ namespace FERRETERIA__Joel.Servicios
             _adaptee.DarDeBajaCategoriaAsync(
                 ObtenerToken(), idCategoria, cancelacion);
 
+        public Task<ResultadoApi<MensajeApi>> ReactivarCategoriaAsync(
+            short idCategoria,
+            CancellationToken cancelacion = default) =>
+            _adaptee.ReactivarCategoriaAsync(
+                ObtenerToken(), idCategoria, cancelacion);
+
         public Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
             short idMarca,
             CancellationToken cancelacion = default) =>
@@ -128,5 +143,10 @@ namespace FERRETERIA__Joel.Servicios
             short idMarca,
             CancellationToken cancelacion = default) =>
             _adaptee.DarDeBajaMarcaAsync(ObtenerToken(), idMarca, cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ReactivarMarcaAsync(
+            short idMarca,
+            CancellationToken cancelacion = default) =>
+            _adaptee.ReactivarMarcaAsync(ObtenerToken(), idMarca, cancelacion);
     }
 }

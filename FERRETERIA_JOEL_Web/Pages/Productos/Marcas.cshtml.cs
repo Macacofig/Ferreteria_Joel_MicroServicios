@@ -139,12 +139,41 @@ public sealed class MarcasModel : PageModel
         return RedirectToPage();
     }
 
+    /// <summary>Reactiva una marca dada de baja.</summary>
+    public async Task<IActionResult> OnPostReactivarAsync(
+        short idMarca,
+        CancellationToken cancelacion = default)
+    {
+        try
+        {
+            ResultadoApi<MensajeApi> resultado =
+                await _api.ReactivarMarcaAsync(idMarca, cancelacion);
+
+            if (resultado.Exitoso)
+            {
+                TempData["Mensaje"] = resultado.Mensaje;
+            }
+            else
+            {
+                TempData["MensajeError"] = resultado.Mensaje;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al reactivar la marca {Id}.", idMarca);
+            TempData["MensajeError"] =
+                "No se pudo reactivar la marca. Inténtalo nuevamente.";
+        }
+
+        return RedirectToPage();
+    }
+
     private async Task CargarAsync(CancellationToken cancelacion = default)
     {
         try
         {
             ResultadoApi<List<MarcaApi>> respuesta =
-                await _api.ListarMarcasAsync(cancelacion);
+                await _api.ListarMarcasAsync(incluirInactivos: true, cancelacion);
 
             if (respuesta.Exitoso && respuesta.Datos is not null)
             {

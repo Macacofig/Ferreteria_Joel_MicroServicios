@@ -32,4 +32,13 @@ public interface IRepositoryProducto
         int idProducto,
         int? usuarioBaja,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Reactiva un producto dado de baja, limpiando los campos de baja y
+    /// registrando la auditoría de la reactivación.
+    /// </summary>
+    Task<bool> ReactivarAsync(
+        int idProducto,
+        int? usuario,
+        CancellationToken ct = default);
 }

@@ -59,11 +59,6 @@
                 </select>
             </div>
 
-            <label style="display:flex;gap:.4rem;align-items:center;padding-bottom:.55rem;">
-                <input type="checkbox" name="IncluirInactivos" value="true" checked="@Model.IncluirInactivos" />
-                Incluir clientes dados de baja
-            </label>
-
             <div style="display:flex;gap:.5rem;padding-bottom:.1rem;">
                 <button type="submit" class="fj-btn fj-btn-primary">Buscar</button>
                 <a class="fj-btn fj-btn-ghost" asp-page="/Clientes">Limpiar</a>
@@ -87,15 +82,14 @@
 
     <section class="fj-card fj-table-card" aria-label="Listado de clientes">
         <div class="fj-table-wrap fj-table-wrap-scroll">
-            <table class="fj-table">
+            <table class="fj-table fj-table-clientes">
                 <thead>
                     <tr>
                         <th scope="col">Cliente</th>
                         <th scope="col">CI</th>
                         <th scope="col">Contacto</th>
                         <th scope="col">Dirección</th>
-                        <th scope="col">Registro</th>
-                        <th scope="col" class="fj-td-estado">Estado</th>
+                        <th scope="col">Estado</th>
                         <th scope="col" class="fj-td-acciones">Acciones</th>
                     </tr>
                 </thead>
@@ -104,7 +98,7 @@
                     @if (Model.Clientes.Count == 0)
                     {
                         <tr>
-                            <td colspan="7" class="fj-table-vacio">
+                            <td colspan="6" class="fj-table-vacio">
                                 <div class="fj-empty">
                                     <p>No se encontraron clientes</p>
                                     <span>Registre un cliente nuevo o cambie los criterios de búsqueda.</span>
@@ -136,19 +130,8 @@
                                 @(string.IsNullOrWhiteSpace(cliente.Direccion) ? "—" : cliente.Direccion)
                             </td>
 
-                            <td class="fj-td-secundario">
-                                @cliente.FechaCreacion.ToLocalTime().ToString("dd/MM/yyyy")
-                            </td>
-
-                            <td class="fj-td-estado">
-                                @if (cliente.Activo)
-                                {
-                                    <span class="fj-pill" style="--pill: var(--success);">Activo</span>
-                                }
-                                else
-                                {
-                                    <span class="fj-pill" style="--pill: var(--texto-ter);">Inactivo</span>
-                                }
+                            <td class="fj-auditoria">
+                                <span class="fj-pill" style="--pill: @(cliente.Activo ? "var(--success)" : "var(--texto-ter)");">@(cliente.Activo ? "Activo" : "Inactivo")</span>
                             </td>
 
                             <td class="fj-td-acciones">

@@ -142,6 +142,35 @@ public sealed class CategoriasModel : PageModel
         return RedirectToPage();
     }
 
+    /// <summary>Reactiva una categoría dada de baja.</summary>
+    public async Task<IActionResult> OnPostReactivarAsync(
+        short idCategoria,
+        CancellationToken cancelacion = default)
+    {
+        try
+        {
+            ResultadoApi<MensajeApi> resultado =
+                await _api.ReactivarCategoriaAsync(idCategoria, cancelacion);
+
+            if (resultado.Exitoso)
+            {
+                TempData["Mensaje"] = resultado.Mensaje;
+            }
+            else
+            {
+                TempData["MensajeError"] = resultado.Mensaje;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al reactivar la categoría {Id}.", idCategoria);
+            TempData["MensajeError"] =
+                "No se pudo reactivar la categoría. Inténtalo nuevamente.";
+        }
+
+        return RedirectToPage();
+    }
+
     private async Task CargarAsync(CancellationToken cancelacion = default)
     {
         await CargarSiguienteCodigoAsync(cancelacion);
@@ -149,7 +178,7 @@ public sealed class CategoriasModel : PageModel
         try
         {
             ResultadoApi<List<CategoriaApi>> respuesta =
-                await _api.ListarCategoriasAsync(cancelacion);
+                await _api.ListarCategoriasAsync(incluirInactivos: true, cancelacion);
 
             if (respuesta.Exitoso && respuesta.Datos is not null)
             {

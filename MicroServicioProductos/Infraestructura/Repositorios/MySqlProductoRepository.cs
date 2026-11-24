@@ -277,6 +277,7 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
                 Estado = @estado,
                 FechaActualizacion = @fechaActualizacion,
                 UsuarioModificacion = @usuarioModificacion,
+                FechaModificacion = @fechaModificacion,
                 IdEmpleadoResponsable = @idEmpleadoResponsable
             WHERE IdProducto = @id";
 
@@ -304,6 +305,9 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
             "@usuarioModificacion",
             (object?)producto.UsuarioModificacion ?? DBNull.Value);
         command.Parameters.AddWithValue(
+            "@fechaModificacion",
+            (object?)producto.FechaModificacion ?? ahora);
+        command.Parameters.AddWithValue(
             "@idEmpleadoResponsable",
             (object?)producto.IdEmpleadoResponsable ?? DBNull.Value);
 
@@ -323,6 +327,8 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
                 UsuarioBaja = @usuarioBaja,
                 FechaBaja = @fechaBaja,
                 FechaActualizacion = @fechaActualizacion,
+                UsuarioModificacion = @usuarioBaja,
+                FechaModificacion = @fechaBaja,
                 IdEmpleadoResponsable = @idEmpleadoResponsable
             WHERE IdProducto = @id
               AND Estado = 1";
@@ -341,6 +347,41 @@ public sealed class MySqlProductoRepository : IRepositoryProducto
         command.Parameters.AddWithValue(
             "@idEmpleadoResponsable",
             (object?)usuarioBaja ?? DBNull.Value);
+
+        await connection.OpenAsync(ct);
+
+        return await command.ExecuteNonQueryAsync(ct) > 0;
+    }
+
+    /// <summary>
+    /// Reactiva un producto dado de baja sin borrar la fila, limpiando los
+    /// campos de baja y registrando quién y cuándo lo reactivó.
+    /// </summary>
+    public async Task<bool> ReactivarAsync(
+        int idProducto,
+        int? usuario,
+        CancellationToken ct = default)
+    {
+        const string query = @"
+            UPDATE producto
+            SET Estado = 1,
+                UsuarioBaja = NULL,
+                FechaBaja = NULL,
+                FechaActualizacion = @ahora,
+                UsuarioModificacion = @usuario,
+                FechaModificacion = @ahora,
+                IdEmpleadoResponsable = @usuario
+            WHERE IdProducto = @id
+              AND Estado = 0";
+
+        DateTime ahora = DateTime.Now;
+
+        using MySqlConnection connection = _connectionFactory.CreateConnection();
+        using MySqlCommand command = new(query, connection);
+
+        command.Parameters.AddWithValue("@id", idProducto);
+        command.Parameters.AddWithValue("@ahora", ahora);
+        command.Parameters.AddWithValue("@usuario", (object?)usuario ?? DBNull.Value);
 
         await connection.OpenAsync(ct);
 

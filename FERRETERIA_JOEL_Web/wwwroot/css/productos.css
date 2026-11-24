@@ -565,14 +565,18 @@
     text-align: center;
 }
 
-.fj-table-proveedores .fj-auditoria {
+.fj-table-proveedores .fj-auditoria,
+.fj-table-productos .fj-auditoria,
+.fj-table-clientes .fj-auditoria {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
 }
 
-.fj-table-proveedores .fj-auditoria small {
+.fj-table-proveedores .fj-auditoria small,
+.fj-table-productos .fj-auditoria small,
+.fj-table-clientes .fj-auditoria small {
     font-size: 0.72rem;
     color: var(--texto-ter);
 }

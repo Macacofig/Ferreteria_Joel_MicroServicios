@@ -15,9 +15,11 @@ namespace FERRETERIA__Joel.Servicios
             CancellationToken cancelacion = default);
 
         Task<ResultadoApi<List<CategoriaApi>>> ListarCategoriasAsync(
+            bool incluirInactivos = false,
             CancellationToken cancelacion = default);
 
         Task<ResultadoApi<List<MarcaApi>>> ListarMarcasAsync(
+            bool incluirInactivos = false,
             CancellationToken cancelacion = default);
 
         Task<ResultadoApi<ProductoApi>> ObtenerAsync(
@@ -37,6 +39,10 @@ namespace FERRETERIA__Joel.Servicios
             CancellationToken cancelacion = default);
 
         Task<ResultadoApi<MensajeApi>> DarDeBajaAsync(
+            int idProducto,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> ReactivarAsync(
             int idProducto,
             CancellationToken cancelacion = default);
 
@@ -66,6 +72,10 @@ namespace FERRETERIA__Joel.Servicios
             short idCategoria,
             CancellationToken cancelacion = default);
 
+        Task<ResultadoApi<MensajeApi>> ReactivarCategoriaAsync(
+            short idCategoria,
+            CancellationToken cancelacion = default);
+
         // ===================== Marcas =====================
 
         Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
@@ -82,6 +92,10 @@ namespace FERRETERIA__Joel.Servicios
             CancellationToken cancelacion = default);
 
         Task<ResultadoApi<MensajeApi>> DarDeBajaMarcaAsync(
+            short idMarca,
+            CancellationToken cancelacion = default);
+
+        Task<ResultadoApi<MensajeApi>> ReactivarMarcaAsync(
             short idMarca,
             CancellationToken cancelacion = default);
     }

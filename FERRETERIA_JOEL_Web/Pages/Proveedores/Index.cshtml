@@ -1,10 +1,8 @@
 ﻿@page
 @model FERRETERIA__Joel.Pages.Proveedores.IndexModel
-@using System.Globalization
 @{
     ViewData["Title"] = "Proveedores";
     ViewData["ActiveMenu"] = "Proveedores";
-    var cultura = new CultureInfo("es-ES");
 }
 
 @section Styles {
@@ -77,7 +75,7 @@
                         <th scope="col">Contacto</th>
                         <th scope="col">Teléfono</th>
                         <th scope="col">Responsable</th>
-                        <th scope="col">Auditoría</th>
+                        <th scope="col">Estado</th>
                         <th scope="col" class="fj-td-acciones">Acciones</th>
                     </tr>
                 </thead>
@@ -105,8 +103,6 @@
                             <td class="fj-td-secundario">@(string.IsNullOrWhiteSpace(proveedor.NombreResponsable) ? "No registrado" : proveedor.NombreResponsable)</td>
                             <td class="fj-auditoria">
                                 <span class="fj-pill" style="--pill: @(proveedor.Estado ? "var(--success)" : "var(--texto-ter)");">@(proveedor.Estado ? "Activo" : "Inactivo")</span>
-                                <small>Creado: @proveedor.FechaCreacion.ToString("g", cultura) · @(string.IsNullOrWhiteSpace(proveedor.UsuarioCreacion) ? "—" : proveedor.UsuarioCreacion)</small>
-                                <small>Modif.: @(proveedor.FechaModificacion?.ToString("g", cultura) ?? "—") · @(string.IsNullOrWhiteSpace(proveedor.UsuarioModificacion) ? "—" : proveedor.UsuarioModificacion)</small>
                             </td>
                             <td class="fj-td-acciones">
                                 <div class="fj-acciones">

@@ -80,6 +80,42 @@ public sealed class IndexModel : PageModel
         });
     }
 
+    /// <summary>Reactiva un producto dado de baja (baja lógica inversa).</summary>
+    public async Task<IActionResult> OnPostReactivarAsync(
+        int idProducto,
+        string? ordenarPor,
+        string? direccion)
+    {
+        try
+        {
+            ResultadoApi<MensajeApi> resultado =
+                await _api.ReactivarAsync(idProducto);
+
+            if (resultado.Exitoso)
+            {
+                TempData["Mensaje"] = resultado.Mensaje;
+            }
+            else
+            {
+                TempData["MensajeError"] = resultado.Mensaje;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al reactivar el producto {Id}.", idProducto);
+            TempData["MensajeError"] =
+                "No se pudo reactivar el producto. Inténtalo nuevamente.";
+        }
+
+        NormalizarOrden(ordenarPor, direccion);
+
+        return RedirectToPage(new
+        {
+            ordenarPor = OrdenarPor,
+            direccion = Direccion
+        });
+    }
+
     private void NormalizarOrden(string? ordenarPor, string? direccion)
     {
         string[] columnas =
@@ -102,7 +138,7 @@ public sealed class IndexModel : PageModel
         try
         {
             ResultadoApi<List<ProductoApi>> respuesta =
-                await _api.ListarAsync(OrdenarPor, Direccion);
+                await _api.ListarAsync(OrdenarPor, Direccion, incluirInactivos: true);
 
             if (respuesta.Exitoso && respuesta.Datos is not null)
             {

@@ -49,20 +49,22 @@ namespace FERRETERIA__Joel.Servicios
 
         public Task<ResultadoApi<List<CategoriaApi>>> ListarCategoriasAsync(
             string? token,
+            bool incluirInactivos = false,
             CancellationToken cancelacion = default) =>
             EnviarAsync<List<CategoriaApi>>(
                 HttpMethod.Get,
-                "api/productos/categorias",
+                $"api/productos/categorias?incluirInactivos={(incluirInactivos ? "true" : "false")}",
                 token,
                 null,
                 cancelacion);
 
         public Task<ResultadoApi<List<MarcaApi>>> ListarMarcasAsync(
             string? token,
+            bool incluirInactivos = false,
             CancellationToken cancelacion = default) =>
             EnviarAsync<List<MarcaApi>>(
                 HttpMethod.Get,
-                "api/productos/marcas",
+                $"api/productos/marcas?incluirInactivos={(incluirInactivos ? "true" : "false")}",
                 token,
                 null,
                 cancelacion);
@@ -118,6 +120,17 @@ namespace FERRETERIA__Joel.Servicios
             EnviarAsync<MensajeApi>(
                 HttpMethod.Delete,
                 $"api/productos/{idProducto}",
+                token,
+                null,
+                cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ReactivarAsync(
+            string? token,
+            int idProducto,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MensajeApi>(
+                HttpMethod.Patch,
+                $"api/productos/{idProducto}/reactivar",
                 token,
                 null,
                 cancelacion);
@@ -190,6 +203,17 @@ namespace FERRETERIA__Joel.Servicios
                 null,
                 cancelacion);
 
+        public Task<ResultadoApi<MensajeApi>> ReactivarCategoriaAsync(
+            string? token,
+            short idCategoria,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MensajeApi>(
+                HttpMethod.Patch,
+                $"api/productos/categorias/{idCategoria}/reactivar",
+                token,
+                null,
+                cancelacion);
+
         // ===================== Marcas =====================
 
         public Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
@@ -233,6 +257,17 @@ namespace FERRETERIA__Joel.Servicios
             EnviarAsync<MensajeApi>(
                 HttpMethod.Delete,
                 $"api/productos/marcas/{idMarca}",
+                token,
+                null,
+                cancelacion);
+
+        public Task<ResultadoApi<MensajeApi>> ReactivarMarcaAsync(
+            string? token,
+            short idMarca,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<MensajeApi>(
+                HttpMethod.Patch,
+                $"api/productos/marcas/{idMarca}/reactivar",
                 token,
                 null,
                 cancelacion);

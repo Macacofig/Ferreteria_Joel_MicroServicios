@@ -114,7 +114,7 @@
     <section class="fj-toolbar fj-toolbar-simple">
         <p class="fj-toolbar-count">
             <strong>@Model.Productos.Count</strong>
-            @(Model.Productos.Count == 1 ? "producto activo" : "productos activos")
+            @(Model.Productos.Count == 1 ? "producto registrado" : "productos registrados")
         </p>
 
         <div class="fj-toolbar-actions prod-toolbar-controls">
@@ -169,6 +169,7 @@
                         <th scope="col">
                             <a asp-page="/Productos/Index" asp-route-ordenarPor="stock" asp-route-direccion="@DireccionDe("stock")">Stock @(FlechaDe("stock"))</a>
                         </th>
+                        <th scope="col">Estado</th>
                         <th scope="col" class="fj-td-acciones">Acciones</th>
                     </tr>
                 </thead>
@@ -177,7 +178,7 @@
                     @if (Model.Productos.Count == 0)
                     {
                         <tr>
-                            <td colspan="8" class="fj-table-vacio">
+                            <td colspan="9" class="fj-table-vacio">
                                 <div class="fj-empty">
                                     <span class="fj-empty-ico" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
@@ -213,13 +214,11 @@
                                     @producto.CantidadStock
                                 </span>
                             </td>
+                            <td class="fj-auditoria">
+                                <span class="fj-pill" style="--pill: @(producto.Estado == 1 ? "var(--success)" : "var(--texto-ter)");">@(producto.Estado == 1 ? "Activo" : "Inactivo")</span>
+                            </td>
                             <td class="fj-td-acciones">
                                 <div class="fj-acciones">
-                                    <a class="fj-btn fj-btn-edit fj-btn-sm"
-                                       asp-page="/Productos/Editar"
-                                       asp-route-id="@producto.IdProducto"
-                                       title="Editar producto">Editar</a>
-
                                     <a class="fj-btn fj-btn-ghost fj-btn-sm fj-btn-detalle"
                                        asp-page="/Productos/Historico"
                                        asp-route-id="@producto.IdProducto"
@@ -228,17 +227,40 @@
                                         Ver Histórico
                                     </a>
 
-                                    <form method="post"
-                                          asp-page-handler="Eliminar"
-                                          class="fj-inline-form"
-                                          data-fj-confirm="¿Desea dar de baja el producto '@producto.Nombre' (código @producto.Codigo)?">
-                                        <input type="hidden" name="idProducto" value="@producto.IdProducto" />
-                                        <input type="hidden" name="ordenarPor" value="@Model.OrdenarPor" />
-                                        <input type="hidden" name="direccion" value="@Model.Direccion" />
-                                        <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Eliminar" aria-label="Eliminar producto">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                                        </button>
-                                    </form>
+                                    @if (producto.Estado == 1)
+                                    {
+                                        <a class="fj-btn fj-btn-edit fj-btn-sm"
+                                           asp-page="/Productos/Editar"
+                                           asp-route-id="@producto.IdProducto"
+                                           title="Editar producto">Editar</a>
+
+                                        <form method="post"
+                                              asp-page-handler="Eliminar"
+                                              class="fj-inline-form"
+                                              data-fj-confirm="¿Desea dar de baja el producto '@producto.Nombre' (código @producto.Codigo)?">
+                                            <input type="hidden" name="idProducto" value="@producto.IdProducto" />
+                                            <input type="hidden" name="ordenarPor" value="@Model.OrdenarPor" />
+                                            <input type="hidden" name="direccion" value="@Model.Direccion" />
+                                            <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Dar de baja" aria-label="Dar de baja producto">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="Reactivar"
+                                              class="fj-inline-form"
+                                              data-fj-confirm="¿Desea reactivar el producto '@producto.Nombre' (código @producto.Codigo)?">
+                                            <input type="hidden" name="idProducto" value="@producto.IdProducto" />
+                                            <input type="hidden" name="ordenarPor" value="@Model.OrdenarPor" />
+                                            <input type="hidden" name="direccion" value="@Model.Direccion" />
+                                            <button type="submit" class="fj-btn fj-btn-ghost fj-btn-sm" title="Reactivar producto">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><polyline points="3 3 3 8 8 8" /></svg>
+                                                Reactivar
+                                            </button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>

@@ -127,7 +127,7 @@
     <section class="fj-toolbar fj-toolbar-simple" aria-label="Herramientas del listado">
         <p class="fj-toolbar-count">
             <strong>@Model.Marcas.Count</strong>
-            @(Model.Marcas.Count == 1 ? "marca activa" : "marcas activas")
+            @(Model.Marcas.Count == 1 ? "marca registrada" : "marcas registradas")
         </p>
 
         <div class="fj-toolbar-actions">
@@ -152,6 +152,7 @@
                     <tr>
                         <th scope="col">Nombre</th>
                         <th scope="col">País de origen</th>
+                        <th scope="col">Estado</th>
                         <th scope="col" class="fj-td-acciones">Acciones</th>
                     </tr>
                 </thead>
@@ -160,10 +161,10 @@
                     @if (Model.Marcas.Count == 0)
                     {
                         <tr>
-                            <td colspan="3" class="fj-table-vacio">
+                            <td colspan="4" class="fj-table-vacio">
                                 <div class="fj-empty">
                                     <p>Sin marcas registradas</p>
-                                    <span>Cuando existan marcas activas, aparecerán aquí.</span>
+                                    <span>Cuando existan marcas registradas, aparecerán aquí.</span>
                                 </div>
                             </td>
                         </tr>
@@ -178,25 +179,44 @@
                             <td class="fj-td-secundario">
                                 @(string.IsNullOrWhiteSpace(marca.PaisOrigen) ? "—" : marca.PaisOrigen)
                             </td>
+                            <td class="fj-auditoria">
+                                <span class="fj-pill" style="--pill: @(marca.Estado == 1 ? "var(--success)" : "var(--texto-ter)");">@(marca.Estado == 1 ? "Activo" : "Inactivo")</span>
+                            </td>
                             <td class="fj-td-acciones">
                                 <div class="fj-acciones">
-                                    <button type="button"
-                                            class="fj-btn fj-btn-edit fj-btn-sm"
-                                            data-fj-marca-editar
-                                            data-id="@marca.IdMarca"
-                                            data-nombre="@marca.Nombre"
-                                            data-pais="@marca.PaisOrigen"
-                                            title="Editar marca">Editar</button>
+                                    @if (marca.Estado == 1)
+                                    {
+                                        <button type="button"
+                                                class="fj-btn fj-btn-edit fj-btn-sm"
+                                                data-fj-marca-editar
+                                                data-id="@marca.IdMarca"
+                                                data-nombre="@marca.Nombre"
+                                                data-pais="@marca.PaisOrigen"
+                                                title="Editar marca">Editar</button>
 
-                                    <form method="post"
-                                          asp-page-handler="Eliminar"
-                                          class="fj-inline-form"
-                                          data-fj-confirm="¿Desea dar de baja la marca '@marca.Nombre'?">
-                                        <input type="hidden" name="idMarca" value="@marca.IdMarca" />
-                                        <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Eliminar" aria-label="Eliminar marca">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                                        </button>
-                                    </form>
+                                        <form method="post"
+                                              asp-page-handler="Eliminar"
+                                              class="fj-inline-form"
+                                              data-fj-confirm="¿Desea dar de baja la marca '@marca.Nombre'?">
+                                            <input type="hidden" name="idMarca" value="@marca.IdMarca" />
+                                            <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Dar de baja" aria-label="Dar de baja marca">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="Reactivar"
+                                              class="fj-inline-form"
+                                              data-fj-confirm="¿Desea reactivar la marca '@marca.Nombre'?">
+                                            <input type="hidden" name="idMarca" value="@marca.IdMarca" />
+                                            <button type="submit" class="fj-btn fj-btn-ghost fj-btn-sm" title="Reactivar marca">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><polyline points="3 3 3 8 8 8" /></svg>
+                                                Reactivar
+                                            </button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>

@@ -139,9 +139,9 @@ public sealed class EditarModel : PageModel
         try
         {
             ResultadoApi<List<CategoriaApi>> categorias =
-                await _api.ListarCategoriasAsync(cancelacion);
+                await _api.ListarCategoriasAsync(false, cancelacion);
             ResultadoApi<List<MarcaApi>> marcas =
-                await _api.ListarMarcasAsync(cancelacion);
+                await _api.ListarMarcasAsync(false, cancelacion);
 
             if (categorias.Exitoso && categorias.Datos is not null)
             {

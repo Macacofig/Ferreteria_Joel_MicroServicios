@@ -25,17 +25,13 @@ namespace FERRETERIA__Joel.Pages
 
         public List<ProductoCatalogoApi> Productos { get; set; } = new();
 
-        public bool SoloActivos { get; set; }
-
-        public async Task OnGetAsync(bool soloActivos = false)
+        public async Task OnGetAsync()
         {
-            SoloActivos = soloActivos;
-
             try
             {
                 Productos = await _api.ObtenerCatalogoAsync(
                     ObtenerToken(),
-                    soloActivos);
+                    soloActivos: false);
             }
             catch (Exception ex)
             {
