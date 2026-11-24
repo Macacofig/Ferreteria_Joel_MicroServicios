@@ -188,6 +188,11 @@ public sealed class ServicioCategorias : IServicioCategorias
                 PrefijosResultado.NoEncontrado + "La categoría no existe o no está activa.");
     }
 
+    /// <summary>
+    /// Da de baja la categoría. Es una baja lógica: los productos que la
+    /// referencian conservan su nombre y pueden seguirse consultando; solo se
+    /// impide asignarla a productos nuevos hasta que se reactive.
+    /// </summary>
     public async Task<Result> DarDeBajaAsync(
         short idCategoria,
         CancellationToken ct = default)
@@ -199,13 +204,6 @@ public sealed class ServicioCategorias : IServicioCategorias
         {
             return Result.Fallo(
                 PrefijosResultado.NoEncontrado + "La categoría no existe o no está activa.");
-        }
-
-        if (await _categorias.TieneProductosActivosCategoriaAsync(idCategoria, ct))
-        {
-            return Result.Fallo(
-                PrefijosResultado.Conflicto +
-                "No se puede dar de baja la categoría porque tiene productos activos asociados.");
         }
 
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;

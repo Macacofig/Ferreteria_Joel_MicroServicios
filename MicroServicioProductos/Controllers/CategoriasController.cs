@@ -33,9 +33,9 @@ public sealed class CategoriasController : ControladorBaseApi
             return ResponderFallo(resultado);
         }
 
-        return OkConMensaje(resultado.Valor!
+        return OkDatos(resultado.Valor!
             .Select(MapeosCategoria.AResponse)
-            .ToList(), resultado.Mensaje);
+            .ToList());
     }
 
     [HttpGet("siguiente-codigo")]
@@ -50,8 +50,8 @@ public sealed class CategoriasController : ControladorBaseApi
             return ResponderFallo(resultado);
         }
 
-        return OkConMensaje(
-            new { codigo = resultado.Valor! }, resultado.Mensaje);
+        return OkDatos(
+            new { codigo = resultado.Valor! });
     }
 
     [HttpGet("{id:int}")]
@@ -67,8 +67,8 @@ public sealed class CategoriasController : ControladorBaseApi
             return ResponderFallo(resultado);
         }
 
-        return OkConMensaje(
-            MapeosCategoria.AResponse(resultado.Valor!), resultado.Mensaje);
+        return OkDatos(
+            MapeosCategoria.AResponse(resultado.Valor!));
     }
 
     [HttpPost]

@@ -33,8 +33,8 @@ public sealed class HistoricoProductoController : ControladorBaseApi
             return ResponderFallo(resultado);
         }
 
-        return OkConMensaje(resultado.Valor!
+        return OkDatos(resultado.Valor!
             .Select(MapeosHistoricoProducto.AResponse)
-            .ToList(), resultado.Mensaje);
+            .ToList());
     }
 }
