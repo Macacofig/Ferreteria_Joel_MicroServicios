@@ -6,8 +6,8 @@ namespace MicroServicioProductos.Controllers;
 
 /// <summary>
 /// Traducción común de <see cref="Result"/> a HTTP. La comparten los cuatro
-/// controladores para no repetir la lógica de 404/409/400 ni la cabecera de
-/// mensaje de éxito.
+/// controladores para no repetir la lógica de 404/409/400 ni la forma del
+/// cuerpo de las respuestas correctas.
 /// </summary>
 public abstract class ControladorBaseApi : ControllerBase
 {
@@ -19,18 +19,12 @@ public abstract class ControladorBaseApi : ControllerBase
         id is >= 1 and <= short.MaxValue ? (short)id : (short)0;
 
     /// <summary>
-    /// Publica el mensaje de éxito del Result sin alterar el cuerpo: los
-    /// clientes del front esperan listas y DTOs directos.
+    /// Devuelve el cuerpo directo que espera el front (listas y DTOs, sin
+    /// envoltorio). El mensaje del Result no se envía como cabecera: los
+    /// caracteres no ASCII, como «categoría», hacen que Kestrel rechace la
+    /// respuesta con un 500. Las mutaciones ya incluyen «mensaje» en el cuerpo.
     /// </summary>
-    protected IActionResult OkConMensaje(object? datos, string mensaje)
-    {
-        if (!string.IsNullOrWhiteSpace(mensaje))
-        {
-            Response.Headers["X-Mensaje"] = mensaje;
-        }
-
-        return Ok(datos);
-    }
+    protected IActionResult OkDatos(object? datos) => Ok(datos);
 
     protected IActionResult ResponderFallo(Result resultado)
     {

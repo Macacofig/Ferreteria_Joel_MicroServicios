@@ -33,9 +33,9 @@ public sealed class MarcasController : ControladorBaseApi
             return ResponderFallo(resultado);
         }
 
-        return OkConMensaje(resultado.Valor!
+        return OkDatos(resultado.Valor!
             .Select(MapeosMarca.AResponse)
-            .ToList(), resultado.Mensaje);
+            .ToList());
     }
 
     [HttpGet("{id:int}")]
@@ -51,8 +51,8 @@ public sealed class MarcasController : ControladorBaseApi
             return ResponderFallo(resultado);
         }
 
-        return OkConMensaje(
-            MapeosMarca.AResponse(resultado.Valor!), resultado.Mensaje);
+        return OkDatos(
+            MapeosMarca.AResponse(resultado.Valor!));
     }
 
     [HttpPost]

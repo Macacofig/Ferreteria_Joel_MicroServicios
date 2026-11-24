@@ -143,6 +143,11 @@ public sealed class ServicioMarcas : IServicioMarcas
                 PrefijosResultado.NoEncontrado + "La marca no existe o no está activa.");
     }
 
+    /// <summary>
+    /// Da de baja la marca. Es una baja lógica: los productos que la referencian
+    /// conservan su nombre y pueden seguirse consultando; solo se impide asignar
+    /// la marca a productos nuevos hasta que se reactive.
+    /// </summary>
     public async Task<Result> DarDeBajaAsync(
         short idMarca,
         CancellationToken ct = default)
@@ -153,13 +158,6 @@ public sealed class ServicioMarcas : IServicioMarcas
         {
             return Result.Fallo(
                 PrefijosResultado.NoEncontrado + "La marca no existe o no está activa.");
-        }
-
-        if (await _marcas.TieneProductosActivosMarcaAsync(idMarca, ct))
-        {
-            return Result.Fallo(
-                PrefijosResultado.Conflicto +
-                "No se puede dar de baja la marca porque tiene productos activos asociados.");
         }
 
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;

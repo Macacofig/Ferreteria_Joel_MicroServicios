@@ -31,8 +31,16 @@ builder.Services.AddSingleton<IForwarderHttpClientFactory, ResilienciaForwarderH
 string authority = builder.Configuration["Keycloak:Authority"]
     ?? "http://localhost:8081/realms/ferreteria";
 
-string metadataAddress = builder.Configuration["Keycloak:MetadataAddress"]
-    ?? $"{authority.TrimEnd('/')}/.well-known/openid-configuration";
+// La configuración puede traer la clave vacía (valor por defecto en
+// appsettings.json). El operador ?? no la sustituye, así que se comprueba
+// también el contenido para no dejar MetadataAddress en blanco en local.
+string metadataAddress =
+    builder.Configuration["Keycloak:MetadataAddress"] ?? string.Empty;
+
+if (string.IsNullOrWhiteSpace(metadataAddress))
+{
+    metadataAddress = $"{authority.TrimEnd('/')}/.well-known/openid-configuration";
+}
 
 // Se aceptan uno o varios emisores (separados por coma o punto y coma) para
 // tolerar tanto el issuer interno de Docker (http://keycloak:8080/realms/...)
