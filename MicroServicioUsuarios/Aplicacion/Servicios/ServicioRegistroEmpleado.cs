@@ -2,6 +2,7 @@
 using FERRETERIA__Joel.Dominio.Constantes;
 using FERRETERIA__Joel.Dominio.Entidades;
 using FERRETERIA__Joel.Dominio.Puertos;
+using FERRETERIA__Joel.Dominio.Resultados;
 using FERRETERIA__Joel.Dominio.Utilidades;
 using FERRETERIA__Joel.Infraestructura.Factories;
 
@@ -67,6 +68,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
                 return new ResultadoRegistro
                 {
                     Exitoso = false,
+                    Mensaje = "Revise los datos del empleado.",
                     ErroresCampo = erroresCampo
                 };
             }
@@ -81,10 +83,22 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
 
             // El usuario se genera solo con el primer apellido para conservar
             // convenciones existentes ("María López" → "mlopez", no "mlope zperez").
-            string nombreUsuario =
+            Result<string> nombreUsuarioResultado =
                 await GenerarNombreUsuarioDisponibleAsync(
                     solicitud.Nombre,
                     apellidos.PrimerApellido);
+
+            if (nombreUsuarioResultado.EsFallo)
+            {
+                return new ResultadoRegistro
+                {
+                    Exitoso = false,
+                    Mensaje = nombreUsuarioResultado.Error,
+                    Errores = new List<string> { nombreUsuarioResultado.Error }
+                };
+            }
+
+            string nombreUsuario = nombreUsuarioResultado.Valor!;
 
             Empleado empleado = new()
             {
@@ -123,6 +137,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
             return new ResultadoRegistro
             {
                 Exitoso = true,
+                Mensaje = "Empleado registrado correctamente. Se envió el enlace de activación.",
                 Id = id,
                 NombreUsuario = nombreUsuario,
                 EnlaceActivacion = _constructorEnlace
@@ -193,6 +208,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
             return new ResultadoRegistro
             {
                 Exitoso = true,
+                Mensaje = "Enlace de activación reenviado correctamente.",
                 Id = empleado.IdEmpleado,
                 NombreUsuario = empleado.NombreUsuario,
                 EnlaceActivacion = _constructorEnlace
@@ -278,7 +294,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
             return await Repositorio.ObtenerPendientesActivacionAsync();
         }
 
-        private async Task<string> GenerarNombreUsuarioDisponibleAsync(
+        private async Task<Result<string>> GenerarNombreUsuarioDisponibleAsync(
             string? nombre,
             string? apellido)
         {
@@ -293,11 +309,13 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
 
                 if (!await Repositorio.ExistePorNombreUsuarioAsync(candidato))
                 {
-                    return candidato;
+                    return Result.OkConMensaje(
+                        candidato, "Nombre de usuario disponible.");
                 }
             }
 
-            throw new InvalidOperationException(
+            // Regla de negocio agotada: se devuelve como Result, no como excepción.
+            return Result.Fallo<string>(
                 "No fue posible generar un nombre de usuario único.");
         }
     }

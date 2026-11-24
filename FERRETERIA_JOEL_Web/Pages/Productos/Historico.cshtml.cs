@@ -10,16 +10,16 @@ namespace FERRETERIA__Joel.Pages.Productos;
 [Authorize]
 public sealed class HistoricoModel : PageModel
 {
-    private readonly IServicioProductos _api;
+    private readonly IProductosConsulta _consultas;
     private readonly IServicioUsuarios _usuarios;
     private readonly ILogger<HistoricoModel> _logger;
 
     public HistoricoModel(
-        IServicioProductos api,
+        IProductosConsulta consultas,
         IServicioUsuarios usuarios,
         ILogger<HistoricoModel> logger)
     {
-        _api = api;
+        _consultas = consultas;
         _usuarios = usuarios;
         _logger = logger;
     }
@@ -42,7 +42,7 @@ public sealed class HistoricoModel : PageModel
 
         try
         {
-            ResultadoApi<ProductoApi> producto = await _api.ObtenerAsync(id);
+            ResultadoApi<ProductoApi> producto = await _consultas.ObtenerAsync(id);
 
             if (producto.Exitoso && producto.Datos is not null)
             {
@@ -51,7 +51,7 @@ public sealed class HistoricoModel : PageModel
             }
 
             ResultadoApi<List<HistoricoProductoApi>> respuesta =
-                await _api.ListarHistoricoAsync(id);
+                await _consultas.ListarHistoricoAsync(id);
 
             if (respuesta.Exitoso && respuesta.Datos is not null)
             {

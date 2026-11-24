@@ -34,30 +34,49 @@ public class ErrorResultado
         => new(TipoError.Conflicto, mensaje, erroresCampo);
 }
 
+/// <summary>
+/// Resultado de caso de uso: errores esperados de negocio se representan con
+/// <see cref="Error"/> y los éxitos llevan un <see cref="Mensaje"/> listo para
+/// publicar en la respuesta HTTP. No se lanzan excepciones de negocio.
+/// </summary>
 public class Result
 {
     public bool EsExitoso { get; }
     public bool EsFallo => !EsExitoso;
     public ErrorResultado? Error { get; }
 
-    protected Result(bool esExitoso, ErrorResultado? error)
+    /// <summary>Mensaje de éxito; cadena vacía cuando la operación falló.</summary>
+    public string Mensaje { get; }
+
+    protected Result(bool esExitoso, ErrorResultado? error, string mensaje)
     {
         EsExitoso = esExitoso;
         Error = error;
+        Mensaje = mensaje;
     }
 
-    public static Result Ok() => new(true, null);
-    public static Result Fallo(ErrorResultado error) => new(false, error);
+    public static Result Ok() => new(true, null, string.Empty);
 
-    public static Result<T> Ok<T>(T valor) => new(valor, true, null);
-    public static Result<T> Fallo<T>(ErrorResultado error) => new(default, false, error);
+    public static Result OkConMensaje(string mensaje) =>
+        new(true, null, mensaje);
+
+    public static Result Fallo(ErrorResultado error) => new(false, error, string.Empty);
+
+    public static Result<T> Ok<T>(T valor) => new(valor, true, null, string.Empty);
+
+    public static Result<T> OkConMensaje<T>(T valor, string mensaje) =>
+        new(valor, true, null, mensaje);
+
+    public static Result<T> Fallo<T>(ErrorResultado error) =>
+        new(default, false, error, string.Empty);
 }
 
 public sealed class Result<T> : Result
 {
     public T? Valor { get; }
 
-    internal Result(T? valor, bool esExitoso, ErrorResultado? error) : base(esExitoso, error)
+    internal Result(T? valor, bool esExitoso, ErrorResultado? error, string mensaje)
+        : base(esExitoso, error, mensaje)
     {
         Valor = valor;
     }

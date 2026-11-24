@@ -29,6 +29,10 @@ namespace FERRETERIA__Joel.Servicios
         public DateTime? FechaModificacion { get; set; }
 
         public string? UsuarioModificacion { get; set; }
+
+        public DateTime? FechaBaja { get; set; }
+
+        public string? UsuarioBaja { get; set; }
     }
 
     /// <summary>Datos del formulario de alta y edición de un cliente.</summary>
@@ -45,6 +49,51 @@ namespace FERRETERIA__Joel.Servicios
         public string? Telefono { get; set; }
 
         public string? Direccion { get; set; }
+    }
+
+    /// <summary>
+    /// Persona de contacto de un cliente (segunda tabla de
+    /// MicroServicioClientes), incluida su auditoría.
+    /// </summary>
+    public class ContactoApi
+    {
+        public int IdContacto { get; set; }
+
+        public int IdCliente { get; set; }
+
+        public string Nombre { get; set; } = string.Empty;
+
+        public string? Cargo { get; set; }
+
+        public string? Telefono { get; set; }
+
+        public string? Correo { get; set; }
+
+        public bool Activo { get; set; }
+
+        public DateTime FechaCreacion { get; set; }
+
+        public string UsuarioCreacion { get; set; } = string.Empty;
+
+        public DateTime? FechaModificacion { get; set; }
+
+        public string? UsuarioModificacion { get; set; }
+
+        public DateTime? FechaBaja { get; set; }
+
+        public string? UsuarioBaja { get; set; }
+    }
+
+    /// <summary>Datos del formulario de alta y edición de un contacto.</summary>
+    public class ContactoSolicitudApi
+    {
+        public string Nombre { get; set; } = string.Empty;
+
+        public string? Cargo { get; set; }
+
+        public string? Telefono { get; set; }
+
+        public string? Correo { get; set; }
     }
 }
 

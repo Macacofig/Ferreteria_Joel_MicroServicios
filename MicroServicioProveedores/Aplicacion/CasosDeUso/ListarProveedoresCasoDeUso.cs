@@ -8,9 +8,9 @@ public class ListarProveedoresCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public ListarProveedoresCasoDeUso(IRepositorioProveedores repositorio)
+    public ListarProveedoresCasoDeUso(RepositoryCreatorBase<IRepositorioProveedores> creadorRepositorio)
     {
-        _repositorio = repositorio;
+        _repositorio = creadorRepositorio.CreateRepository();
     }
 
     public async Task<Result<IReadOnlyList<ProveedorDto>>> EjecutarAsync(string? orden, CancellationToken ct = default)
@@ -22,6 +22,12 @@ public class ListarProveedoresCasoDeUso
             ? proveedores.OrderByDescending(p => p.RazonSocial, StringComparer.CurrentCultureIgnoreCase).ToList()
             : proveedores.OrderBy(p => p.RazonSocial, StringComparer.CurrentCultureIgnoreCase).ToList();
 
-        return Result.Ok<IReadOnlyList<ProveedorDto>>(ordenados.Select(MapeadorProveedor.ADto).ToList());
+        IReadOnlyList<ProveedorDto> datos =
+            ordenados.Select(MapeadorProveedor.ADto).ToList();
+        string mensaje = datos.Count == 0
+            ? "No se encontraron proveedores registrados."
+            : $"Se encontraron {datos.Count} proveedor(es).";
+
+        return Result.OkConMensaje(datos, mensaje);
     }
 }

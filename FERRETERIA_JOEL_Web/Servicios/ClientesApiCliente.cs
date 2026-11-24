@@ -81,6 +81,79 @@ namespace FERRETERIA__Joel.Servicios
             CancellationToken cancelacion = default) =>
             EnviarAsync<object>(HttpMethod.Post, $"api/clientes/{idCliente}/reactivar", token, null, cancelacion);
 
+        // ===================================================================
+        // Segunda tabla: contactos del cliente
+        // ===================================================================
+
+        public Task<RespuestaApi<List<ContactoApi>>> ListarContactosAsync(
+            string? token,
+            int idCliente,
+            bool soloActivos,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<List<ContactoApi>>(
+                HttpMethod.Get,
+                $"api/clientes/{idCliente}/contactos?soloActivos={soloActivos.ToString().ToLowerInvariant()}",
+                token,
+                null,
+                cancelacion);
+
+        public Task<RespuestaApi<ContactoApi>> ObtenerContactoAsync(
+            string? token,
+            int idContacto,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<ContactoApi>(
+                HttpMethod.Get,
+                $"api/clientes/contactos/{idContacto}",
+                token,
+                null,
+                cancelacion);
+
+        public Task<RespuestaApi<ContactoApi>> CrearContactoAsync(
+            string? token,
+            int idCliente,
+            ContactoSolicitudApi solicitud,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<ContactoApi>(
+                HttpMethod.Post,
+                $"api/clientes/{idCliente}/contactos",
+                token,
+                solicitud,
+                cancelacion);
+
+        public Task<RespuestaApi<ContactoApi>> ActualizarContactoAsync(
+            string? token,
+            int idContacto,
+            ContactoSolicitudApi solicitud,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<ContactoApi>(
+                HttpMethod.Put,
+                $"api/clientes/contactos/{idContacto}",
+                token,
+                solicitud,
+                cancelacion);
+
+        public Task<RespuestaApi<object>> DarDeBajaContactoAsync(
+            string? token,
+            int idContacto,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<object>(
+                HttpMethod.Delete,
+                $"api/clientes/contactos/{idContacto}",
+                token,
+                null,
+                cancelacion);
+
+        public Task<RespuestaApi<object>> ReactivarContactoAsync(
+            string? token,
+            int idContacto,
+            CancellationToken cancelacion = default) =>
+            EnviarAsync<object>(
+                HttpMethod.Post,
+                $"api/clientes/contactos/{idContacto}/reactivar",
+                token,
+                null,
+                cancelacion);
+
         private async Task<RespuestaApi<T>> EnviarAsync<T>(
             HttpMethod metodo,
             string ruta,

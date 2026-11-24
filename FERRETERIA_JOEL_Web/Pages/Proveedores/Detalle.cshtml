@@ -1,4 +1,4 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model FERRETERIA__Joel.Pages.Proveedores.DetalleModel
 @using System.Globalization
 @{
@@ -12,28 +12,51 @@
 }
 
 <div class="fj-container fj-page-products">
+
     <section class="fj-page-head">
-        <p class="fj-eyebrow">Módulo · Proveedores</p>
-        <h1>Detalle del proveedor</h1>
-        <p class="fj-page-sub">Consulta de la información registrada del proveedor.</p>
+        <p class="fj-eyebrow">Módulo · Proveedores · Consulta</p>
+        <h1>Detalle del Proveedor</h1>
+        <p class="fj-page-sub">
+            Consulta de la información registrada de
+            <strong>@(Model.Proveedor is null ? "proveedor" : Model.Proveedor.RazonSocial)</strong>.
+        </p>
     </section>
 
     @if (Model.Proveedor is null)
     {
         <div class="fj-alert" role="alert">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
             <span>No se encontró el proveedor solicitado.</span>
         </div>
+
+        <section class="fj-toolbar fj-toolbar-simple">
+            <p class="fj-toolbar-count"><strong>0</strong> proveedores</p>
+            <div class="fj-toolbar-actions">
+                <a class="fj-btn fj-btn-ghost" asp-page="./Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+                    Volver a Proveedores
+                </a>
+            </div>
+        </section>
     }
     else
     {
-        <section class="fj-card">
-            <div class="fj-form" style="padding-bottom:0;">
-                <dl class="fj-perfil-datos" style="margin:0;">
+        <section class="fj-toolbar fj-toolbar-simple">
+            <p class="fj-toolbar-count">
+                <strong>ID @Model.Proveedor.Id</strong>
+                @(string.IsNullOrWhiteSpace(Model.Proveedor.NombreResponsable) ? "sin responsable registrado" : Model.Proveedor.NombreResponsable)
+            </p>
+            <div class="fj-toolbar-actions">
+                <a class="fj-btn fj-btn-ghost" asp-page="./Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+                    Volver a Proveedores
+                </a>
+            </div>
+        </section>
+
+        <section class="fj-card" aria-label="Detalle del proveedor">
+            <div class="fj-form-producto">
+                <dl class="fj-detalle">
                     <div>
                         <dt>ID</dt>
                         <dd>@Model.Proveedor.Id</dd>
@@ -41,10 +64,6 @@
                     <div>
                         <dt>Razón social</dt>
                         <dd>@Model.Proveedor.RazonSocial</dd>
-                    </div>
-                    <div>
-                        <dt>NIT</dt>
-                        <dd>@Model.Proveedor.Nit</dd>
                     </div>
                     <div>
                         <dt>Contacto</dt>
@@ -61,16 +80,10 @@
                     <div>
                         <dt>Estado</dt>
                         <dd>
-                            <span class="fj-pill" style="--pill: @(Model.Proveedor.Estado ? "var(--success)" : "var(--texto-ter)");">@(Model.Proveedor.Estado ? "Activo" : "Inactivo")</span>
+                            <span class="fj-pill" style="--pill: @(Model.Proveedor.Estado ? "var(--success)" : "var(--texto-ter)");">
+                                @(Model.Proveedor.Estado ? "Activo" : "Inactivo")
+                            </span>
                         </dd>
-                    </div>
-                    <div>
-                        <dt>Fecha de creación</dt>
-                        <dd>@Model.Proveedor.FechaCreacion.ToString("g", cultura) @(string.IsNullOrWhiteSpace(Model.Proveedor.UsuarioCreacion) ? "" : $"· {Model.Proveedor.UsuarioCreacion}")</dd>
-                    </div>
-                    <div>
-                        <dt>Fecha de modificación</dt>
-                        <dd>@(Model.Proveedor.FechaModificacion?.ToString("g", cultura) ?? "—") @(string.IsNullOrWhiteSpace(Model.Proveedor.UsuarioModificacion) ? "" : $"· {Model.Proveedor.UsuarioModificacion}")</dd>
                     </div>
                     @if (!Model.Proveedor.Estado)
                     {
@@ -80,40 +93,40 @@
                         </div>
                     }
                 </dl>
-            </div>
 
-            <div class="fj-form-actions" style="padding:0 1.75rem 1.75rem;">
-                <a asp-page="./Index" class="fj-btn fj-btn-ghost">Volver al listado</a>
-                <a asp-page="./Editar" asp-route-id="@Model.Proveedor.Id" class="fj-btn fj-btn-edit">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                    Editar
-                </a>
-                @if (Model.Proveedor.Estado)
-                {
-                    <form method="post"
-                          asp-page-handler="Eliminar"
-                          asp-route-id="@Model.Proveedor.Id"
-                          class="fj-inline-form"
-                          data-fj-confirm="¿Está seguro de dar de baja al proveedor '@Model.Proveedor.RazonSocial'? Podrá reactivarlo después.">
-                        <button type="submit" class="fj-btn fj-btn-danger">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                            Dar de baja
-                        </button>
-                    </form>
-                }
-                else
-                {
-                    <form method="post"
-                          asp-page-handler="Reactivar"
-                          asp-route-id="@Model.Proveedor.Id"
-                          class="fj-inline-form"
-                          data-fj-confirm="¿Desea reactivar al proveedor '@Model.Proveedor.RazonSocial'?">
-                        <button type="submit" class="fj-btn fj-btn-ghost">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><polyline points="3 3 3 8 8 8" /></svg>
-                            Reactivar
-                        </button>
-                    </form>
-                }
+                <div class="fj-barra-botones">
+                    <a asp-page="./Index" class="fj-btn fj-btn-ghost">Cancelar</a>
+                    <a asp-page="./Editar" asp-route-id="@Model.Proveedor.Id" class="fj-btn fj-btn-edit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                        Editar
+                    </a>
+                    @if (Model.Proveedor.Estado)
+                    {
+                        <form method="post"
+                              asp-page-handler="Eliminar"
+                              asp-route-id="@Model.Proveedor.Id"
+                              class="fj-inline-form"
+                              data-fj-confirm="¿Está seguro de dar de baja al proveedor '@Model.Proveedor.RazonSocial'? Podrá reactivarlo después.">
+                            <button type="submit" class="fj-btn fj-btn-danger">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                Dar de baja
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post"
+                              asp-page-handler="Reactivar"
+                              asp-route-id="@Model.Proveedor.Id"
+                              class="fj-inline-form"
+                              data-fj-confirm="¿Desea reactivar al proveedor '@Model.Proveedor.RazonSocial'?">
+                            <button type="submit" class="fj-btn fj-btn-ghost">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><polyline points="3 3 3 8 8 8" /></svg>
+                                Reactivar
+                            </button>
+                        </form>
+                    }
+                </div>
             </div>
         </section>
     }

@@ -1,4 +1,4 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model FERRETERIA__Joel.Pages.Proveedores.EditarModel
 @{
     ViewData["Title"] = "Editar proveedor";
@@ -10,75 +10,83 @@
 }
 
 <div class="fj-container fj-page-products">
+
     <section class="fj-page-head">
-        <p class="fj-eyebrow">Módulo · Proveedores</p>
-        <h1>Editar proveedor</h1>
-        <p class="fj-page-sub">Actualice los datos del proveedor seleccionado.</p>
+        <p class="fj-eyebrow">Módulo · Proveedores · Edición</p>
+        <h1>Edición de Proveedor</h1>
+        <p class="fj-page-sub">
+            Actualización de los datos de
+            <strong>@(string.IsNullOrWhiteSpace(Model.Formulario.RazonSocial) ? "proveedor" : Model.Formulario.RazonSocial)</strong>.
+        </p>
     </section>
 
     @if (TempData["MensajeError"] != null)
     {
         <div class="fj-alert" role="alert">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
             <span>@TempData["MensajeError"]</span>
         </div>
     }
 
-    <section class="fj-card">
-        <form method="post" class="fj-form">
+    <section class="fj-card" aria-label="Formulario de edición de proveedor">
+        <form method="post" class="fj-form-producto">
             <input type="hidden" asp-for="Id" />
-            <div asp-validation-summary="ModelOnly" style="color:var(--danger);font-size:.85rem;margin-bottom:.75rem;"></div>
 
-            <div class="fj-form-grid">
-                <div class="fj-form-field">
-                    <label class="fj-form-label" asp-for="Formulario.RazonSocial">Razón social</label>
-                    <input class="fj-input" asp-for="Formulario.RazonSocial" maxlength="150" required
+            <div class="fj-fila fj-fila-2">
+                <div class="fj-campo">
+                    <label class="form-label" asp-for="Formulario.RazonSocial">Razón social</label>
+                    <input class="form-control" asp-for="Formulario.RazonSocial" maxlength="150" required
                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9 ]+"
                            title="Solo letras, números y espacios (sin símbolos especiales)." />
-                    <span class="fj-form-hint">Solo letras, números y espacios (sin símbolos especiales).</span>
-                    <span asp-validation-for="Formulario.RazonSocial" style="color:var(--danger);font-size:.78rem;"></span>
+                    <span class="text-danger" asp-validation-for="Formulario.RazonSocial"></span>
                 </div>
-                <div class="fj-form-field">
-                    <label class="fj-form-label" asp-for="Formulario.Nit">NIT</label>
-                    <input class="fj-input" asp-for="Formulario.Nit" maxlength="30" required
+
+                <div class="fj-campo">
+                    <label class="form-label" asp-for="Formulario.Nit">NIT</label>
+                    <input class="form-control" asp-for="Formulario.Nit" maxlength="30" required
                            inputmode="numeric" pattern="[0-9]+"
                            title="Solo números." />
-                    <span class="fj-form-hint">Solo números.</span>
-                    <span asp-validation-for="Formulario.Nit" style="color:var(--danger);font-size:.78rem;"></span>
-                </div>
-                <div class="fj-form-field">
-                    <label class="fj-form-label" asp-for="Formulario.Contacto">Contacto</label>
-                    <input class="fj-input" asp-for="Formulario.Contacto" maxlength="100" required
-                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+"
-                           title="Solo letras y espacios (sin números ni símbolos especiales)." />
-                    <span class="fj-form-hint">Solo letras y espacios (sin números ni símbolos especiales).</span>
-                    <span asp-validation-for="Formulario.Contacto" style="color:var(--danger);font-size:.78rem;"></span>
-                </div>
-                <div class="fj-form-field">
-                    <label class="fj-form-label" asp-for="Formulario.Telefono">Teléfono</label>
-                    <input class="fj-input" asp-for="Formulario.Telefono" type="tel" required
-                           inputmode="numeric" maxlength="8" minlength="8" pattern="[5-7][0-9]{7}"
-                           title="Debe tener 8 dígitos y comenzar con 5, 6 o 7." />
-                    <span class="fj-form-hint">8 dígitos, debe iniciar con 5, 6 o 7.</span>
-                    <span asp-validation-for="Formulario.Telefono" style="color:var(--danger);font-size:.78rem;"></span>
-                </div>
-                <div class="fj-form-field fj-form-field--full">
-                    <label class="fj-form-label" asp-for="Formulario.NombreResponsable">Responsable del cambio</label>
-                    <input class="fj-input" asp-for="Formulario.NombreResponsable" readonly />
-                    <span class="fj-form-hint">Se registrará el nombre del usuario que guarda los cambios.</span>
+                    <span class="text-danger" asp-validation-for="Formulario.Nit"></span>
                 </div>
             </div>
 
-            <div class="fj-form-actions">
-                <a asp-page="./Index" class="fj-btn fj-btn-ghost">Cancelar</a>
-                <button type="submit" class="fj-btn fj-btn-primary">Guardar cambios</button>
+            <div class="fj-fila fj-fila-2">
+                <div class="fj-campo">
+                    <label class="form-label" asp-for="Formulario.Contacto">Contacto</label>
+                    <input class="form-control" asp-for="Formulario.Contacto" maxlength="100" required
+                           pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+"
+                           title="Solo letras y espacios (sin números ni símbolos especiales)." />
+                    <span class="text-danger" asp-validation-for="Formulario.Contacto"></span>
+                </div>
+
+                <div class="fj-campo">
+                    <label class="form-label" asp-for="Formulario.Telefono">Teléfono</label>
+                    <input class="form-control" asp-for="Formulario.Telefono" type="tel" required
+                           inputmode="numeric" maxlength="8" minlength="8" pattern="[5-7][0-9]{7}"
+                           title="Debe tener 8 dígitos y comenzar con 5, 6 o 7." />
+                    <span class="text-danger" asp-validation-for="Formulario.Telefono"></span>
+                </div>
+            </div>
+
+            <div class="fj-fila fj-fila-1 fj-fila--ultima">
+                <div class="fj-campo">
+                    <label class="form-label" asp-for="Formulario.NombreResponsable">Responsable del cambio</label>
+                    <input class="form-control fj-codigo-autogenerado" asp-for="Formulario.NombreResponsable" readonly
+                           title="Se registrará el nombre del usuario que guarda los cambios." />
+                    <span class="text-danger" asp-validation-for="Formulario.NombreResponsable"></span>
+                </div>
+            </div>
+
+            <div class="fj-barra-botones">
+                <a class="fj-btn fj-btn-ghost" asp-page="./Index">Cancelar</a>
+                <button type="submit" class="fj-btn fj-btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
+                    Guardar Cambios
+                </button>
             </div>
         </form>
     </section>
+
 </div>
 
 @section Scripts {

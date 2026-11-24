@@ -76,6 +76,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
                 return new ResultadoRegistro
                 {
                     Exitoso = false,
+                    Mensaje = "Revise los datos del empleado.",
                     ErroresCampo = errores
                 };
             }
@@ -115,6 +116,7 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
             return new ResultadoRegistro
             {
                 Exitoso = true,
+                Mensaje = "Empleado actualizado correctamente.",
                 Id = idEmpleado,
                 NombreUsuario = actual.NombreUsuario
             };

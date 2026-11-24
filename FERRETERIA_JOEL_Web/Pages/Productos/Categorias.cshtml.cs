@@ -14,12 +14,17 @@ namespace FERRETERIA__Joel.Pages.Productos;
 [Authorize]
 public sealed class CategoriasModel : PageModel
 {
-    private readonly IServicioProductos _api;
+    private readonly ICatalogoConsulta _catalogo;
+    private readonly ICatalogoComandos _comandos;
     private readonly ILogger<CategoriasModel> _logger;
 
-    public CategoriasModel(IServicioProductos api, ILogger<CategoriasModel> logger)
+    public CategoriasModel(
+        ICatalogoConsulta catalogo,
+        ICatalogoComandos comandos,
+        ILogger<CategoriasModel> logger)
     {
-        _api = api;
+        _catalogo = catalogo;
+        _comandos = comandos;
         _logger = logger;
     }
 
@@ -67,7 +72,7 @@ public sealed class CategoriasModel : PageModel
             if (IdEditar.HasValue)
             {
                 ResultadoApi<MensajeApi> resultado =
-                    await _api.ActualizarCategoriaAsync(
+                    await _comandos.ActualizarCategoriaAsync(
                         IdEditar.Value, Solicitud, cancelacion);
 
                 if (resultado.Exitoso)
@@ -81,7 +86,7 @@ public sealed class CategoriasModel : PageModel
             else
             {
                 ResultadoApi<CrearCategoriaRespuestaApi> resultado =
-                    await _api.CrearCategoriaAsync(Solicitud, cancelacion);
+                    await _comandos.CrearCategoriaAsync(Solicitud, cancelacion);
 
                 if (resultado.Exitoso)
                 {
@@ -121,7 +126,7 @@ public sealed class CategoriasModel : PageModel
         try
         {
             ResultadoApi<MensajeApi> resultado =
-                await _api.DarDeBajaCategoriaAsync(idCategoria, cancelacion);
+                await _comandos.DarDeBajaCategoriaAsync(idCategoria, cancelacion);
 
             if (resultado.Exitoso)
             {
@@ -150,7 +155,7 @@ public sealed class CategoriasModel : PageModel
         try
         {
             ResultadoApi<MensajeApi> resultado =
-                await _api.ReactivarCategoriaAsync(idCategoria, cancelacion);
+                await _comandos.ReactivarCategoriaAsync(idCategoria, cancelacion);
 
             if (resultado.Exitoso)
             {
@@ -178,7 +183,7 @@ public sealed class CategoriasModel : PageModel
         try
         {
             ResultadoApi<List<CategoriaApi>> respuesta =
-                await _api.ListarCategoriasAsync(incluirInactivos: true, cancelacion);
+                await _catalogo.ListarCategoriasAsync(incluirInactivos: true, cancelacion);
 
             if (respuesta.Exitoso && respuesta.Datos is not null)
             {
@@ -209,7 +214,7 @@ public sealed class CategoriasModel : PageModel
         try
         {
             ResultadoApi<SiguienteCodigoApi> respuesta =
-                await _api.ObtenerSiguienteCodigoCategoriaAsync(cancelacion);
+                await _catalogo.ObtenerSiguienteCodigoCategoriaAsync(cancelacion);
 
             if (respuesta.Exitoso
                 && respuesta.Datos is not null

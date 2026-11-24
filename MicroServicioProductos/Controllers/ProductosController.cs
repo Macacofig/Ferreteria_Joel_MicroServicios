@@ -1,5 +1,5 @@
 using MicroServicioProductos.Aplicacion.Modelos;
-using MicroServicioProductos.Aplicacion.Servicios;
+using MicroServicioProductos.Aplicacion.Puertos;
 using MicroServicioProductos.Dominio.Resultados;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,17 +7,18 @@ using Microsoft.AspNetCore.Mvc;
 namespace MicroServicioProductos.Controllers;
 
 /// <summary>
-/// API REST del catálogo de productos. El controlador solo traduce HTTP ↔
-/// casos de uso; las reglas de negocio viven en <see cref="ServicioProductos"/>.
+/// Adaptador de entrada HTTP del catálogo de productos. El controlador solo
+/// traduce HTTP ↔ casos de uso del puerto <see cref="IServicioProductos"/>;
+/// las reglas de negocio viven en la capa de Aplicación.
 /// </summary>
 [ApiController]
 [Route("api/productos")]
 [Authorize]
 public sealed class ProductosController : ControllerBase
 {
-    private readonly ServicioProductos _servicio;
+    private readonly IServicioProductos _servicio;
 
-    public ProductosController(ServicioProductos servicio)
+    public ProductosController(IServicioProductos servicio)
     {
         _servicio = servicio;
     }
@@ -40,9 +41,9 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(resultado.ValorRequerido
+        return OkConMensaje(resultado.Valor!
             .Select(MapeosProducto.AResponse)
-            .ToList());
+            .ToList(), resultado.Mensaje);
     }
 
     [HttpGet("categorias")]
@@ -58,9 +59,9 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(resultado.ValorRequerido
+        return OkConMensaje(resultado.Valor!
             .Select(MapeosProducto.AResponse)
-            .ToList());
+            .ToList(), resultado.Mensaje);
     }
 
     [HttpGet("categorias/siguiente-codigo")]
@@ -75,7 +76,8 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { codigo = resultado.ValorRequerido });
+        return OkConMensaje(
+            new { codigo = resultado.Valor! }, resultado.Mensaje);
     }
 
     [HttpGet("marcas")]
@@ -91,9 +93,9 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(resultado.ValorRequerido
+        return OkConMensaje(resultado.Valor!
             .Select(MapeosProducto.AResponse)
-            .ToList());
+            .ToList(), resultado.Mensaje);
     }
 
     [HttpGet("categorias/{id:int}")]
@@ -109,7 +111,8 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(MapeosProducto.AResponse(resultado.ValorRequerido));
+        return OkConMensaje(
+            MapeosProducto.AResponse(resultado.Valor!), resultado.Mensaje);
     }
 
     [HttpGet("marcas/{id:int}")]
@@ -125,7 +128,8 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(MapeosProducto.AResponse(resultado.ValorRequerido));
+        return OkConMensaje(
+            MapeosProducto.AResponse(resultado.Valor!), resultado.Mensaje);
     }
 
     [HttpGet("siguiente-codigo")]
@@ -140,7 +144,8 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { codigo = resultado.ValorRequerido });
+        return OkConMensaje(
+            new { codigo = resultado.Valor! }, resultado.Mensaje);
     }
 
     [HttpGet("{id:int}")]
@@ -154,7 +159,8 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(MapeosProducto.AResponse(resultado.ValorRequerido));
+        return OkConMensaje(
+            MapeosProducto.AResponse(resultado.Valor!), resultado.Mensaje);
     }
 
     [HttpGet("{id:int}/historico")]
@@ -170,9 +176,9 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(resultado.ValorRequerido
+        return OkConMensaje(resultado.Valor!
             .Select(MapeosProducto.AResponse)
-            .ToList());
+            .ToList(), resultado.Mensaje);
     }
 
     // ===================== Mutaciones =====================
@@ -189,12 +195,12 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        int idProducto = resultado.ValorRequerido;
+        int idProducto = resultado.Valor!;
 
         return CreatedAtAction(
             nameof(Obtener),
             new { id = idProducto },
-            new { idProducto, mensaje = "Producto creado correctamente." });
+            new { idProducto, mensaje = resultado.Mensaje });
     }
 
     [HttpPut("{id:int}")]
@@ -210,7 +216,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Producto actualizado correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     [HttpDelete("{id:int}")]
@@ -225,7 +231,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Producto dado de baja correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     [HttpPatch("{id:int}/reactivar")]
@@ -240,7 +246,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Producto reactivado correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     // ===================== Categorías =====================
@@ -258,7 +264,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        short idCategoria = resultado.ValorRequerido;
+        short idCategoria = resultado.Valor!;
 
         return CreatedAtAction(
             nameof(ObtenerCategoria),
@@ -266,7 +272,7 @@ public sealed class ProductosController : ControllerBase
             new
             {
                 idCategoria,
-                mensaje = "Categoría creada correctamente."
+                mensaje = resultado.Mensaje
             });
     }
 
@@ -284,7 +290,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Categoría actualizada correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     [HttpDelete("categorias/{id:int}")]
@@ -300,7 +306,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Categoría dada de baja correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     [HttpPatch("categorias/{id:int}/reactivar")]
@@ -316,7 +322,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Categoría reactivada correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     // ===================== Marcas =====================
@@ -333,7 +339,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        short idMarca = resultado.ValorRequerido;
+        short idMarca = resultado.Valor!;
 
         return CreatedAtAction(
             nameof(ObtenerMarca),
@@ -341,7 +347,7 @@ public sealed class ProductosController : ControllerBase
             new
             {
                 idMarca,
-                mensaje = "Marca creada correctamente."
+                mensaje = resultado.Mensaje
             });
     }
 
@@ -359,7 +365,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Marca actualizada correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     [HttpDelete("marcas/{id:int}")]
@@ -375,7 +381,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Marca dada de baja correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     [HttpPatch("marcas/{id:int}/reactivar")]
@@ -391,7 +397,7 @@ public sealed class ProductosController : ControllerBase
             return ResponderFallo(resultado);
         }
 
-        return Ok(new { mensaje = "Marca reactivada correctamente." });
+        return Ok(new { mensaje = resultado.Mensaje });
     }
 
     // ===================== Traducción Result → HTTP =====================
@@ -403,26 +409,40 @@ public sealed class ProductosController : ControllerBase
     private static short ConvertirIdCatalogo(int id) =>
         id is >= 1 and <= short.MaxValue ? (short)id : (short)0;
 
+    /// <summary>
+    /// Publica el mensaje de éxito del Result en la respuesta HTTP sin alterar
+    /// el cuerpo: los clientes del front esperan listas y DTOs directos.
+    /// </summary>
+    private IActionResult OkConMensaje(object? datos, string mensaje)
+    {
+        if (!string.IsNullOrWhiteSpace(mensaje))
+        {
+            Response.Headers["X-Mensaje"] = mensaje;
+        }
+
+        return Ok(datos);
+    }
+
     private IActionResult ResponderFallo(Result resultado)
     {
         string error = resultado.Error;
 
         if (error.StartsWith(
-                ServicioProductos.PrefijoNoEncontrado,
+                PrefijosResultado.NoEncontrado,
                 StringComparison.Ordinal))
         {
             string mensaje = error[
-                ServicioProductos.PrefijoNoEncontrado.Length..];
+                PrefijosResultado.NoEncontrado.Length..];
 
             return NotFound(new { mensaje });
         }
 
         if (error.StartsWith(
-                ServicioProductos.PrefijoConflicto,
+                PrefijosResultado.Conflicto,
                 StringComparison.Ordinal))
         {
             string mensaje = error[
-                ServicioProductos.PrefijoConflicto.Length..];
+                PrefijosResultado.Conflicto.Length..];
 
             return Conflict(new { mensaje });
         }

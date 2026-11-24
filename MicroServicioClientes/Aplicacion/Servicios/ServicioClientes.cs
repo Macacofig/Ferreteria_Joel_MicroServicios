@@ -4,7 +4,6 @@ using MicroServicioClientes.Aplicacion.Validaciones;
 using MicroServicioClientes.Dominio.Comunes;
 using MicroServicioClientes.Dominio.Entidades;
 using MicroServicioClientes.Dominio.Puertos;
-using MicroServicioClientes.Infraestructura.Factories;
 
 namespace MicroServicioClientes.Aplicacion.Servicios;
 
@@ -18,7 +17,7 @@ public sealed class ServicioClientes : IServicioClientes
     private readonly IContextoUsuario _contexto;
 
     public ServicioClientes(
-        RepositoryCreator<IClienteRepositorio> creadorRepositorio,
+        IRepositoryCreator<IClienteRepositorio> creadorRepositorio,
         IContextoUsuario contexto)
     {
         _clientes = creadorRepositorio.CreateRepository();
@@ -35,7 +34,7 @@ public sealed class ServicioClientes : IServicioClientes
 
         string mensaje = datos.Count == 0
             ? "No se encontraron clientes con los criterios indicados."
-            : string.Empty;
+            : $"Se encontraron {datos.Count} cliente(s).";
 
         return Resultado<IReadOnlyList<ClienteRespuesta>>.Exito(datos, mensaje);
     }
@@ -46,7 +45,8 @@ public sealed class ServicioClientes : IServicioClientes
 
         return cliente is null
             ? NoEncontrado()
-            : Resultado<ClienteRespuesta>.Exito(ClienteRespuesta.Desde(cliente));
+            : Resultado<ClienteRespuesta>.Exito(
+                ClienteRespuesta.Desde(cliente), "Cliente obtenido correctamente.");
     }
 
     public async Task<Resultado<ClienteRespuesta>> CrearAsync(

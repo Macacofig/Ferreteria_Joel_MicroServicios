@@ -10,12 +10,20 @@ namespace FERRETERIA__Joel.Pages.Productos;
 [Authorize]
 public sealed class EditarModel : PageModel
 {
-    private readonly IServicioProductos _api;
+    private readonly IProductosConsulta _consultas;
+    private readonly IProductosComandos _comandos;
+    private readonly ICatalogoConsulta _catalogo;
     private readonly ILogger<EditarModel> _logger;
 
-    public EditarModel(IServicioProductos api, ILogger<EditarModel> logger)
+    public EditarModel(
+        IProductosConsulta consultas,
+        IProductosComandos comandos,
+        ICatalogoConsulta catalogo,
+        ILogger<EditarModel> logger)
     {
-        _api = api;
+        _consultas = consultas;
+        _comandos = comandos;
+        _catalogo = catalogo;
         _logger = logger;
     }
 
@@ -43,7 +51,7 @@ public sealed class EditarModel : PageModel
 
         try
         {
-            ResultadoApi<ProductoApi> respuesta = await _api.ObtenerAsync(id);
+            ResultadoApi<ProductoApi> respuesta = await _consultas.ObtenerAsync(id);
 
             if (!respuesta.Exitoso || respuesta.Datos is null)
             {
@@ -100,7 +108,7 @@ public sealed class EditarModel : PageModel
         try
         {
             ResultadoApi<MensajeApi> resultado =
-                await _api.ActualizarAsync(IdProducto, Solicitud, cancelacion);
+                await _comandos.ActualizarAsync(IdProducto, Solicitud, cancelacion);
 
             if (resultado.Exitoso)
             {
@@ -139,9 +147,9 @@ public sealed class EditarModel : PageModel
         try
         {
             ResultadoApi<List<CategoriaApi>> categorias =
-                await _api.ListarCategoriasAsync(false, cancelacion);
+                await _catalogo.ListarCategoriasAsync(false, cancelacion);
             ResultadoApi<List<MarcaApi>> marcas =
-                await _api.ListarMarcasAsync(false, cancelacion);
+                await _catalogo.ListarMarcasAsync(false, cancelacion);
 
             if (categorias.Exitoso && categorias.Datos is not null)
             {

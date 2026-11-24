@@ -121,12 +121,12 @@ namespace FERRETERIA__Joel.Servicios
                         "Keycloak no devolvió un token válido.");
                 }
 
-                return Result.Ok(new TokenIdentidad
+                return Result.OkConMensaje(new TokenIdentidad
                 {
                     Token = token,
                     RefreshToken = refresco,
                     Expira = DateTime.UtcNow.AddSeconds(segundos)
-                });
+                }, "Sesión autenticada correctamente en Keycloak.");
             }
             catch (Exception ex)
             {
@@ -191,7 +191,7 @@ namespace FERRETERIA__Joel.Servicios
 
             await AsignarRolAsync(solicitud.NombreUsuario, solicitud.Rol, tokenAdmin, cancelacion);
 
-            return Result.Ok();
+            return Result.OkConMensaje("Usuario creado correctamente en Keycloak.");
         }
 
         public async Task<Result> ActualizarUsuarioAsync(
@@ -234,7 +234,7 @@ namespace FERRETERIA__Joel.Servicios
 
             await AsignarRolAsync(identificadorActual, solicitud.Rol, tokenAdmin, cancelacion);
 
-            return Result.Ok();
+            return Result.OkConMensaje("Usuario actualizado correctamente en Keycloak.");
         }
 
         public async Task<Result> EstablecerContrasenaAsync(
@@ -272,7 +272,7 @@ namespace FERRETERIA__Joel.Servicios
                 cancelacion);
 
             return respuesta.IsSuccessStatusCode
-                ? Result.Ok()
+                ? Result.OkConMensaje("Contraseña actualizada correctamente en Keycloak.")
                 : Result.Fallo("No se pudo actualizar la contraseña en Keycloak.");
         }
 
@@ -305,7 +305,7 @@ namespace FERRETERIA__Joel.Servicios
                 HttpMethod.Put, $"/users/{id}", tokenAdmin, representacion, cancelacion);
 
             return respuesta.IsSuccessStatusCode
-                ? Result.Ok()
+                ? Result.OkConMensaje("Estado del usuario actualizado correctamente en Keycloak.")
                 : Result.Fallo("No se pudo cambiar el estado del usuario en Keycloak.");
         }
 

@@ -1,4 +1,5 @@
 using MicroServicioProductos.Aplicacion.Modelos;
+using MicroServicioProductos.Aplicacion.Puertos;
 using MicroServicioProductos.Dominio.Entidades;
 using MicroServicioProductos.Dominio.Puertos;
 using MicroServicioProductos.Dominio.Resultados;
@@ -11,25 +12,26 @@ namespace MicroServicioProductos.Aplicacion.Servicios;
 /// esperados. Los prefijos permiten al adaptador HTTP distinguir 404 y 409
 /// del resto de validaciones (400) sin inspeccionar excepciones.
 /// </summary>
-public sealed class ServicioProductos
+public sealed class ServicioProductos : IServicioProductos
 {
-    public const string PrefijoNoEncontrado = "[NO_ENCONTRADO]";
-    public const string PrefijoConflicto = "[CONFLICTO]";
-
     private readonly IRepositoryProducto _productos;
     private readonly IRepositoryCatalogoAuxiliar _catalogo;
     private readonly IRepositoryHistoricoProducto _historico;
     private readonly IContextoUsuario _contextoUsuario;
 
+    /// <summary>
+    /// Aplicación usa directamente los creadores abstractos: son ellos los que
+    /// deciden qué repositorio concreto se inyecta en cada caso de uso.
+    /// </summary>
     public ServicioProductos(
-        IRepositoryProducto productos,
-        IRepositoryCatalogoAuxiliar catalogo,
-        IRepositoryHistoricoProducto historico,
+        RepositoryCreator<IRepositoryProducto> creadorProductos,
+        RepositoryCreator<IRepositoryCatalogoAuxiliar> creadorCatalogo,
+        RepositoryCreator<IRepositoryHistoricoProducto> creadorHistorico,
         IContextoUsuario contextoUsuario)
     {
-        _productos = productos;
-        _catalogo = catalogo;
-        _historico = historico;
+        _productos = creadorProductos.CreateRepository();
+        _catalogo = creadorCatalogo.CreateRepository();
+        _historico = creadorHistorico.CreateRepository();
         _contextoUsuario = contextoUsuario;
     }
 
@@ -44,7 +46,9 @@ public sealed class ServicioProductos
         IReadOnlyList<Producto> productos = await _productos.ListarAsync(
             ordenarPor, direccion, incluirInactivos, ct);
 
-        return Result.Ok(productos);
+        return Result.OkConMensaje(
+            productos,
+            $"Se encontraron {productos.Count} producto(s).");
     }
 
     public async Task<Result<Producto>> ObtenerPorIdAsync(
@@ -55,8 +59,8 @@ public sealed class ServicioProductos
 
         return producto is null
             ? Result.Fallo<Producto>(
-                PrefijoNoEncontrado + "El producto no existe.")
-            : Result.Ok(producto);
+                PrefijosResultado.NoEncontrado + "El producto no existe.")
+            : Result.OkConMensaje(producto, "Producto obtenido correctamente.");
     }
 
     /// <summary>
@@ -67,7 +71,8 @@ public sealed class ServicioProductos
     {
         string codigo = await _productos.ObtenerSiguienteCodigoAsync(ct);
 
-        return Result.Ok(codigo);
+        return Result.OkConMensaje(
+            codigo, "Código de producto obtenido correctamente.");
     }
 
     /// <summary>
@@ -79,7 +84,8 @@ public sealed class ServicioProductos
         string codigo =
             await _catalogo.ObtenerSiguienteCodigoCategoriaAsync(ct);
 
-        return Result.Ok(codigo);
+        return Result.OkConMensaje(
+            codigo, "Código de categoría obtenido correctamente.");
     }
 
     public async Task<Result<IReadOnlyList<Categoria>>> ListarCategoriasAsync(
@@ -89,7 +95,9 @@ public sealed class ServicioProductos
         IReadOnlyList<Categoria> categorias =
             await _catalogo.ListarCategoriasAsync(incluirInactivos, ct);
 
-        return Result.Ok(categorias);
+        return Result.OkConMensaje(
+            categorias,
+            $"Se encontraron {categorias.Count} categoría(s).");
     }
 
     public async Task<Result<IReadOnlyList<Marca>>> ListarMarcasAsync(
@@ -99,7 +107,9 @@ public sealed class ServicioProductos
         IReadOnlyList<Marca> marcas =
             await _catalogo.ListarMarcasAsync(incluirInactivos, ct);
 
-        return Result.Ok(marcas);
+        return Result.OkConMensaje(
+            marcas,
+            $"Se encontraron {marcas.Count} marca(s).");
     }
 
     public async Task<Result<IReadOnlyList<HistoricoProducto>>> ListarHistoricoAsync(
@@ -111,13 +121,15 @@ public sealed class ServicioProductos
         if (producto is null)
         {
             return Result.Fallo<IReadOnlyList<HistoricoProducto>>(
-                PrefijoNoEncontrado + "El producto no existe.");
+                PrefijosResultado.NoEncontrado + "El producto no existe.");
         }
 
         IReadOnlyList<HistoricoProducto> historial =
             await _historico.ListarPorProductoAsync(idProducto, ct);
 
-        return Result.Ok(historial);
+        return Result.OkConMensaje(
+            historial,
+            $"Se encontraron {historial.Count} registro(s) de historial.");
     }
 
     // ===================== Altas, cambios y bajas =====================
@@ -160,7 +172,7 @@ public sealed class ServicioProductos
             return Result.Fallo<int>(validacion.Error);
         }
 
-        DatosValidados datos = validacion.ValorRequerido;
+        DatosValidados datos = validacion.Valor!;
 
         // Última comprobación antes de insertar: otra petición pudo tomar el
         // mismo correlativo mientras se ejecutaban las validaciones.
@@ -172,7 +184,7 @@ public sealed class ServicioProductos
                 || await _productos.ExisteCodigoAsync(codigoAlterno, null, ct))
             {
                 return Result.Fallo<int>(
-                    PrefijoConflicto +
+                    PrefijosResultado.Conflicto +
                     "No se pudo asignar un código único. Inténtalo nuevamente.");
             }
 
@@ -212,7 +224,7 @@ public sealed class ServicioProductos
             IdEmpleadoResponsable = idEmpleado
         }, ct);
 
-        return Result.Ok(idProducto);
+        return Result.OkConMensaje(idProducto, "Producto creado correctamente.");
     }
 
     public async Task<Result> ActualizarAsync(
@@ -230,7 +242,7 @@ public sealed class ServicioProductos
         if (actual is null || actual.Estado != 1)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "El producto no existe o no está activo.");
+                PrefijosResultado.NoEncontrado + "El producto no existe o no está activo.");
         }
 
         Result<DatosValidados> validacion = await ValidarAsync(
@@ -251,7 +263,7 @@ public sealed class ServicioProductos
             return validacion;
         }
 
-        DatosValidados datos = validacion.ValorRequerido;
+        DatosValidados datos = validacion.Valor!;
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
         string usuario = _contextoUsuario.NombreUsuarioActual;
         DateTime ahora = DateTime.Now;
@@ -282,7 +294,7 @@ public sealed class ServicioProductos
         if (!guardado)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "El producto no existe o no está activo.");
+                PrefijosResultado.NoEncontrado + "El producto no existe o no está activo.");
         }
 
         await _historico.RegistrarAsync(new HistoricoProducto
@@ -298,7 +310,7 @@ public sealed class ServicioProductos
             IdEmpleadoResponsable = idEmpleado
         }, ct);
 
-        return Result.Ok();
+        return Result.OkConMensaje("Producto actualizado correctamente.");
     }
 
     public async Task<Result> DarDeBajaAsync(
@@ -310,7 +322,7 @@ public sealed class ServicioProductos
         if (actual is null || actual.Estado != 1)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "El producto no existe o no está activo.");
+                PrefijosResultado.NoEncontrado + "El producto no existe o no está activo.");
         }
 
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
@@ -323,7 +335,7 @@ public sealed class ServicioProductos
         if (!dadoDeBaja)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "El producto no existe o no está activo.");
+                PrefijosResultado.NoEncontrado + "El producto no existe o no está activo.");
         }
 
         await _historico.RegistrarAsync(new HistoricoProducto
@@ -337,7 +349,7 @@ public sealed class ServicioProductos
             IdEmpleadoResponsable = idEmpleado
         }, ct);
 
-        return Result.Ok();
+        return Result.OkConMensaje("Producto dado de baja correctamente.");
     }
 
     /// <summary>Reactiva un producto dado de baja, conservando su historial.</summary>
@@ -350,12 +362,12 @@ public sealed class ServicioProductos
         if (actual is null)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "El producto no existe.");
+                PrefijosResultado.NoEncontrado + "El producto no existe.");
         }
 
         if (actual.Estado == 1)
         {
-            return Result.Fallo(PrefijoConflicto + "El producto ya está activo.");
+            return Result.Fallo(PrefijosResultado.Conflicto + "El producto ya está activo.");
         }
 
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
@@ -368,7 +380,7 @@ public sealed class ServicioProductos
         if (!reactivado)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "El producto no existe o ya está activo.");
+                PrefijosResultado.NoEncontrado + "El producto no existe o ya está activo.");
         }
 
         await _historico.RegistrarAsync(new HistoricoProducto
@@ -382,7 +394,7 @@ public sealed class ServicioProductos
             IdEmpleadoResponsable = idEmpleado
         }, ct);
 
-        return Result.Ok();
+        return Result.OkConMensaje("Producto reactivado correctamente.");
     }
 
     // ===================== Categorías =====================
@@ -396,8 +408,8 @@ public sealed class ServicioProductos
 
         return categoria is null
             ? Result.Fallo<Categoria>(
-                PrefijoNoEncontrado + "La categoría no existe o no está activa.")
-            : Result.Ok(categoria);
+                PrefijosResultado.NoEncontrado + "La categoría no existe o no está activa.")
+            : Result.OkConMensaje(categoria, "Categoría obtenida correctamente.");
     }
 
     public async Task<Result<short>> CrearCategoriaAsync(
@@ -432,7 +444,7 @@ public sealed class ServicioProductos
             return Result.Fallo<short>(validacion.Error);
         }
 
-        DatosCategoria datos = validacion.ValorRequerido;
+        DatosCategoria datos = validacion.Valor!;
 
         // Última comprobación antes de insertar: otra petición pudo tomar el
         // mismo correlativo mientras se ejecutaban las validaciones.
@@ -446,7 +458,7 @@ public sealed class ServicioProductos
                     codigoAlterno, null, ct))
             {
                 return Result.Fallo<short>(
-                    PrefijoConflicto +
+                    PrefijosResultado.Conflicto +
                     "No se pudo asignar un código único. Inténtalo nuevamente.");
             }
 
@@ -471,7 +483,7 @@ public sealed class ServicioProductos
         short idCategoria =
             await _catalogo.InsertarCategoriaAsync(categoria, ct);
 
-        return Result.Ok(idCategoria);
+        return Result.OkConMensaje(idCategoria, "Categoría creada correctamente.");
     }
 
     public async Task<Result> ActualizarCategoriaAsync(
@@ -490,7 +502,7 @@ public sealed class ServicioProductos
         if (actual is null || actual.Estado != 1)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La categoría no existe o no está activa.");
         }
 
         // El código es inmutable: se valida y se conserva el que ya está en BD,
@@ -507,7 +519,7 @@ public sealed class ServicioProductos
             return validacion;
         }
 
-        DatosCategoria datos = validacion.ValorRequerido;
+        DatosCategoria datos = validacion.Valor!;
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
         DateTime ahora = DateTime.Now;
 
@@ -533,9 +545,9 @@ public sealed class ServicioProductos
             await _catalogo.ActualizarCategoriaAsync(actualizada, ct);
 
         return guardado
-            ? Result.Ok()
+            ? Result.OkConMensaje("Categoría actualizada correctamente.")
             : Result.Fallo(
-                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La categoría no existe o no está activa.");
     }
 
     public async Task<Result> DarDeBajaCategoriaAsync(
@@ -548,13 +560,13 @@ public sealed class ServicioProductos
         if (actual is null || actual.Estado != 1)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La categoría no existe o no está activa.");
         }
 
         if (await _catalogo.TieneProductosActivosCategoriaAsync(idCategoria, ct))
         {
             return Result.Fallo(
-                PrefijoConflicto +
+                PrefijosResultado.Conflicto +
                 "No se puede dar de baja la categoría porque tiene productos activos asociados.");
         }
 
@@ -564,9 +576,9 @@ public sealed class ServicioProductos
             idCategoria, idEmpleado, ct);
 
         return dadoDeBaja
-            ? Result.Ok()
+            ? Result.OkConMensaje("Categoría dada de baja correctamente.")
             : Result.Fallo(
-                PrefijoNoEncontrado + "La categoría no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La categoría no existe o no está activa.");
     }
 
     /// <summary>Reactiva una categoría dada de baja.</summary>
@@ -581,12 +593,12 @@ public sealed class ServicioProductos
         if (actual is null)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "La categoría no existe.");
+                PrefijosResultado.NoEncontrado + "La categoría no existe.");
         }
 
         if (actual.Estado == 1)
         {
-            return Result.Fallo(PrefijoConflicto + "La categoría ya está activa.");
+            return Result.Fallo(PrefijosResultado.Conflicto + "La categoría ya está activa.");
         }
 
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
@@ -595,9 +607,9 @@ public sealed class ServicioProductos
             idCategoria, idEmpleado, ct);
 
         return reactivada
-            ? Result.Ok()
+            ? Result.OkConMensaje("Categoría reactivada correctamente.")
             : Result.Fallo(
-                PrefijoNoEncontrado + "La categoría no existe o ya está activa.");
+                PrefijosResultado.NoEncontrado + "La categoría no existe o ya está activa.");
     }
 
     // ===================== Marcas =====================
@@ -610,8 +622,8 @@ public sealed class ServicioProductos
 
         return marca is null
             ? Result.Fallo<Marca>(
-                PrefijoNoEncontrado + "La marca no existe o no está activa.")
-            : Result.Ok(marca);
+                PrefijosResultado.NoEncontrado + "La marca no existe o no está activa.")
+            : Result.OkConMensaje(marca, "Marca obtenida correctamente.");
     }
 
     public async Task<Result<short>> CrearMarcaAsync(
@@ -634,7 +646,7 @@ public sealed class ServicioProductos
             return Result.Fallo<short>(validacion.Error);
         }
 
-        DatosMarca datos = validacion.ValorRequerido;
+        DatosMarca datos = validacion.Valor!;
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
         DateTime ahora = DateTime.Now;
 
@@ -651,7 +663,7 @@ public sealed class ServicioProductos
 
         short idMarca = await _catalogo.InsertarMarcaAsync(marca, ct);
 
-        return Result.Ok(idMarca);
+        return Result.OkConMensaje(idMarca, "Marca creada correctamente.");
     }
 
     public async Task<Result> ActualizarMarcaAsync(
@@ -669,7 +681,7 @@ public sealed class ServicioProductos
         if (actual is null || actual.Estado != 1)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La marca no existe o no está activa.");
         }
 
         Result<DatosMarca> validacion = await ValidarMarcaAsync(
@@ -683,7 +695,7 @@ public sealed class ServicioProductos
             return validacion;
         }
 
-        DatosMarca datos = validacion.ValorRequerido;
+        DatosMarca datos = validacion.Valor!;
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
         DateTime ahora = DateTime.Now;
 
@@ -707,9 +719,9 @@ public sealed class ServicioProductos
         bool guardado = await _catalogo.ActualizarMarcaAsync(actualizada, ct);
 
         return guardado
-            ? Result.Ok()
+            ? Result.OkConMensaje("Marca actualizada correctamente.")
             : Result.Fallo(
-                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La marca no existe o no está activa.");
     }
 
     public async Task<Result> DarDeBajaMarcaAsync(
@@ -721,13 +733,13 @@ public sealed class ServicioProductos
         if (actual is null || actual.Estado != 1)
         {
             return Result.Fallo(
-                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La marca no existe o no está activa.");
         }
 
         if (await _catalogo.TieneProductosActivosMarcaAsync(idMarca, ct))
         {
             return Result.Fallo(
-                PrefijoConflicto +
+                PrefijosResultado.Conflicto +
                 "No se puede dar de baja la marca porque tiene productos activos asociados.");
         }
 
@@ -737,9 +749,9 @@ public sealed class ServicioProductos
             await _catalogo.DarDeBajaMarcaAsync(idMarca, idEmpleado, ct);
 
         return dadoDeBaja
-            ? Result.Ok()
+            ? Result.OkConMensaje("Marca dada de baja correctamente.")
             : Result.Fallo(
-                PrefijoNoEncontrado + "La marca no existe o no está activa.");
+                PrefijosResultado.NoEncontrado + "La marca no existe o no está activa.");
     }
 
     /// <summary>Reactiva una marca dada de baja.</summary>
@@ -752,12 +764,12 @@ public sealed class ServicioProductos
 
         if (actual is null)
         {
-            return Result.Fallo(PrefijoNoEncontrado + "La marca no existe.");
+            return Result.Fallo(PrefijosResultado.NoEncontrado + "La marca no existe.");
         }
 
         if (actual.Estado == 1)
         {
-            return Result.Fallo(PrefijoConflicto + "La marca ya está activa.");
+            return Result.Fallo(PrefijosResultado.Conflicto + "La marca ya está activa.");
         }
 
         int? idEmpleado = _contextoUsuario.IdEmpleadoActual;
@@ -766,9 +778,9 @@ public sealed class ServicioProductos
             idMarca, idEmpleado, ct);
 
         return reactivada
-            ? Result.Ok()
+            ? Result.OkConMensaje("Marca reactivada correctamente.")
             : Result.Fallo(
-                PrefijoNoEncontrado + "La marca no existe o ya está activa.");
+                PrefijosResultado.NoEncontrado + "La marca no existe o ya está activa.");
     }
 
     private async Task<string> GenerarCodigoDisponibleAsync(
@@ -859,7 +871,7 @@ public sealed class ServicioProductos
                 codigoNormalizado, excluirIdCategoria, ct))
         {
             return Result.Fallo<DatosCategoria>(
-                PrefijoConflicto +
+                PrefijosResultado.Conflicto +
                 $"El código '{codigoNormalizado}' ya está registrado en otra categoría activa.");
         }
 
@@ -867,7 +879,7 @@ public sealed class ServicioProductos
                 nombreNormalizado, excluirIdCategoria, ct))
         {
             return Result.Fallo<DatosCategoria>(
-                PrefijoConflicto +
+                PrefijosResultado.Conflicto +
                 $"El nombre '{nombreNormalizado}' ya está registrado en otra categoría activa.");
         }
 
@@ -911,7 +923,7 @@ public sealed class ServicioProductos
                 nombreNormalizado, excluirIdMarca, ct))
         {
             return Result.Fallo<DatosMarca>(
-                PrefijoConflicto +
+                PrefijosResultado.Conflicto +
                 $"El nombre '{nombreNormalizado}' ya está registrado en otra marca activa.");
         }
 
@@ -1000,7 +1012,7 @@ public sealed class ServicioProductos
         if (await _productos.ExisteCodigoAsync(codigo, excluirIdProducto, ct))
         {
             return Result.Fallo<DatosValidados>(
-                PrefijoConflicto + $"El código '{codigo}' ya está registrado.");
+                PrefijosResultado.Conflicto + $"El código '{codigo}' ya está registrado.");
         }
 
         if (errores.Count > 0)

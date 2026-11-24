@@ -36,14 +36,16 @@ public class ProveedoresController : ControllerBase
     public async Task<IActionResult> Listar([FromQuery] string? orden, CancellationToken ct)
     {
         var resultado = await _listar.EjecutarAsync(orden, ct);
-        return DesdeResultado(resultado, datos => Ok(RespuestaApi<IReadOnlyList<ProveedorDto>>.Ok(datos)));
+        return DesdeResultado(resultado, datos =>
+            Ok(RespuestaApi<IReadOnlyList<ProveedorDto>>.Ok(datos, resultado.Mensaje)));
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Obtener(int id, CancellationToken ct)
     {
         var resultado = await _obtener.EjecutarAsync(id, ct);
-        return DesdeResultado(resultado, datos => Ok(RespuestaApi<ProveedorDto>.Ok(datos)));
+        return DesdeResultado(resultado, datos =>
+            Ok(RespuestaApi<ProveedorDto>.Ok(datos, resultado.Mensaje)));
     }
 
     [HttpPost]
@@ -56,7 +58,7 @@ public class ProveedoresController : ControllerBase
 
         var resultado = await _crear.EjecutarAsync(solicitud, UsuarioActual(), ct);
         return DesdeResultado(resultado, datos => CreatedAtAction(nameof(Obtener), new { id = datos.Id },
-            RespuestaApi<ProveedorDto>.Ok(datos, "Proveedor registrado correctamente.")));
+            RespuestaApi<ProveedorDto>.Ok(datos, resultado.Mensaje)));
     }
 
     [HttpPut("{id:int}")]
@@ -68,7 +70,8 @@ public class ProveedoresController : ControllerBase
         }
 
         var resultado = await _actualizar.EjecutarAsync(id, solicitud, UsuarioActual(), ct);
-        return DesdeResultado(resultado, datos => Ok(RespuestaApi<ProveedorDto>.Ok(datos, "Proveedor actualizado correctamente.")));
+        return DesdeResultado(resultado, datos =>
+            Ok(RespuestaApi<ProveedorDto>.Ok(datos, resultado.Mensaje)));
     }
 
     [HttpDelete("{id:int}")]
@@ -77,7 +80,7 @@ public class ProveedoresController : ControllerBase
         var resultado = await _eliminar.DarDeBajaAsync(id, UsuarioActual(), ct);
         if (resultado.EsExitoso)
         {
-            return Ok(RespuestaApi<object>.Ok(new { id }, "Proveedor dado de baja correctamente."));
+            return Ok(RespuestaApi<object>.Ok(new { id }, resultado.Mensaje));
         }
 
         return DesdeFallo<object>(resultado.Error!);
@@ -89,7 +92,7 @@ public class ProveedoresController : ControllerBase
         var resultado = await _eliminar.ReactivarAsync(id, UsuarioActual(), ct);
         if (resultado.EsExitoso)
         {
-            return Ok(RespuestaApi<object>.Ok(new { id }, "Proveedor reactivado correctamente."));
+            return Ok(RespuestaApi<object>.Ok(new { id }, resultado.Mensaje));
         }
 
         return DesdeFallo<object>(resultado.Error!);

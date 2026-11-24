@@ -10,12 +10,20 @@ namespace FERRETERIA__Joel.Pages.Productos;
 [Authorize]
 public sealed class CrearModel : PageModel
 {
-    private readonly IServicioProductos _api;
+    private readonly IProductosConsulta _consultas;
+    private readonly IProductosComandos _comandos;
+    private readonly ICatalogoConsulta _catalogo;
     private readonly ILogger<CrearModel> _logger;
 
-    public CrearModel(IServicioProductos api, ILogger<CrearModel> logger)
+    public CrearModel(
+        IProductosConsulta consultas,
+        IProductosComandos comandos,
+        ICatalogoConsulta catalogo,
+        ILogger<CrearModel> logger)
     {
-        _api = api;
+        _consultas = consultas;
+        _comandos = comandos;
+        _catalogo = catalogo;
         _logger = logger;
     }
 
@@ -58,7 +66,7 @@ public sealed class CrearModel : PageModel
         try
         {
             ResultadoApi<CrearProductoRespuestaApi> resultado =
-                await _api.CrearAsync(Solicitud, cancelacion);
+                await _comandos.CrearAsync(Solicitud, cancelacion);
 
             if (resultado.Exitoso)
             {
@@ -95,7 +103,7 @@ public sealed class CrearModel : PageModel
         try
         {
             ResultadoApi<SiguienteCodigoApi> respuesta =
-                await _api.ObtenerSiguienteCodigoAsync(cancelacion);
+                await _consultas.ObtenerSiguienteCodigoAsync(cancelacion);
 
             if (respuesta.Exitoso
                 && respuesta.Datos is not null
@@ -115,9 +123,9 @@ public sealed class CrearModel : PageModel
         try
         {
             ResultadoApi<List<CategoriaApi>> categorias =
-                await _api.ListarCategoriasAsync(false, cancelacion);
+                await _catalogo.ListarCategoriasAsync(false, cancelacion);
             ResultadoApi<List<MarcaApi>> marcas =
-                await _api.ListarMarcasAsync(false, cancelacion);
+                await _catalogo.ListarMarcasAsync(false, cancelacion);
 
             if (categorias.Exitoso && categorias.Datos is not null)
             {

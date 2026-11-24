@@ -11,9 +11,9 @@ public class EliminarProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public EliminarProveedorCasoDeUso(IRepositorioProveedores repositorio)
+    public EliminarProveedorCasoDeUso(RepositoryCreatorBase<IRepositorioProveedores> creadorRepositorio)
     {
-        _repositorio = repositorio;
+        _repositorio = creadorRepositorio.CreateRepository();
     }
 
     public async Task<Result> DarDeBajaAsync(int id, string usuario, CancellationToken ct = default)
@@ -31,7 +31,7 @@ public class EliminarProveedorCasoDeUso
 
         bool dadoDeBaja = await _repositorio.DarDeBajaAsync(id, usuario, ct);
         return dadoDeBaja
-            ? Result.Ok()
+            ? Result.OkConMensaje("Proveedor dado de baja correctamente.")
             : Result.Fallo(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
     }
 
@@ -50,7 +50,7 @@ public class EliminarProveedorCasoDeUso
 
         bool reactivado = await _repositorio.ReactivarAsync(id, usuario, ct);
         return reactivado
-            ? Result.Ok()
+            ? Result.OkConMensaje("Proveedor reactivado correctamente.")
             : Result.Fallo(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
     }
 }

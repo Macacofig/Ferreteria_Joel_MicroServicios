@@ -1,5 +1,6 @@
 ﻿using MicroServicioProveedores.Aplicacion.Contratos;
 using MicroServicioProveedores.Dominio.Entidades;
+using MicroServicioProveedores.Dominio.Resultados;
 using MongoDB.Driver;
 
 namespace MicroServicioProveedores.Infraestructura.Persistencia;
@@ -51,19 +52,22 @@ public class MongoProveedorRepositorio : IRepositorioProveedores
         return contador.Secuencia;
     }
 
-    public async Task CrearAsync(Proveedor proveedor, CancellationToken ct = default)
+    public async Task<Result> CrearAsync(Proveedor proveedor, CancellationToken ct = default)
     {
         try
         {
             await _proveedores.InsertOneAsync(MapearADocumento(proveedor), cancellationToken: ct);
+            return Result.Ok();
         }
+        // Duplicados son errores esperados de negocio: se convierten en Result.
+        // El resto de excepciones Mongo (conexión, configuración) siguen propagándose.
         catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw TraducirDuplicado(ex);
+            return Result.Fallo(TraducirDuplicado(ex));
         }
     }
 
-    public async Task<bool> ActualizarAsync(Proveedor proveedor, CancellationToken ct = default)
+    public async Task<Result> ActualizarAsync(Proveedor proveedor, CancellationToken ct = default)
     {
         try
         {
@@ -71,11 +75,14 @@ public class MongoProveedorRepositorio : IRepositorioProveedores
                 p => p.Id == proveedor.Id,
                 MapearADocumento(proveedor),
                 cancellationToken: ct);
-            return resultado.MatchedCount > 0;
+
+            return resultado.MatchedCount > 0
+                ? Result.Ok()
+                : Result.Fallo(ErrorResultado.NoEncontrado("Proveedor no encontrado."));
         }
         catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
         {
-            throw TraducirDuplicado(ex);
+            return Result.Fallo(TraducirDuplicado(ex));
         }
     }
 
@@ -119,20 +126,28 @@ public class MongoProveedorRepositorio : IRepositorioProveedores
         return resultado.ModifiedCount > 0;
     }
 
-    private static ConflictoNegocioExcepcion TraducirDuplicado(MongoWriteException ex)
+    private static ErrorResultado TraducirDuplicado(MongoWriteException ex)
     {
         string mensaje = ex.WriteError?.Message ?? string.Empty;
         if (mensaje.Contains("nit", StringComparison.OrdinalIgnoreCase))
         {
-            return new ConflictoNegocioExcepcion("Ya existe un proveedor registrado con el mismo NIT.", "Nit");
+            return ErrorResultado.Conflicto(
+                "Ya existe un proveedor registrado con el mismo NIT.",
+                new Dictionary<string, string>
+                {
+                    ["Nit"] = "El NIT ingresado ya está registrado para otro proveedor."
+                });
         }
 
         if (mensaje.Contains("_id", StringComparison.OrdinalIgnoreCase))
         {
-            return new ConflictoNegocioExcepcion("Ya existe un proveedor con el mismo identificador.", "Id");
+            return ErrorResultado.Conflicto(
+                "Ya existe un proveedor con el mismo identificador.",
+                new Dictionary<string, string> { ["Id"] = "El identificador ya está registrado." });
         }
 
-        return new ConflictoNegocioExcepcion("El proveedor entra en conflicto con un registro existente.");
+        return ErrorResultado.Conflicto(
+            "El proveedor entra en conflicto con un registro existente.");
     }
 
     private static ProveedorDocumento MapearADocumento(Proveedor proveedor) => new()

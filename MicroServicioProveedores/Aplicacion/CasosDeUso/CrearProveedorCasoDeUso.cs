@@ -9,9 +9,9 @@ public class CrearProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public CrearProveedorCasoDeUso(IRepositorioProveedores repositorio)
+    public CrearProveedorCasoDeUso(RepositoryCreatorBase<IRepositorioProveedores> creadorRepositorio)
     {
-        _repositorio = repositorio;
+        _repositorio = creadorRepositorio.CreateRepository();
     }
 
     public async Task<Result<ProveedorDto>> EjecutarAsync(CrearProveedorSolicitud solicitud, string usuario, CancellationToken ct = default)
@@ -43,18 +43,14 @@ public class CrearProveedorCasoDeUso
             return Result.Fallo<ProveedorDto>(resultadoCreacion.Error!);
         }
 
-        try
+        Result guardado = await _repositorio.CrearAsync(resultadoCreacion.Valor!, ct);
+        if (guardado.EsFallo)
         {
-            await _repositorio.CrearAsync(resultadoCreacion.Valor!, ct);
-        }
-        catch (ConflictoNegocioExcepcion ex)
-        {
-            var errores = string.IsNullOrWhiteSpace(ex.Campo)
-                ? null
-                : new Dictionary<string, string> { [ex.Campo] = ex.Message };
-            return Result.Fallo<ProveedorDto>(ErrorResultado.Conflicto(ex.Message, errores));
+            return Result.Fallo<ProveedorDto>(guardado.Error!);
         }
 
-        return Result.Ok(MapeadorProveedor.ADto(resultadoCreacion.Valor!));
+        return Result.OkConMensaje(
+            MapeadorProveedor.ADto(resultadoCreacion.Valor!),
+            "Proveedor registrado correctamente.");
     }
 }
