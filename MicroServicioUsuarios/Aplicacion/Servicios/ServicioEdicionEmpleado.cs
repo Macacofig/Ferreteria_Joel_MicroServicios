@@ -3,6 +3,7 @@ using FERRETERIA__Joel.Dominio.Constantes;
 using FERRETERIA__Joel.Dominio.Entidades;
 using FERRETERIA__Joel.Dominio.Puertos;
 using FERRETERIA__Joel.Dominio.Resultados;
+using FERRETERIA__Joel.Dominio.Utilidades;
 using FERRETERIA__Joel.Infraestructura.Factories;
 
 namespace FERRETERIA__Joel.Aplicacion.Servicios
@@ -79,8 +80,16 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
                 };
             }
 
+            NormalizadorApellidos.Resultado apellidos =
+                NormalizadorApellidos.Normalizar(
+                    solicitud.Apellido,
+                    solicitud.PrimerApellido,
+                    solicitud.SegundoApellido);
+
             actual.Nombre = solicitud.Nombre.Trim();
-            actual.Apellido = solicitud.Apellido.Trim();
+            actual.Apellido = apellidos.Apellido;
+            actual.PrimerApellido = apellidos.PrimerApellido;
+            actual.SegundoApellido = apellidos.SegundoApellido;
             actual.Telefono = solicitud.Telefono.Trim();
             actual.CorreoElectronico = correo;
             actual.Rol = RolesSistema.Normalizar(solicitud.Rol);

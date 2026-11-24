@@ -14,8 +14,11 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
         private const string MensajeNombre =
             "El nombre es obligatorio, debe tener máximo 100 caracteres y solo admite letras y espacios.";
 
-        private const string MensajeApellido =
-            "El apellido es obligatorio, debe tener máximo 100 caracteres y solo admite letras y espacios.";
+        private const string MensajePrimerApellido =
+            "El primer apellido es obligatorio, debe tener máximo 100 caracteres y solo admite letras y espacios.";
+
+        private const string MensajeSegundoApellido =
+            "El segundo apellido debe tener máximo 100 caracteres y solo admite letras y espacios.";
 
         private const string MensajeTelefono =
             "El teléfono debe tener 8 dígitos y comenzar con 6 o 7.";
@@ -54,9 +57,24 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
                 errores[nameof(IRegistroCredenciales.Nombre)] = MensajeNombre;
             }
 
-            if (!_credenciales.EsApellidoValido(solicitud.Apellido))
+            NormalizadorApellidos.Resultado apellidos =
+                NormalizadorApellidos.Normalizar(
+                    solicitud.Apellido,
+                    solicitud.PrimerApellido,
+                    solicitud.SegundoApellido);
+
+            if (apellidos.PrimerApellido.Length == 0
+                || !_credenciales.EsApellidoValido(apellidos.PrimerApellido))
             {
-                errores[nameof(IRegistroCredenciales.Apellido)] = MensajeApellido;
+                errores[nameof(IRegistroCredenciales.PrimerApellido)] =
+                    MensajePrimerApellido;
+            }
+
+            if (apellidos.SegundoApellido is not null
+                && !_credenciales.EsApellidoValido(apellidos.SegundoApellido))
+            {
+                errores[nameof(IRegistroCredenciales.SegundoApellido)] =
+                    MensajeSegundoApellido;
             }
 
             if (!_credenciales.EsTelefonoValido(solicitud.Telefono))

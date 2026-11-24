@@ -16,6 +16,8 @@ namespace FERRETERIA__Joel.Aplicacion.Modelos
                 IdEmpleado = empleado.IdEmpleado,
                 Nombre = empleado.Nombre,
                 Apellido = empleado.Apellido,
+                PrimerApellido = empleado.PrimerApellido,
+                SegundoApellido = empleado.SegundoApellido,
                 NombreUsuario = empleado.NombreUsuario,
                 Rol = empleado.Rol,
                 Telefono = empleado.Telefono,

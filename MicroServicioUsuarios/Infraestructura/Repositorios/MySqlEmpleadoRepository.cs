@@ -1,6 +1,7 @@
 ﻿using FERRETERIA__Joel.Dominio.Constantes;
 using FERRETERIA__Joel.Dominio.Entidades;
 using FERRETERIA__Joel.Dominio.Puertos;
+using FERRETERIA__Joel.Dominio.Utilidades;
 using FERRETERIA__Joel.Infraestructura.Conexion;
 using MySql.Data.MySqlClient;
 
@@ -29,6 +30,8 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
             IdEmpleado,
             Nombre,
             Apellido,
+            PrimerApellido,
+            SegundoApellido,
             NombreUsuario,
             Rol,
             Telefono,
@@ -46,6 +49,8 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
             IdEmpleado,
             Nombre,
             Apellido,
+            PrimerApellido,
+            SegundoApellido,
             NombreUsuario,
             Rol,
             Telefono,
@@ -66,6 +71,8 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
             IdEmpleado,
             Nombre,
             Apellido,
+            PrimerApellido,
+            SegundoApellido,
             NombreUsuario,
             Rol,
             Telefono,
@@ -104,6 +111,8 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
                 (
                     Nombre,
                     Apellido,
+                    PrimerApellido,
+                    SegundoApellido,
                     NombreUsuario,
                     Rol,
                     Telefono,
@@ -123,6 +132,8 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
                 (
                     @nombre,
                     @apellido,
+                    @primerApellido,
+                    @segundoApellido,
                     @nombreUsuario,
                     @rol,
                     @telefono,
@@ -146,6 +157,12 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
 
             command.Parameters.AddWithValue("@nombre", empleado.Nombre);
             command.Parameters.AddWithValue("@apellido", empleado.Apellido);
+            command.Parameters.AddWithValue(
+                "@primerApellido",
+                (object?)empleado.PrimerApellido ?? DBNull.Value);
+            command.Parameters.AddWithValue(
+                "@segundoApellido",
+                (object?)empleado.SegundoApellido ?? DBNull.Value);
             command.Parameters.AddWithValue(
                 "@nombreUsuario",
                 (object?)empleado.NombreUsuario ?? DBNull.Value);
@@ -489,6 +506,8 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
                 SET
                     Nombre = @nombre,
                     Apellido = @apellido,
+                    PrimerApellido = @primerApellido,
+                    SegundoApellido = @segundoApellido,
                     Rol = @rol,
                     Telefono = @telefono,
                     CorreoElectronico = @correoElectronico,
@@ -506,6 +525,12 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
             command.Parameters.AddWithValue("@id", empleado.IdEmpleado);
             command.Parameters.AddWithValue("@nombre", empleado.Nombre);
             command.Parameters.AddWithValue("@apellido", empleado.Apellido);
+            command.Parameters.AddWithValue(
+                "@primerApellido",
+                (object?)empleado.PrimerApellido ?? DBNull.Value);
+            command.Parameters.AddWithValue(
+                "@segundoApellido",
+                (object?)empleado.SegundoApellido ?? DBNull.Value);
             command.Parameters.AddWithValue("@rol", empleado.Rol);
             command.Parameters.AddWithValue("@telefono", empleado.Telefono);
             command.Parameters.AddWithValue(
@@ -711,11 +736,19 @@ namespace FERRETERIA__Joel.Infraestructura.Repositorios
         /// </summary>
         private static Empleado MapearEmpleado(MySqlDataReader reader)
         {
+            NormalizadorApellidos.Resultado apellidos =
+                NormalizadorApellidos.Normalizar(
+                    reader["Apellido"].ToString(),
+                    ObtenerTexto(reader, "PrimerApellido"),
+                    ObtenerTexto(reader, "SegundoApellido"));
+
             return new Empleado
             {
                 IdEmpleado = reader.GetInt32("IdEmpleado"),
                 Nombre = reader["Nombre"].ToString() ?? "",
-                Apellido = reader["Apellido"].ToString() ?? "",
+                Apellido = apellidos.Apellido,
+                PrimerApellido = apellidos.PrimerApellido,
+                SegundoApellido = apellidos.SegundoApellido,
                 NombreUsuario = ObtenerTexto(reader, "NombreUsuario"),
                 Rol = reader["Rol"].ToString() ?? "",
                 Telefono = reader["Telefono"].ToString() ?? "",

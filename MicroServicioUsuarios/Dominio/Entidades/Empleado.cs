@@ -4,7 +4,18 @@
     {
         public int IdEmpleado { get; set; }
         public string Nombre { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Apellidos completos (primer + segundo). Se conserva como campo
+        /// canónico para claims, perfil, personal y Keycloak.
+        /// </summary>
         public string Apellido { get; set; } = string.Empty;
+
+        /// <summary>Primer apellido del empleado.</summary>
+        public string? PrimerApellido { get; set; }
+
+        /// <summary>Segundo apellido del empleado (puede ser nulo).</summary>
+        public string? SegundoApellido { get; set; }
 
         // Nombre de usuario generado automáticamente a partir del nombre y el
         // apellido (por ejemplo "mlopez"). Es único a nivel de base de datos.

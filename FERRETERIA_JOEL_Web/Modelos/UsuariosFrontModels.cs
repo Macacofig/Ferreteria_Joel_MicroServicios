@@ -10,6 +10,8 @@ namespace FERRETERIA__Joel.Aplicacion.Modelos
     {
         public string Nombre { get; set; } = string.Empty;
         public string Apellido { get; set; } = string.Empty;
+        public string PrimerApellido { get; set; } = string.Empty;
+        public string SegundoApellido { get; set; } = string.Empty;
         public string Telefono { get; set; } = string.Empty;
         public string CorreoElectronico { get; set; } = string.Empty;
         public string Rol { get; set; } = string.Empty;

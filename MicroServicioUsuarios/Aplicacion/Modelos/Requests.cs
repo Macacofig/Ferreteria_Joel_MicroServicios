@@ -10,6 +10,8 @@
     {
         public string Nombre { get; set; } = string.Empty;
         public string Apellido { get; set; } = string.Empty;
+        public string? PrimerApellido { get; set; }
+        public string? SegundoApellido { get; set; }
         public string Telefono { get; set; } = string.Empty;
         public string CorreoElectronico { get; set; } = string.Empty;
         public string Rol { get; set; } = string.Empty;

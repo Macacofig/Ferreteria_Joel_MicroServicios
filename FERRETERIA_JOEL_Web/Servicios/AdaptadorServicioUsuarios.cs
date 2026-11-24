@@ -177,6 +177,8 @@ namespace FERRETERIA__Joel.Servicios
             CancellationToken cancellationToken = default)
         {
             (string nombre, string apellido) = SepararNombre(request.NombreCompleto);
+            (string primerApellido, string? segundoApellido) =
+                SepararApellido(apellido);
 
             RespuestaApi<CrearUsuarioApiRespuesta> respuesta = await _adaptee.CrearAsync(
                 TokenDeSesion(),
@@ -184,6 +186,8 @@ namespace FERRETERIA__Joel.Servicios
                 {
                     Nombre = nombre,
                     Apellido = apellido,
+                    PrimerApellido = primerApellido,
+                    SegundoApellido = segundoApellido,
                     CorreoElectronico = request.Correo,
                     Rol = request.Rol
                 },
@@ -200,6 +204,8 @@ namespace FERRETERIA__Joel.Servicios
             CancellationToken cancellationToken = default)
         {
             (string nombre, string apellido) = SepararNombre(request.NombreCompleto);
+            (string primerApellido, string? segundoApellido) =
+                SepararApellido(apellido);
 
             RespuestaApi<UsuarioApi> respuesta = await _adaptee.ActualizarAsync(
                 TokenDeSesion(),
@@ -208,6 +214,8 @@ namespace FERRETERIA__Joel.Servicios
                 {
                     Nombre = nombre,
                     Apellido = apellido,
+                    PrimerApellido = primerApellido,
+                    SegundoApellido = segundoApellido,
                     CorreoElectronico = request.Correo,
                     Rol = request.Rol
                 },
@@ -298,6 +306,24 @@ namespace FERRETERIA__Joel.Servicios
             {
                 0 => (string.Empty, string.Empty),
                 1 => (partes[0], string.Empty),
+                _ => (partes[0], string.Join(' ', partes[1..]))
+            };
+        }
+
+        /// <summary>
+        /// Divide el apellido compuesto que usan los contratos antiguos del
+        /// front en primer y segundo apellido para enviarlos a la API.
+        /// </summary>
+        private static (string PrimerApellido, string? SegundoApellido) SepararApellido(
+            string apellido)
+        {
+            string[] partes = (apellido ?? string.Empty)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            return partes.Length switch
+            {
+                0 => (string.Empty, null),
+                1 => (partes[0], null),
                 _ => (partes[0], string.Join(' ', partes[1..]))
             };
         }

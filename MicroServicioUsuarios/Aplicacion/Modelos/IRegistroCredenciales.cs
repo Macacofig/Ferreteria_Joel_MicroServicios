@@ -11,6 +11,12 @@
 
         string Apellido { get; }
 
+        /// <summary>Primer apellido (compatible con formularios que envían solo Apellido).</summary>
+        string? PrimerApellido { get; }
+
+        /// <summary>Segundo apellido, opcional.</summary>
+        string? SegundoApellido { get; }
+
         string Telefono { get; }
 
         string CorreoElectronico { get; }

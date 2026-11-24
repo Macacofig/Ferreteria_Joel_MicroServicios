@@ -35,6 +35,8 @@
         public int IdEmpleado { get; init; }
         public string Nombre { get; init; } = string.Empty;
         public string Apellido { get; init; } = string.Empty;
+        public string? PrimerApellido { get; init; }
+        public string? SegundoApellido { get; init; }
         public string? NombreUsuario { get; init; }
         public string Rol { get; init; } = string.Empty;
         public string Telefono { get; init; } = string.Empty;

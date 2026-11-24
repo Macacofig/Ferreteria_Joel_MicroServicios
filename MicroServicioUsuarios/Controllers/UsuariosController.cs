@@ -115,6 +115,8 @@ namespace FERRETERIA__Joel.ServicioUsuarios.Controllers
                 {
                     Nombre = solicitud.Nombre,
                     Apellido = solicitud.Apellido,
+                    PrimerApellido = solicitud.PrimerApellido,
+                    SegundoApellido = solicitud.SegundoApellido,
                     Telefono = solicitud.Telefono,
                     CorreoElectronico = solicitud.CorreoElectronico,
                     Rol = solicitud.Rol
@@ -169,6 +171,8 @@ namespace FERRETERIA__Joel.ServicioUsuarios.Controllers
                 {
                     Nombre = solicitud.Nombre,
                     Apellido = solicitud.Apellido,
+                    PrimerApellido = solicitud.PrimerApellido,
+                    SegundoApellido = solicitud.SegundoApellido,
                     Telefono = solicitud.Telefono,
                     CorreoElectronico = solicitud.CorreoElectronico,
                     Rol = solicitud.Rol

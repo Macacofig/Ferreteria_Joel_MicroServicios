@@ -109,12 +109,22 @@
                 }
             </div>
 
-            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("Apellido") ? "fj-form-field-error" : "")">
-                <label class="fj-form-label" asp-for="Solicitud.Apellido">Apellido</label>
-                <input class="fj-input" asp-for="Solicitud.Apellido" maxlength="100" placeholder="Ej: Gómez" required />
-                @if (Model.ErroresCampo.TryGetValue("Apellido", out var errorApellido))
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("PrimerApellido") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.PrimerApellido">Primer apellido</label>
+                <input class="fj-input" asp-for="Solicitud.PrimerApellido" maxlength="100" placeholder="Ej: Gómez" required />
+                @if (Model.ErroresCampo.TryGetValue("PrimerApellido", out var errorPrimerApellido))
                 {
-                    <p class="fj-form-error" role="alert">@errorApellido</p>
+                    <p class="fj-form-error" role="alert">@errorPrimerApellido</p>
+                }
+            </div>
+
+            <div class="fj-form-field @(Model.ErroresCampo.ContainsKey("SegundoApellido") ? "fj-form-field-error" : "")">
+                <label class="fj-form-label" asp-for="Solicitud.SegundoApellido">Segundo apellido</label>
+                <input class="fj-input" asp-for="Solicitud.SegundoApellido" maxlength="100" placeholder="Ej: Pérez" />
+                <span class="fj-form-hint">Opcional. Se mostrará junto al primer apellido.</span>
+                @if (Model.ErroresCampo.TryGetValue("SegundoApellido", out var errorSegundoApellido))
+                {
+                    <p class="fj-form-error" role="alert">@errorSegundoApellido</p>
                 }
             </div>
 

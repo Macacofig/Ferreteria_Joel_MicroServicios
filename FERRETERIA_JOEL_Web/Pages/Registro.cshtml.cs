@@ -63,6 +63,8 @@ namespace FERRETERIA__Joel.Pages
                     {
                         Nombre = Solicitud.Nombre,
                         Apellido = Solicitud.Apellido,
+                        PrimerApellido = Solicitud.PrimerApellido,
+                        SegundoApellido = Solicitud.SegundoApellido,
                         Telefono = Solicitud.Telefono,
                         CorreoElectronico = Solicitud.CorreoElectronico,
                         Rol = Solicitud.Rol
@@ -198,7 +200,19 @@ namespace FERRETERIA__Joel.Pages
         private void NormalizarDatos()
         {
             Solicitud.Nombre = NormalizarTexto(Solicitud.Nombre);
-            Solicitud.Apellido = NormalizarTexto(Solicitud.Apellido);
+            Solicitud.PrimerApellido = NormalizarTexto(Solicitud.PrimerApellido);
+            Solicitud.SegundoApellido = NormalizarTexto(Solicitud.SegundoApellido);
+
+            // Apellido se conserva como concatenación para no romper perfiles,
+            // claims ni la sincronización con Keycloak.
+            Solicitud.Apellido =
+                string.IsNullOrWhiteSpace(Solicitud.PrimerApellido)
+                    ? NormalizarTexto(Solicitud.Apellido)
+                    : string.Join(
+                        ' ',
+                        new[] { Solicitud.PrimerApellido, Solicitud.SegundoApellido }
+                            .Where(parte => !string.IsNullOrWhiteSpace(parte)));
+
             Solicitud.Telefono = NormalizarTexto(Solicitud.Telefono);
             Solicitud.CorreoElectronico =
                 NormalizarTexto(Solicitud.CorreoElectronico);

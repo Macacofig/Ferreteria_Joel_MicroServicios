@@ -2,6 +2,7 @@
 using FERRETERIA__Joel.Dominio.Constantes;
 using FERRETERIA__Joel.Dominio.Entidades;
 using FERRETERIA__Joel.Dominio.Puertos;
+using FERRETERIA__Joel.Dominio.Utilidades;
 using FERRETERIA__Joel.Infraestructura.Factories;
 
 namespace FERRETERIA__Joel.Aplicacion.Servicios
@@ -71,15 +72,26 @@ namespace FERRETERIA__Joel.Aplicacion.Servicios
             }
 
             string token = GeneradorTokenActivacion.Generar();
+
+            NormalizadorApellidos.Resultado apellidos =
+                NormalizadorApellidos.Normalizar(
+                    solicitud.Apellido,
+                    solicitud.PrimerApellido,
+                    solicitud.SegundoApellido);
+
+            // El usuario se genera solo con el primer apellido para conservar
+            // convenciones existentes ("María López" → "mlopez", no "mlope zperez").
             string nombreUsuario =
                 await GenerarNombreUsuarioDisponibleAsync(
                     solicitud.Nombre,
-                    solicitud.Apellido);
+                    apellidos.PrimerApellido);
 
             Empleado empleado = new()
             {
                 Nombre = solicitud.Nombre.Trim(),
-                Apellido = solicitud.Apellido.Trim(),
+                Apellido = apellidos.Apellido,
+                PrimerApellido = apellidos.PrimerApellido,
+                SegundoApellido = apellidos.SegundoApellido,
                 NombreUsuario = nombreUsuario,
                 Rol = RolesSistema.Normalizar(solicitud.Rol),
                 Telefono = solicitud.Telefono.Trim(),
