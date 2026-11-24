@@ -1,51 +1,21 @@
-using MicroServicioProductos.Aplicacion.Puertos;
 using MicroServicioProductos.Dominio.Puertos;
-using MicroServicioProductos.Infraestructura.Conexion;
-using MicroServicioProductos.Infraestructura.Repositorios;
 
 namespace MicroServicioProductos.Infraestructura.Factories;
 
 /// <summary>
-/// Creadores concretos del Factory Method. Heredan del creador abstracto de
-/// Aplicación y son los únicos que conocen los adaptadores MySQL.
+/// Creador abstracto del patrón Factory Method. Cada creador concreto decide
+/// qué adaptador de persistencia devolver, de modo que los casos de uso
+/// dependan solo del contrato de dominio y no de las clases concretas de MySQL.
+/// <para>
+/// El Producto del patrón es <see cref="IRepository{TEntidad}"/>: los puertos
+/// <see cref="IRepositoryProducto"/> e <see cref="IRepositoryHistoricoProducto"/>
+/// lo especializan (el primero vía <see cref="IGestionarRepository{TEntidad}"/>)
+/// y añaden las consultas propias del catálogo.
+/// </para>
 /// </summary>
-public sealed class ProductoRepositoryCreator : RepositoryCreator<IRepositoryProducto>
+/// <typeparam name="TRepositorio">Contrato de repositorio solicitado.</typeparam>
+public abstract class RepositoryCreator<TRepositorio>
 {
-    private readonly IDbConnectionFactory _connectionFactory;
-
-    public ProductoRepositoryCreator(IDbConnectionFactory connectionFactory)
-    {
-        _connectionFactory = connectionFactory;
-    }
-
-    public override IRepositoryProducto CreateRepository() =>
-        new MySqlProductoRepository(_connectionFactory);
-}
-
-public sealed class CatalogoAuxiliarRepositoryCreator
-    : RepositoryCreator<IRepositoryCatalogoAuxiliar>
-{
-    private readonly IDbConnectionFactory _connectionFactory;
-
-    public CatalogoAuxiliarRepositoryCreator(IDbConnectionFactory connectionFactory)
-    {
-        _connectionFactory = connectionFactory;
-    }
-
-    public override IRepositoryCatalogoAuxiliar CreateRepository() =>
-        new MySqlCatalogoAuxiliarRepository(_connectionFactory);
-}
-
-public sealed class HistoricoProductoRepositoryCreator
-    : RepositoryCreator<IRepositoryHistoricoProducto>
-{
-    private readonly IDbConnectionFactory _connectionFactory;
-
-    public HistoricoProductoRepositoryCreator(IDbConnectionFactory connectionFactory)
-    {
-        _connectionFactory = connectionFactory;
-    }
-
-    public override IRepositoryHistoricoProducto CreateRepository() =>
-        new MySqlHistoricoProductoRepository(_connectionFactory);
+    /// <summary>Método de fábrica implementado por los creadores concretos.</summary>
+    public abstract TRepositorio CreateRepository();
 }

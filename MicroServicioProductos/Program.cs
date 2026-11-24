@@ -23,23 +23,30 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 
 // ---------------------------------------------------------------------------
-// Persistencia MySQL (bdproductos) con patrón Factory Method. Aplicación
-// inyecta directamente el creador abstracto y llama a CreateRepository();
-// por eso no se registran repositorios sueltos en el contenedor.
+// Persistencia MySQL (bdproductos) con patrón Factory Method. Cada entidad
+// tiene su propio creador concreto y su propio caso de uso en Aplicación.
+// La unidad de trabajo es compartida por todos los repositorios de la
+// petición para que producto e historial se confirmen en el mismo commit.
 // ---------------------------------------------------------------------------
 builder.Services.AddSingleton<IDbConnectionFactory, MySqlConnectionFactory>();
+builder.Services.AddScoped<IMySqlUnitOfWork, MySqlUnitOfWork>();
+builder.Services.AddScoped<IUnitOfWork>(proveedor =>
+    proveedor.GetRequiredService<IMySqlUnitOfWork>());
 
 builder.Services.AddScoped<RepositoryCreator<IRepositoryProducto>,
     ProductoRepositoryCreator>();
-builder.Services.AddScoped<RepositoryCreator<IRepositoryCatalogoAuxiliar>,
-    CatalogoAuxiliarRepositoryCreator>();
+builder.Services.AddScoped<RepositoryCreator<IRepositoryCategoria>,
+    CategoriaRepositoryCreator>();
+builder.Services.AddScoped<RepositoryCreator<IRepositoryMarca>,
+    MarcaRepositoryCreator>();
 builder.Services.AddScoped<RepositoryCreator<IRepositoryHistoricoProducto>,
     HistoricoProductoRepositoryCreator>();
 
-
-// Puerto de entrada: el controlador depende de IServicioProductos, nunca de
-// la clase concreta ServicioProductos.
+// Puertos de entrada: cada controlador depende solo de su propio servicio.
 builder.Services.AddScoped<IServicioProductos, ServicioProductos>();
+builder.Services.AddScoped<IServicioCategorias, ServicioCategorias>();
+builder.Services.AddScoped<IServicioMarcas, ServicioMarcas>();
+builder.Services.AddScoped<IServicioHistoricoProducto, ServicioHistoricoProducto>();
 
 // Identidad resuelta desde el JWT validado.
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuarioJwt>();
@@ -325,6 +332,7 @@ static string PaginaEstado()
           <li>API: <code>/api/productos</code></li>
           <li>Categorías: <code>/api/productos/categorias</code></li>
           <li>Marcas: <code>/api/productos/marcas</code></li>
+          <li>Histórico: <code>/api/productos/{id}/historico</code></li>
           <li>Salud: <code>/health</code></li>
         </ul>
       </div>

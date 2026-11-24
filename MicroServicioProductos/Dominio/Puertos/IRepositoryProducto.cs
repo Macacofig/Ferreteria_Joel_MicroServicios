@@ -2,8 +2,12 @@ using MicroServicioProductos.Dominio.Entidades;
 
 namespace MicroServicioProductos.Dominio.Puertos;
 
-/// <summary>Puerto de persistencia del catálogo de productos.</summary>
-public interface IRepositoryProducto
+/// <summary>
+/// Puerto de persistencia del catálogo de productos. El producto genérico del
+/// Factory Method es <see cref="IGestionarRepository{T}"/>, especializado para
+/// <see cref="Producto"/> con las consultas propias del catálogo.
+/// </summary>
+public interface IRepositoryProducto : IGestionarRepository<Producto>
 {
     Task<IReadOnlyList<Producto>> ListarAsync(
         string? ordenarPor,
