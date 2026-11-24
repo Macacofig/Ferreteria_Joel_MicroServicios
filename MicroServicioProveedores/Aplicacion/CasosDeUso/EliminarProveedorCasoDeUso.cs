@@ -1,4 +1,4 @@
-﻿using MicroServicioProveedores.Aplicacion.Contratos;
+﻿using MicroServicioProveedores.Dominio.Puertos;
 using MicroServicioProveedores.Dominio.Resultados;
 
 namespace MicroServicioProveedores.Aplicacion.CasosDeUso;
