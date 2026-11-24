@@ -14,10 +14,10 @@ namespace FERRETERIA__Joel.Pages
     [Authorize(Roles = RolesSistema.Personal)]
     public class ClientesModel : PageModel
     {
-        private readonly ClientesApiCliente _api;
+        private readonly IServicioClientes _api;
         private readonly ILogger<ClientesModel> _logger;
 
-        public ClientesModel(ClientesApiCliente api, ILogger<ClientesModel> logger)
+        public ClientesModel(IServicioClientes api, ILogger<ClientesModel> logger)
         {
             _api = api;
             _logger = logger;

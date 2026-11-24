@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using FERRETERIA__Joel.Helpers;
 using FERRETERIA__Joel.Servicios;
 using Microsoft.AspNetCore.Authentication;
@@ -102,6 +102,8 @@ builder.Services.AddHttpClient<ClientesApiCliente>(client =>
     client.BaseAddress = new Uri(clientesApiUrl.TrimEnd('/') + "/");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+
+builder.Services.AddScoped<IServicioClientes, AdaptadorServicioClientes>();
 
 string reportesApiUrl = builder.Configuration["Servicios:ReportesApiUrl"]
     ?? builder.Configuration["Servicios__ReportesApiUrl"]
