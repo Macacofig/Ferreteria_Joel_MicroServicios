@@ -14,12 +14,17 @@ namespace FERRETERIA__Joel.Pages.Productos;
 [Authorize]
 public sealed class MarcasModel : PageModel
 {
-    private readonly IServicioProductos _api;
+    private readonly ICatalogoConsulta _catalogo;
+    private readonly ICatalogoComandos _comandos;
     private readonly ILogger<MarcasModel> _logger;
 
-    public MarcasModel(IServicioProductos api, ILogger<MarcasModel> logger)
+    public MarcasModel(
+        ICatalogoConsulta catalogo,
+        ICatalogoComandos comandos,
+        ILogger<MarcasModel> logger)
     {
-        _api = api;
+        _catalogo = catalogo;
+        _comandos = comandos;
         _logger = logger;
     }
 
@@ -64,7 +69,7 @@ public sealed class MarcasModel : PageModel
             if (IdEditar.HasValue)
             {
                 ResultadoApi<MensajeApi> resultado =
-                    await _api.ActualizarMarcaAsync(
+                    await _comandos.ActualizarMarcaAsync(
                         IdEditar.Value, Solicitud, cancelacion);
 
                 if (resultado.Exitoso)
@@ -78,7 +83,7 @@ public sealed class MarcasModel : PageModel
             else
             {
                 ResultadoApi<CrearMarcaRespuestaApi> resultado =
-                    await _api.CrearMarcaAsync(Solicitud, cancelacion);
+                    await _comandos.CrearMarcaAsync(Solicitud, cancelacion);
 
                 if (resultado.Exitoso)
                 {
@@ -118,7 +123,7 @@ public sealed class MarcasModel : PageModel
         try
         {
             ResultadoApi<MensajeApi> resultado =
-                await _api.DarDeBajaMarcaAsync(idMarca, cancelacion);
+                await _comandos.DarDeBajaMarcaAsync(idMarca, cancelacion);
 
             if (resultado.Exitoso)
             {
@@ -147,7 +152,7 @@ public sealed class MarcasModel : PageModel
         try
         {
             ResultadoApi<MensajeApi> resultado =
-                await _api.ReactivarMarcaAsync(idMarca, cancelacion);
+                await _comandos.ReactivarMarcaAsync(idMarca, cancelacion);
 
             if (resultado.Exitoso)
             {
@@ -173,7 +178,7 @@ public sealed class MarcasModel : PageModel
         try
         {
             ResultadoApi<List<MarcaApi>> respuesta =
-                await _api.ListarMarcasAsync(incluirInactivos: true, cancelacion);
+                await _catalogo.ListarMarcasAsync(incluirInactivos: true, cancelacion);
 
             if (respuesta.Exitoso && respuesta.Datos is not null)
             {

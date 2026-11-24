@@ -1,24 +1,16 @@
 namespace FERRETERIA__Joel.Servicios
 {
     /// <summary>
-    /// Target del patrón Adapter para el microservicio de productos. Las Razor
-    /// Pages dependen de este contrato y nunca conocen la URL del ApiGateway ni
-    /// el cliente HTTP concreto. El JWT se toma de la sesión dentro del
-    /// adaptador, de modo que las páginas no lo manipulan.
+    /// Principio de Segregación de Interfaces (ISP): las Razor Pages dependen
+    /// solo de las operaciones que realmente usan, en lugar de un contrato
+    /// único con 20 métodos. Todas son implementadas por
+    /// <see cref="AdaptadorServicioProductos"/>.
     /// </summary>
-    public interface IServicioProductos
+    public interface IProductosConsulta
     {
         Task<ResultadoApi<List<ProductoApi>>> ListarAsync(
             string? ordenarPor,
             string? direccion,
-            bool incluirInactivos = false,
-            CancellationToken cancelacion = default);
-
-        Task<ResultadoApi<List<CategoriaApi>>> ListarCategoriasAsync(
-            bool incluirInactivos = false,
-            CancellationToken cancelacion = default);
-
-        Task<ResultadoApi<List<MarcaApi>>> ListarMarcasAsync(
             bool incluirInactivos = false,
             CancellationToken cancelacion = default);
 
@@ -29,6 +21,14 @@ namespace FERRETERIA__Joel.Servicios
         Task<ResultadoApi<SiguienteCodigoApi>> ObtenerSiguienteCodigoAsync(
             CancellationToken cancelacion = default);
 
+        Task<ResultadoApi<List<HistoricoProductoApi>>> ListarHistoricoAsync(
+            int idProducto,
+            CancellationToken cancelacion = default);
+    }
+
+    /// <summary>Altas, cambios y bajas lógicas de productos.</summary>
+    public interface IProductosComandos
+    {
         Task<ResultadoApi<CrearProductoRespuestaApi>> CrearAsync(
             GuardarProductoApi solicitud,
             CancellationToken cancelacion = default);
@@ -45,12 +45,18 @@ namespace FERRETERIA__Joel.Servicios
         Task<ResultadoApi<MensajeApi>> ReactivarAsync(
             int idProducto,
             CancellationToken cancelacion = default);
+    }
 
-        Task<ResultadoApi<List<HistoricoProductoApi>>> ListarHistoricoAsync(
-            int idProducto,
+    /// <summary>Consultas del catálogo auxiliar: categorías y marcas.</summary>
+    public interface ICatalogoConsulta
+    {
+        Task<ResultadoApi<List<CategoriaApi>>> ListarCategoriasAsync(
+            bool incluirInactivos = false,
             CancellationToken cancelacion = default);
 
-        // ===================== Categorías =====================
+        Task<ResultadoApi<List<MarcaApi>>> ListarMarcasAsync(
+            bool incluirInactivos = false,
+            CancellationToken cancelacion = default);
 
         Task<ResultadoApi<SiguienteCodigoApi>> ObtenerSiguienteCodigoCategoriaAsync(
             CancellationToken cancelacion = default);
@@ -59,6 +65,14 @@ namespace FERRETERIA__Joel.Servicios
             short idCategoria,
             CancellationToken cancelacion = default);
 
+        Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
+            short idMarca,
+            CancellationToken cancelacion = default);
+    }
+
+    /// <summary>Altas, cambios y bajas lógicas de categorías y marcas.</summary>
+    public interface ICatalogoComandos
+    {
         Task<ResultadoApi<CrearCategoriaRespuestaApi>> CrearCategoriaAsync(
             GuardarCategoriaApi solicitud,
             CancellationToken cancelacion = default);
@@ -74,12 +88,6 @@ namespace FERRETERIA__Joel.Servicios
 
         Task<ResultadoApi<MensajeApi>> ReactivarCategoriaAsync(
             short idCategoria,
-            CancellationToken cancelacion = default);
-
-        // ===================== Marcas =====================
-
-        Task<ResultadoApi<MarcaApi>> ObtenerMarcaAsync(
-            short idMarca,
             CancellationToken cancelacion = default);
 
         Task<ResultadoApi<CrearMarcaRespuestaApi>> CrearMarcaAsync(
@@ -98,5 +106,19 @@ namespace FERRETERIA__Joel.Servicios
         Task<ResultadoApi<MensajeApi>> ReactivarMarcaAsync(
             short idMarca,
             CancellationToken cancelacion = default);
+    }
+
+    /// <summary>
+    /// Target del patrón Adapter para el microservicio de productos. Se conserva
+    /// como composición de las interfaces segregadas para código que necesite
+    /// el contrato completo; las páginas usan directamente las interfaces
+    /// pequeñas. El JWT se toma de la sesión dentro del adaptador.
+    /// </summary>
+    public interface IServicioProductos :
+        IProductosConsulta,
+        IProductosComandos,
+        ICatalogoConsulta,
+        ICatalogoComandos
+    {
     }
 }

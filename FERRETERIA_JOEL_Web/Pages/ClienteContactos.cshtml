@@ -1,0 +1,216 @@
+@page
+@model FERRETERIA__Joel.Pages.ClienteContactosModel
+@{
+    ViewData["Title"] = "Contactos del cliente";
+    ViewData["ActiveMenu"] = "Clientes";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/productos.css" asp-append-version="true" />
+}
+
+<div class="fj-container fj-page-products">
+
+    <section class="fj-page-head">
+        <p class="fj-eyebrow">Módulo · Clientes / Contactos</p>
+        <h1>Contactos de @(Model.Cliente is null ? "cliente" : $"{Model.Cliente.Nombre} {Model.Cliente.Apellido}")</h1>
+        <p class="fj-page-sub">
+            Personas de contacto asociadas al cliente
+            @if (Model.Cliente is not null && !string.IsNullOrWhiteSpace(Model.Cliente.Ci))
+            {
+                <text>(CI @Model.Cliente.Ci)</text>
+            }.
+            Segunda tabla del microservicio de clientes, con baja lógica y auditoría.
+        </p>
+    </section>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="fj-alert fj-alert-success" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            <span>@TempData["Mensaje"]</span>
+        </div>
+    }
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="fj-alert" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span>@TempData["MensajeError"]</span>
+        </div>
+    }
+
+    <section class="fj-card" style="padding:1rem 1.25rem;margin-bottom:1rem;">
+        <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end;">
+            <input type="hidden" name="idCliente" value="@Model.IdCliente" />
+            <div class="fj-form-field">
+                <label class="fj-form-label" for="SoloActivos">Mostrar</label>
+                <select class="fj-input" id="SoloActivos" name="SoloActivos">
+                    <option value="true" selected="@Model.SoloActivos">Solo activos</option>
+                    <option value="false" selected="@(!Model.SoloActivos)">Todos (incluye dados de baja)</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:.5rem;padding-bottom:.1rem;">
+                <button type="submit" class="fj-btn fj-btn-primary">Aplicar</button>
+                <a class="fj-btn fj-btn-ghost" asp-page="/Clientes">Volver a clientes</a>
+            </div>
+        </form>
+    </section>
+
+    @if (Model.IdCliente > 0 && (Model.Cliente?.Activo ?? false))
+    {
+        <section class="fj-card" style="padding:1rem 1.25rem;margin-bottom:1rem;">
+            <h2 style="font-size:1rem;margin:0 0 .75rem;">Registrar contacto</h2>
+            <form method="post" asp-page-handler="Crear">
+                <input type="hidden" name="IdCliente" value="@Model.IdCliente" />
+                <input type="hidden" name="SoloActivos" value="@Model.SoloActivos.ToString().ToLowerInvariant()" />
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.75rem;">
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Nombre">Nombre</label>
+                        <input class="fj-input" asp-for="Solicitud.Nombre" maxlength="100" placeholder="Nombre del contacto" required />
+                    </div>
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Cargo">Cargo</label>
+                        <input class="fj-input" asp-for="Solicitud.Cargo" maxlength="50" placeholder="Ej. Jefa de compras" />
+                    </div>
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Telefono">Teléfono</label>
+                        <input class="fj-input" asp-for="Solicitud.Telefono" maxlength="20" placeholder="8 dígitos, inicia en 5/6/7" />
+                    </div>
+                    <div class="fj-form-field">
+                        <label class="fj-form-label" asp-for="Solicitud.Correo">Correo</label>
+                        <input class="fj-input" asp-for="Solicitud.Correo" maxlength="100" placeholder="nombre@correo.com" />
+                    </div>
+                </div>
+                <div style="margin-top:.85rem;">
+                    <button type="submit" class="fj-btn fj-btn-primary">Guardar contacto</button>
+                </div>
+            </form>
+        </section>
+    }
+    else if (Model.IdCliente > 0 && Model.Cliente is not null && !Model.Cliente.Activo)
+    {
+        <div class="fj-alert" role="alert">El cliente está dado de baja; no se pueden agregar contactos.</div>
+    }
+
+    <section class="fj-toolbar fj-toolbar-simple">
+        <p class="fj-toolbar-count">
+            <strong>@Model.Contactos.Count</strong>
+            @(Model.Contactos.Count == 1 ? "contacto encontrado" : "contactos encontrados")
+        </p>
+        <p class="fj-toolbar-count">Máximo 10 contactos activos por cliente</p>
+    </section>
+
+    <section class="fj-card fj-table-card" aria-label="Listado de contactos">
+        <div class="fj-table-wrap fj-table-wrap-scroll">
+            <table class="fj-table fj-table-clientes">
+                <thead>
+                    <tr>
+                        <th scope="col">Contacto</th>
+                        <th scope="col">Teléfono / correo</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Auditoría</th>
+                        <th scope="col" class="fj-td-acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Contactos.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="fj-table-vacio">
+                                <div class="fj-empty">
+                                    <p>No se encontraron contactos</p>
+                                    <span>Registre un contacto nuevo o cambie el filtro de estado.</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @foreach (var contacto in Model.Contactos)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fj-nombre">@contacto.Nombre</span>
+                                @if (!string.IsNullOrWhiteSpace(contacto.Cargo))
+                                {
+                                    <span class="fj-nombre-sub">@contacto.Cargo</span>
+                                }
+                            </td>
+
+                            <td class="fj-td-secundario">
+                                @(string.IsNullOrWhiteSpace(contacto.Telefono) ? "—" : contacto.Telefono)
+                                @if (!string.IsNullOrWhiteSpace(contacto.Correo))
+                                {
+                                    <span class="fj-nombre-sub">@contacto.Correo</span>
+                                }
+                            </td>
+
+                            <td class="fj-auditoria">
+                                <span class="fj-pill" style="--pill: @(contacto.Activo ? "var(--success)" : "var(--texto-ter)");">@(contacto.Activo ? "Activo" : "Inactivo")</span>
+                            </td>
+
+                            <td class="fj-auditoria">
+                                <span class="fj-nombre-sub">Alta: @contacto.FechaCreacion.ToString("dd/MM/yyyy") · @contacto.UsuarioCreacion</span>
+                                @if (contacto.FechaModificacion is not null)
+                                {
+                                    <span class="fj-nombre-sub">Modif: @contacto.FechaModificacion.Value.ToString("dd/MM/yyyy") · @contacto.UsuarioModificacion</span>
+                                }
+                                @if (contacto.FechaBaja is not null)
+                                {
+                                    <span class="fj-nombre-sub">Baja: @contacto.FechaBaja.Value.ToString("dd/MM/yyyy") · @contacto.UsuarioBaja</span>
+                                }
+                            </td>
+
+                            <td class="fj-td-acciones">
+                                <div class="fj-acciones">
+                                    @if (contacto.Activo)
+                                    {
+                                        <details class="fj-inline-form">
+                                            <summary class="fj-btn fj-btn-ghost fj-btn-sm">Editar</summary>
+                                            <form method="post" asp-page-handler="Actualizar" style="display:grid;gap:.5rem;min-width:260px;padding:.75rem;">
+                                                <input type="hidden" name="idContacto" value="@contacto.IdContacto" />
+                                                <input type="hidden" name="IdCliente" value="@Model.IdCliente" />
+                                                <input type="hidden" name="SoloActivos" value="@Model.SoloActivos.ToString().ToLowerInvariant()" />
+                                                <input class="fj-input" name="Solicitud.Nombre" value="@contacto.Nombre" maxlength="100" required />
+                                                <input class="fj-input" name="Solicitud.Cargo" value="@contacto.Cargo" maxlength="50" />
+                                                <input class="fj-input" name="Solicitud.Telefono" value="@contacto.Telefono" maxlength="20" />
+                                                <input class="fj-input" name="Solicitud.Correo" value="@contacto.Correo" maxlength="100" />
+                                                <button type="submit" class="fj-btn fj-btn-primary fj-btn-sm">Guardar</button>
+                                            </form>
+                                        </details>
+
+                                        @if (Model.EsAdministrador)
+                                        {
+                                            <form method="post" asp-page-handler="Baja" class="fj-inline-form"
+                                                  data-fj-confirm="¿Desea dar de baja al contacto '@contacto.Nombre'?">
+                                                <input type="hidden" name="idContacto" value="@contacto.IdContacto" />
+                                                <input type="hidden" name="IdCliente" value="@Model.IdCliente" />
+                                                <input type="hidden" name="SoloActivos" value="@Model.SoloActivos.ToString().ToLowerInvariant()" />
+                                                <button type="submit" class="fj-btn fj-btn-danger fj-btn-icon" title="Dar de baja" aria-label="Dar de baja">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+                                    else if (Model.EsAdministrador)
+                                    {
+                                        <form method="post" asp-page-handler="Reactivar" class="fj-inline-form"
+                                              data-fj-confirm="¿Desea reactivar al contacto '@contacto.Nombre'?">
+                                            <input type="hidden" name="idContacto" value="@contacto.IdContacto" />
+                                            <input type="hidden" name="IdCliente" value="@Model.IdCliente" />
+                                            <input type="hidden" name="SoloActivos" value="@Model.SoloActivos.ToString().ToLowerInvariant()" />
+                                            <button type="submit" class="fj-btn fj-btn-primary fj-btn-sm">Reactivar</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<partial name="_ConfirmModal" />

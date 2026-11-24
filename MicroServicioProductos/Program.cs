@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using MicroServicioProductos.Aplicacion.Puertos;
 using MicroServicioProductos.Aplicacion.Servicios;
 using MicroServicioProductos.Dominio.Puertos;
 using MicroServicioProductos.Infraestructura.Conexion;
@@ -44,7 +45,9 @@ builder.Services.AddScoped<IRepositoryHistoricoProducto>(sp =>
     sp.GetRequiredService<RepositoryCreator<IRepositoryHistoricoProducto>>()
         .CreateRepository());
 
-builder.Services.AddScoped<ServicioProductos>();
+// Puerto de entrada: el controlador depende de IServicioProductos, nunca de
+// la clase concreta ServicioProductos.
+builder.Services.AddScoped<IServicioProductos, ServicioProductos>();
 
 // Identidad resuelta desde el JWT validado.
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuarioJwt>();

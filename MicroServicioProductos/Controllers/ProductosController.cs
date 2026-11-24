@@ -1,5 +1,5 @@
 using MicroServicioProductos.Aplicacion.Modelos;
-using MicroServicioProductos.Aplicacion.Servicios;
+using MicroServicioProductos.Aplicacion.Puertos;
 using MicroServicioProductos.Dominio.Resultados;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,17 +7,18 @@ using Microsoft.AspNetCore.Mvc;
 namespace MicroServicioProductos.Controllers;
 
 /// <summary>
-/// API REST del catálogo de productos. El controlador solo traduce HTTP ↔
-/// casos de uso; las reglas de negocio viven en <see cref="ServicioProductos"/>.
+/// Adaptador de entrada HTTP del catálogo de productos. El controlador solo
+/// traduce HTTP ↔ casos de uso del puerto <see cref="IServicioProductos"/>;
+/// las reglas de negocio viven en la capa de Aplicación.
 /// </summary>
 [ApiController]
 [Route("api/productos")]
 [Authorize]
 public sealed class ProductosController : ControllerBase
 {
-    private readonly ServicioProductos _servicio;
+    private readonly IServicioProductos _servicio;
 
-    public ProductosController(ServicioProductos servicio)
+    public ProductosController(IServicioProductos servicio)
     {
         _servicio = servicio;
     }
@@ -408,21 +409,21 @@ public sealed class ProductosController : ControllerBase
         string error = resultado.Error;
 
         if (error.StartsWith(
-                ServicioProductos.PrefijoNoEncontrado,
+                PrefijosResultado.NoEncontrado,
                 StringComparison.Ordinal))
         {
             string mensaje = error[
-                ServicioProductos.PrefijoNoEncontrado.Length..];
+                PrefijosResultado.NoEncontrado.Length..];
 
             return NotFound(new { mensaje });
         }
 
         if (error.StartsWith(
-                ServicioProductos.PrefijoConflicto,
+                PrefijosResultado.Conflicto,
                 StringComparison.Ordinal))
         {
             string mensaje = error[
-                ServicioProductos.PrefijoConflicto.Length..];
+                PrefijosResultado.Conflicto.Length..];
 
             return Conflict(new { mensaje });
         }

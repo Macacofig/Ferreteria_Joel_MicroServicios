@@ -89,6 +89,7 @@
                         <th scope="col">CI</th>
                         <th scope="col">Contacto</th>
                         <th scope="col">Dirección</th>
+                        <th scope="col">Auditoría</th>
                         <th scope="col">Estado</th>
                         <th scope="col" class="fj-td-acciones">Acciones</th>
                     </tr>
@@ -98,7 +99,7 @@
                     @if (Model.Clientes.Count == 0)
                     {
                         <tr>
-                            <td colspan="6" class="fj-table-vacio">
+                            <td colspan="7" class="fj-table-vacio">
                                 <div class="fj-empty">
                                     <p>No se encontraron clientes</p>
                                     <span>Registre un cliente nuevo o cambie los criterios de búsqueda.</span>
@@ -131,6 +132,14 @@
                             </td>
 
                             <td class="fj-auditoria">
+                                <span class="fj-nombre-sub">Alta: @cliente.FechaCreacion.ToString("dd/MM/yyyy") · @cliente.UsuarioCreacion</span>
+                                @if (cliente.FechaModificacion is not null)
+                                {
+                                    <span class="fj-nombre-sub">Modif: @cliente.FechaModificacion.Value.ToString("dd/MM/yyyy") · @cliente.UsuarioModificacion</span>
+                                }
+                            </td>
+
+                            <td class="fj-auditoria">
                                 <span class="fj-pill" style="--pill: @(cliente.Activo ? "var(--success)" : "var(--texto-ter)");">@(cliente.Activo ? "Activo" : "Inactivo")</span>
                             </td>
 
@@ -138,6 +147,13 @@
                                 <div class="fj-acciones">
                                     @if (cliente.Activo)
                                     {
+                                        <a class="fj-btn fj-btn-ghost fj-btn-sm"
+                                           asp-page="/ClienteContactos"
+                                           asp-route-idCliente="@cliente.IdCliente"
+                                           title="Administrar contactos del cliente">
+                                            Contactos
+                                        </a>
+
                                         <a class="fj-btn fj-btn-ghost fj-btn-sm"
                                            asp-page="/ClienteFormulario"
                                            asp-route-id="@cliente.IdCliente"

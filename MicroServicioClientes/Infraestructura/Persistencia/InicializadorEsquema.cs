@@ -4,8 +4,8 @@ using MicroServicioClientes.Infraestructura.Conexion;
 namespace MicroServicioClientes.Infraestructura.Persistencia;
 
 /// <summary>
-/// Crea la tabla <c>cliente</c> al arrancar (es idempotente). Evita
-/// depender de un script externo montado en Docker.
+/// Crea las tablas <c>cliente</c> y <c>cliente_contacto</c> al arrancar
+/// (es idempotente). Evita depender de un script externo montado en Docker.
 /// </summary>
 public sealed class InicializadorEsquema : IHostedService
 {
@@ -30,6 +30,27 @@ public sealed class InicializadorEsquema : IHostedService
         -- La CI es opcional, pero cuando existe no puede repetirse (los NULL no chocan).
         CREATE UNIQUE INDEX IF NOT EXISTS ux_cliente_ci
             ON cliente (LOWER(ci));
+
+        -- Segunda tabla del microservicio: personas de contacto por cliente.
+        CREATE TABLE IF NOT EXISTS cliente_contacto (
+            id_contacto          SERIAL PRIMARY KEY,
+            id_cliente           INTEGER      NOT NULL
+                                 REFERENCES cliente (id_cliente) ON DELETE RESTRICT,
+            nombre               VARCHAR(100) NOT NULL,
+            cargo                VARCHAR(50),
+            telefono             VARCHAR(20),
+            correo               VARCHAR(100),
+            activo               BOOLEAN      NOT NULL DEFAULT TRUE,
+            fecha_creacion       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+            usuario_creacion     VARCHAR(100) NOT NULL DEFAULT 'sistema',
+            fecha_modificacion   TIMESTAMPTZ,
+            usuario_modificacion VARCHAR(100),
+            fecha_baja           TIMESTAMPTZ,
+            usuario_baja         VARCHAR(100)
+        );
+
+        CREATE INDEX IF NOT EXISTS ix_contacto_cliente_activo
+            ON cliente_contacto (id_cliente, activo);
         """;
 
     private readonly IFabricaConexion _fabrica;
@@ -53,7 +74,7 @@ public sealed class InicializadorEsquema : IHostedService
                 await using var comando = new NpgsqlCommand(Esquema, conexion);
                 await comando.ExecuteNonQueryAsync(cancelacion);
 
-                _logger.LogInformation("Esquema de clientes verificado.");
+                _logger.LogInformation("Esquema de clientes y contactos verificado.");
                 return;
             }
             catch (NpgsqlException ex)

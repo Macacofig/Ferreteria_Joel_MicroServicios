@@ -16,11 +16,13 @@ builder.Services.AgregarAutenticacionKeycloak(builder.Configuration);
 
 // Adaptadores de salida (infraestructura) enlazados a los puertos del núcleo.
 builder.Services.AddSingleton<IFabricaConexion, FabricaConexionPostgres>();
-builder.Services.AddScoped<RepositoryCreator<IClienteRepositorio>, ClienteRepositoryCreator>();
+builder.Services.AddScoped<IRepositoryCreator<IClienteRepositorio>, ClienteRepositoryCreator>();
+builder.Services.AddScoped<IRepositoryCreator<IClienteContactoRepositorio>, ClienteContactoRepositoryCreator>();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuarioHttp>();
 
 // Casos de uso (puertos de entrada).
 builder.Services.AddScoped<IServicioClientes, ServicioClientes>();
+builder.Services.AddScoped<IServicioContactos, ServicioContactos>();
 
 // Crea las tablas al arrancar si no existen.
 builder.Services.AddHostedService<InicializadorEsquema>();

@@ -11,9 +11,9 @@ public class EliminarProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public EliminarProveedorCasoDeUso(IRepositorioProveedores repositorio)
+    public EliminarProveedorCasoDeUso(IRepositoryCreator<IRepositorioProveedores> creadorRepositorio)
     {
-        _repositorio = repositorio;
+        _repositorio = creadorRepositorio.CreateRepository();
     }
 
     public async Task<Result> DarDeBajaAsync(int id, string usuario, CancellationToken ct = default)

@@ -169,6 +169,7 @@
                         <th scope="col">
                             <a asp-page="/Productos/Index" asp-route-ordenarPor="stock" asp-route-direccion="@DireccionDe("stock")">Stock @(FlechaDe("stock"))</a>
                         </th>
+                        <th scope="col">Auditoría</th>
                         <th scope="col">Estado</th>
                         <th scope="col" class="fj-td-acciones">Acciones</th>
                     </tr>
@@ -178,7 +179,7 @@
                     @if (Model.Productos.Count == 0)
                     {
                         <tr>
-                            <td colspan="9" class="fj-table-vacio">
+                            <td colspan="10" class="fj-table-vacio">
                                 <div class="fj-empty">
                                     <span class="fj-empty-ico" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
@@ -213,6 +214,13 @@
                                 <span class="fj-pill" style="--pill: @(producto.CantidadStock == 0 ? "var(--danger)" : producto.CantidadStock < 10 ? "var(--warning)" : "var(--success)");">
                                     @producto.CantidadStock
                                 </span>
+                            </td>
+                            <td class="fj-auditoria">
+                                <span class="fj-nombre-sub">Alta: @producto.FechaCreacion?.ToString("dd/MM/yyyy") · @(producto.UsuarioCreacion?.ToString() ?? "—")</span>
+                                @if (producto.FechaModificacion is not null)
+                                {
+                                    <span class="fj-nombre-sub">Modif: @producto.FechaModificacion.Value.ToString("dd/MM/yyyy") · @(producto.UsuarioModificacion?.ToString() ?? "—")</span>
+                                }
                             </td>
                             <td class="fj-auditoria">
                                 <span class="fj-pill" style="--pill: @(producto.Estado == 1 ? "var(--success)" : "var(--texto-ter)");">@(producto.Estado == 1 ? "Activo" : "Inactivo")</span>

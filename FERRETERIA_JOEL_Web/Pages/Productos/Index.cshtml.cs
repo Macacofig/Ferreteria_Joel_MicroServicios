@@ -12,12 +12,17 @@ namespace FERRETERIA__Joel.Pages.Productos;
 [Authorize]
 public sealed class IndexModel : PageModel
 {
-    private readonly IServicioProductos _api;
+    private readonly IProductosConsulta _consultas;
+    private readonly IProductosComandos _comandos;
     private readonly ILogger<IndexModel> _logger;
 
-    public IndexModel(IServicioProductos api, ILogger<IndexModel> logger)
+    public IndexModel(
+        IProductosConsulta consultas,
+        IProductosComandos comandos,
+        ILogger<IndexModel> logger)
     {
-        _api = api;
+        _consultas = consultas;
+        _comandos = comandos;
         _logger = logger;
     }
 
@@ -53,7 +58,7 @@ public sealed class IndexModel : PageModel
         try
         {
             ResultadoApi<MensajeApi> resultado =
-                await _api.DarDeBajaAsync(idProducto);
+                await _comandos.DarDeBajaAsync(idProducto);
 
             if (resultado.Exitoso)
             {
@@ -89,7 +94,7 @@ public sealed class IndexModel : PageModel
         try
         {
             ResultadoApi<MensajeApi> resultado =
-                await _api.ReactivarAsync(idProducto);
+                await _comandos.ReactivarAsync(idProducto);
 
             if (resultado.Exitoso)
             {
@@ -138,7 +143,7 @@ public sealed class IndexModel : PageModel
         try
         {
             ResultadoApi<List<ProductoApi>> respuesta =
-                await _api.ListarAsync(OrdenarPor, Direccion, incluirInactivos: true);
+                await _consultas.ListarAsync(OrdenarPor, Direccion, incluirInactivos: true);
 
             if (respuesta.Exitoso && respuesta.Datos is not null)
             {

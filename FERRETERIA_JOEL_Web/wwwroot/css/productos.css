@@ -668,3 +668,169 @@
 .fj-table-personal td:nth-child(6) {
     width: 7.5rem;
 }
+
+/* ------------------------------------------------------------------
+   Estilo de catálogo compartido por Productos y Proveedores.
+   Centraliza las reglas que antes eran locales de las vistas de Productos.
+   ------------------------------------------------------------------ */
+
+.fj-page-products .prod-toolbar-controls,
+.fj-page-products .prod-toolbar-controls .fj-inline-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.fj-page-products .prod-toolbar-label {
+    white-space: nowrap;
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-right: 2px;
+}
+
+.fj-page-products .prod-select {
+    height: 36px;
+    padding: 0 28px 0 12px;
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+    background-color: #fff;
+    font-size: 0.875rem;
+    color: #1f2937;
+}
+
+.fj-page-products .prod-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.fj-page-products .prod-table {
+    width: 100%;
+    min-width: 1180px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+.fj-page-products .prod-table thead th {
+    padding: 14px 12px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+
+.fj-page-products .prod-table tbody td {
+    padding: 14px 12px;
+    overflow-wrap: normal;
+}
+
+.fj-page-products .prod-table tbody td.fj-td-codigo,
+.fj-page-products .prod-table tbody td.fj-td-secundario,
+.fj-page-products .prod-table tbody td.fj-td-acciones,
+.fj-page-products .prod-table .fj-nombre,
+.fj-page-products .prod-table .fj-btn {
+    white-space: nowrap;
+}
+
+.fj-page-products .prod-table .fj-nombre-sub {
+    white-space: normal;
+}
+
+.fj-page-products .prod-table .fj-acciones {
+    flex-wrap: nowrap;
+}
+
+.fj-form-producto {
+    padding: 28px 32px;
+    box-sizing: border-box;
+}
+
+.fj-form-producto *,
+.fj-form-producto *::before,
+.fj-form-producto *::after {
+    box-sizing: border-box;
+}
+
+.fj-form-producto .fj-fila {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.fj-form-producto .fj-fila--ultima {
+    margin-bottom: 0;
+}
+
+.fj-form-producto .fj-fila-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fj-form-producto .fj-fila-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fj-form-producto .fj-fila-1 {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.fj-form-producto .fj-campo {
+    min-width: 0;
+}
+
+.fj-form-producto .form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.fj-form-producto .form-control,
+.fj-form-producto .form-select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.fj-form-producto .fj-codigo-autogenerado {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.fj-form-producto .fj-barra-botones {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #eef0f3;
+}
+
+.fj-form-producto .fj-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0.625rem 1rem;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.fj-form-producto .fj-btn svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+}
+
+@media (max-width: 640px) {
+    .fj-form-producto {
+        padding: 20px;
+    }
+
+    .fj-form-producto .fj-fila-2,
+    .fj-form-producto .fj-fila-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .fj-form-producto .fj-barra-botones {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}

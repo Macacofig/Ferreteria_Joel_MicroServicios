@@ -9,9 +9,9 @@ public class ActualizarProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public ActualizarProveedorCasoDeUso(IRepositorioProveedores repositorio)
+    public ActualizarProveedorCasoDeUso(IRepositoryCreator<IRepositorioProveedores> creadorRepositorio)
     {
-        _repositorio = repositorio;
+        _repositorio = creadorRepositorio.CreateRepository();
     }
 
     public async Task<Result<ProveedorDto>> EjecutarAsync(int id, ActualizarProveedorSolicitud solicitud, string usuario, CancellationToken ct = default)

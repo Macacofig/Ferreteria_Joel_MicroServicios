@@ -8,9 +8,9 @@ public class ObtenerProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public ObtenerProveedorCasoDeUso(IRepositorioProveedores repositorio)
+    public ObtenerProveedorCasoDeUso(IRepositoryCreator<IRepositorioProveedores> creadorRepositorio)
     {
-        _repositorio = repositorio;
+        _repositorio = creadorRepositorio.CreateRepository();
     }
 
     public async Task<Result<ProveedorDto>> EjecutarAsync(int id, CancellationToken ct = default)

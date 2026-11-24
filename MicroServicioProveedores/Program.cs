@@ -3,6 +3,7 @@ using System.Text.Json;
 using MicroServicioProveedores.Aplicacion.CasosDeUso;
 using MicroServicioProveedores.Aplicacion.Contratos;
 using MicroServicioProveedores.Comun;
+using MicroServicioProveedores.Infraestructura.Factories;
 using MicroServicioProveedores.Infraestructura.Persistencia;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
@@ -28,7 +29,9 @@ string nombreBd = builder.Configuration["Mongo:BaseDatos"]
 
 builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(cadenaMongo));
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IMongoClient>().GetDatabase(nombreBd));
-builder.Services.AddScoped<IRepositorioProveedores, MongoProveedorRepositorio>();
+// Factory Method: Aplicación solo conoce IRepositoryCreator<T>; el creador
+// concreto es el único que referencia al repositorio Mongo.
+builder.Services.AddScoped<IRepositoryCreator<IRepositorioProveedores>, ProveedorRepositoryCreator>();
 builder.Services.AddScoped<MongoInicializadorProveedores>();
 
 // ---------------------------------------------------------------------------

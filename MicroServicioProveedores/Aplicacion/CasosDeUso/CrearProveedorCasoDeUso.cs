@@ -9,9 +9,9 @@ public class CrearProveedorCasoDeUso
 {
     private readonly IRepositorioProveedores _repositorio;
 
-    public CrearProveedorCasoDeUso(IRepositorioProveedores repositorio)
+    public CrearProveedorCasoDeUso(IRepositoryCreator<IRepositorioProveedores> creadorRepositorio)
     {
-        _repositorio = repositorio;
+        _repositorio = creadorRepositorio.CreateRepository();
     }
 
     public async Task<Result<ProveedorDto>> EjecutarAsync(CrearProveedorSolicitud solicitud, string usuario, CancellationToken ct = default)

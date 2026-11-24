@@ -1,7 +1,10 @@
 using System.Security.Claims;
 using System.Text.Json;
+using ApiGateway.Infraestructura;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Tokens;
+using Yarp.ReverseProxy.Forwarder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +17,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services
     .AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+// YARP crea un HttpMessageInvoker por clúster; envolver su handler agrega
+// reintentos cortos (solo GET) y timeouts sin amplificar la carga si un
+// microservicio está caído.
+builder.Services.AddSingleton<IForwarderHttpClientFactory, ResilienciaForwarderHttpClientFactory>();
 
 // ---------------------------------------------------------------------------
 // JWT Bearer: el gateway valida los tokens emitidos por Keycloak usando el
@@ -42,6 +50,13 @@ builder.Services
     {
         options.MetadataAddress = metadataAddress;
         options.RequireHttpsMetadata = false;
+
+        // La consulta del JWKS usa el backchannel; se acota con pocos reintentos
+        // y un timeout corto para no bloquear la validación de tokens.
+        options.BackchannelHttpHandler = new ResilienceHandler(ResilienciaHttp.CrearPipelineKeycloak())
+        {
+            InnerHandler = new HttpClientHandler()
+        };
 
         options.TokenValidationParameters = new TokenValidationParameters
         {

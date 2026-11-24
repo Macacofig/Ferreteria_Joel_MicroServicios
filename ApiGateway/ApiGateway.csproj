@@ -11,6 +11,8 @@
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- Validación de los JWT emitidos por Keycloak (JWKS). -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <!-- Reintentos cortos y timeouts para YARP y el backchannel de Keycloak. -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.11.1" />
   </ItemGroup>
 
 </Project>

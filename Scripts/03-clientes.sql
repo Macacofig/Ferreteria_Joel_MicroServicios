@@ -26,6 +26,28 @@ CREATE TABLE IF NOT EXISTS cliente (
 -- La CI es opcional, pero cuando existe no puede repetirse (los NULL no chocan).
 CREATE UNIQUE INDEX IF NOT EXISTS ux_cliente_ci ON cliente (LOWER(ci));
 
+-- Segunda tabla del microservicio: personas de contacto por cliente.
+-- Incluye auditoría completa (creación, modificación y baja lógica).
+CREATE TABLE IF NOT EXISTS cliente_contacto (
+    id_contacto          SERIAL PRIMARY KEY,
+    id_cliente           INTEGER      NOT NULL
+                             REFERENCES cliente (id_cliente) ON DELETE RESTRICT,
+    nombre               VARCHAR(100) NOT NULL,
+    cargo                VARCHAR(50),
+    telefono             VARCHAR(20),
+    correo               VARCHAR(100),
+    activo               BOOLEAN      NOT NULL DEFAULT TRUE,
+    fecha_creacion       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    usuario_creacion     VARCHAR(100) NOT NULL DEFAULT 'sistema',
+    fecha_modificacion   TIMESTAMPTZ,
+    usuario_modificacion VARCHAR(100),
+    fecha_baja           TIMESTAMPTZ,
+    usuario_baja         VARCHAR(100)
+);
+
+CREATE INDEX IF NOT EXISTS ix_contacto_cliente_activo
+    ON cliente_contacto (id_cliente, activo);
+
 -- ============================================================
 -- DATOS SEMILLA — CLIENTES (9)
 -- ============================================================
@@ -40,4 +62,18 @@ VALUES
     ('9678901', 'Marcelo',  'Choque',    'marcelo.choque@correo.com',   '71230007', 'Av. Ayacucho 780, Cochabamba',           'cmendoza'),
     ('2789012', 'Verónica', 'Rocha',     'veronica.rocha@correo.com',   '71230008', 'Calle Bolívar 145, Quillacollo',         'agutierrez'),
     ('1890123', 'Álvaro',   'Peredo',    NULL,                          '71230009', 'Av. Circunvalación 600, Cochabamba',     'agutierrez')
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
+-- DATOS SEMILLA — CONTACTOS
+-- Se ejecuta después de los clientes para que las FK existan.
+-- ============================================================
+INSERT INTO cliente_contacto (id_cliente, nombre, cargo, telefono, correo, usuario_creacion)
+SELECT c.id_cliente, v.nombre, v.cargo, v.telefono, v.correo, 'jrios'
+FROM cliente c
+JOIN (VALUES
+    ('4567123', 'Ana Salazar',    'Jefa de compras', '71231001', 'ana.salazar@correo.com'),
+    ('5123456', 'Luis Quispe',    'Encargado',       '71231002', 'luis.quispe@correo.com'),
+    ('6234567', 'Rosa Mamani',    'Almacenera',      '71231003', 'rosa.mamani@correo.com')
+) AS v(ci, nombre, cargo, telefono, correo) ON LOWER(v.ci) = LOWER(c.ci)
 ON CONFLICT DO NOTHING;

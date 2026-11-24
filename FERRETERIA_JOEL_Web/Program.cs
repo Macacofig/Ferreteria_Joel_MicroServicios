@@ -82,6 +82,16 @@ builder.Services.AddHttpClient<ProductosApiCliente>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddScoped<IServicioProductos, AdaptadorServicioProductos>();
+// ISP: las páginas reciben solo la interfaz que necesitan, todas resueltas
+// a la misma instancia del adaptador dentro del ámbito de la petición.
+builder.Services.AddScoped<IProductosConsulta>(sp =>
+    (IProductosConsulta)sp.GetRequiredService<IServicioProductos>());
+builder.Services.AddScoped<IProductosComandos>(sp =>
+    (IProductosComandos)sp.GetRequiredService<IServicioProductos>());
+builder.Services.AddScoped<ICatalogoConsulta>(sp =>
+    (ICatalogoConsulta)sp.GetRequiredService<IServicioProductos>());
+builder.Services.AddScoped<ICatalogoComandos>(sp =>
+    (ICatalogoComandos)sp.GetRequiredService<IServicioProductos>());
 
 string ventasApiUrl = builder.Configuration["Servicios:VentasApiUrl"]
     ?? builder.Configuration["Servicios__VentasApiUrl"]
@@ -104,6 +114,8 @@ builder.Services.AddHttpClient<ClientesApiCliente>(client =>
 });
 
 builder.Services.AddScoped<IServicioClientes, AdaptadorServicioClientes>();
+// La segunda tabla de clientes usa el mismo canal HTTP y el mismo JWT.
+builder.Services.AddScoped<IServicioContactos, AdaptadorServicioContactos>();
 
 string reportesApiUrl = builder.Configuration["Servicios:ReportesApiUrl"]
     ?? builder.Configuration["Servicios__ReportesApiUrl"]
