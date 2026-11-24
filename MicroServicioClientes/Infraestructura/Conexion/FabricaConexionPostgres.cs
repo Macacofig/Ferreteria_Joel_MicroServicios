@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace MicroServicioClientes.Infraestructura.Persistencia;
+namespace MicroServicioClientes.Infraestructura.Conexion;
 
 /// <summary>Crea conexiones con la cadena <c>ConnectionStrings:PostgresConnection</c>.</summary>
 public sealed class FabricaConexionPostgres : IFabricaConexion

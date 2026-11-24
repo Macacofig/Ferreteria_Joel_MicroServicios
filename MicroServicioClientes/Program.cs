@@ -3,6 +3,8 @@ using MicroServicioClientes.Aplicacion.Servicios;
 using MicroServicioClientes.Dominio.Puertos;
 using MicroServicioClientes.Infraestructura.Persistencia;
 using MicroServicioClientes.Infraestructura.Seguridad;
+using MicroServicioClientes.Infraestructura.Factories;
+using MicroServicioClientes.Infraestructura.Conexion;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,7 @@ builder.Services.AgregarAutenticacionKeycloak(builder.Configuration);
 
 // Adaptadores de salida (infraestructura) enlazados a los puertos del núcleo.
 builder.Services.AddSingleton<IFabricaConexion, FabricaConexionPostgres>();
-builder.Services.AddScoped<IClienteRepositorio, PostgresClienteRepositorio>();
+builder.Services.AddScoped<RepositoryCreator<IClienteRepositorio>, ClienteRepositoryCreator>();
 builder.Services.AddScoped<IContextoUsuario, ContextoUsuarioHttp>();
 
 // Casos de uso (puertos de entrada).

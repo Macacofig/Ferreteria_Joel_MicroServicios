@@ -1,4 +1,5 @@
 using Npgsql;
+using MicroServicioClientes.Infraestructura.Conexion;
 
 namespace MicroServicioClientes.Infraestructura.Persistencia;
 

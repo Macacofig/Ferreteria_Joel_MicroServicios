@@ -1,9 +1,10 @@
 using System.Text;
 using MicroServicioClientes.Dominio.Entidades;
 using MicroServicioClientes.Dominio.Puertos;
+using MicroServicioClientes.Infraestructura.Conexion;
 using Npgsql;
 
-namespace MicroServicioClientes.Infraestructura.Persistencia;
+namespace MicroServicioClientes.Infraestructura.Repositorios;
 
 /// <summary>
 /// Adaptador de salida (patrón Adapter + Repository): traduce el puerto

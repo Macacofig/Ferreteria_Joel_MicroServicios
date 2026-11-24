@@ -4,6 +4,7 @@ using MicroServicioClientes.Aplicacion.Validaciones;
 using MicroServicioClientes.Dominio.Comunes;
 using MicroServicioClientes.Dominio.Entidades;
 using MicroServicioClientes.Dominio.Puertos;
+using MicroServicioClientes.Infraestructura.Factories;
 
 namespace MicroServicioClientes.Aplicacion.Servicios;
 
@@ -16,9 +17,11 @@ public sealed class ServicioClientes : IServicioClientes
     private readonly IClienteRepositorio _clientes;
     private readonly IContextoUsuario _contexto;
 
-    public ServicioClientes(IClienteRepositorio clientes, IContextoUsuario contexto)
+    public ServicioClientes(
+        RepositoryCreator<IClienteRepositorio> creadorRepositorio,
+        IContextoUsuario contexto)
     {
-        _clientes = clientes;
+        _clientes = creadorRepositorio.CreateRepository();
         _contexto = contexto;
     }
 
