@@ -1,5 +1,5 @@
 using MicroServicioProductos.Aplicacion.Modelos;
-using MicroServicioProductos.Aplicacion.Puertos;
+using MicroServicioProductos.Aplicacion.Servicios;
 using MicroServicioProductos.Dominio.Resultados;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,26 +8,18 @@ namespace MicroServicioProductos.Controllers;
 
 /// <summary>
 /// API REST del catálogo de productos. El controlador solo traduce HTTP ↔
-/// casos de uso; las reglas de negocio viven en los servicios de aplicación
-/// segregados.
+/// casos de uso; las reglas de negocio viven en <see cref="ServicioProductos"/>.
 /// </summary>
 [ApiController]
 [Route("api/productos")]
 [Authorize]
 public sealed class ProductosController : ControllerBase
 {
-    private readonly IServicioProductos _productos;
-    private readonly IServicioCategorias _categorias;
-    private readonly IServicioMarcas _marcas;
+    private readonly ServicioProductos _servicio;
 
-    public ProductosController(
-        IServicioProductos productos,
-        IServicioCategorias categorias,
-        IServicioMarcas marcas)
+    public ProductosController(ServicioProductos servicio)
     {
-        _productos = productos;
-        _categorias = categorias;
-        _marcas = marcas;
+        _servicio = servicio;
     }
 
     // ===================== Consultas =====================
@@ -40,7 +32,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<IReadOnlyList<Dominio.Entidades.Producto>> resultado =
-            await _productos.ListarAsync(
+            await _servicio.ListarAsync(
                 ordenarPor, direccion, incluirInactivos, ct);
 
         if (resultado.EsFallo)
@@ -59,7 +51,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<IReadOnlyList<Dominio.Entidades.Categoria>> resultado =
-            await _categorias.ListarCategoriasAsync(incluirInactivos, ct);
+            await _servicio.ListarCategoriasAsync(incluirInactivos, ct);
 
         if (resultado.EsFallo)
         {
@@ -76,7 +68,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<string> resultado =
-            await _categorias.ObtenerSiguienteCodigoCategoriaAsync(ct);
+            await _servicio.ObtenerSiguienteCodigoCategoriaAsync(ct);
 
         if (resultado.EsFallo)
         {
@@ -92,7 +84,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<IReadOnlyList<Dominio.Entidades.Marca>> resultado =
-            await _marcas.ListarMarcasAsync(incluirInactivos, ct);
+            await _servicio.ListarMarcasAsync(incluirInactivos, ct);
 
         if (resultado.EsFallo)
         {
@@ -110,7 +102,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<Dominio.Entidades.Categoria> resultado =
-            await _categorias.ObtenerCategoriaPorIdAsync(ConvertirIdCatalogo(id), ct);
+            await _servicio.ObtenerCategoriaPorIdAsync(ConvertirIdCatalogo(id), ct);
 
         if (resultado.EsFallo)
         {
@@ -126,7 +118,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<Dominio.Entidades.Marca> resultado =
-            await _marcas.ObtenerMarcaPorIdAsync(ConvertirIdCatalogo(id), ct);
+            await _servicio.ObtenerMarcaPorIdAsync(ConvertirIdCatalogo(id), ct);
 
         if (resultado.EsFallo)
         {
@@ -141,7 +133,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<string> resultado =
-            await _productos.ObtenerSiguienteCodigoAsync(ct);
+            await _servicio.ObtenerSiguienteCodigoAsync(ct);
 
         if (resultado.EsFallo)
         {
@@ -155,7 +147,7 @@ public sealed class ProductosController : ControllerBase
     public async Task<IActionResult> Obtener(int id, CancellationToken ct = default)
     {
         Result<Dominio.Entidades.Producto> resultado =
-            await _productos.ObtenerPorIdAsync(id, ct);
+            await _servicio.ObtenerPorIdAsync(id, ct);
 
         if (resultado.EsFallo)
         {
@@ -171,7 +163,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<IReadOnlyList<Dominio.Entidades.HistoricoProducto>> resultado =
-            await _productos.ListarHistoricoAsync(id, ct);
+            await _servicio.ListarHistoricoAsync(id, ct);
 
         if (resultado.EsFallo)
         {
@@ -190,7 +182,7 @@ public sealed class ProductosController : ControllerBase
         [FromBody] CrearProductoRequest solicitud,
         CancellationToken ct = default)
     {
-        Result<int> resultado = await _productos.CrearAsync(solicitud, ct);
+        Result<int> resultado = await _servicio.CrearAsync(solicitud, ct);
 
         if (resultado.EsFallo)
         {
@@ -211,7 +203,7 @@ public sealed class ProductosController : ControllerBase
         [FromBody] ActualizarProductoRequest solicitud,
         CancellationToken ct = default)
     {
-        Result resultado = await _productos.ActualizarAsync(id, solicitud, ct);
+        Result resultado = await _servicio.ActualizarAsync(id, solicitud, ct);
 
         if (resultado.EsFallo)
         {
@@ -226,7 +218,7 @@ public sealed class ProductosController : ControllerBase
         int id,
         CancellationToken ct = default)
     {
-        Result resultado = await _productos.DarDeBajaAsync(id, ct);
+        Result resultado = await _servicio.DarDeBajaAsync(id, ct);
 
         if (resultado.EsFallo)
         {
@@ -241,7 +233,7 @@ public sealed class ProductosController : ControllerBase
         int id,
         CancellationToken ct = default)
     {
-        Result resultado = await _productos.ReactivarAsync(id, ct);
+        Result resultado = await _servicio.ReactivarAsync(id, ct);
 
         if (resultado.EsFallo)
         {
@@ -259,7 +251,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result<short> resultado =
-            await _categorias.CrearCategoriaAsync(solicitud, ct);
+            await _servicio.CrearCategoriaAsync(solicitud, ct);
 
         if (resultado.EsFallo)
         {
@@ -284,7 +276,7 @@ public sealed class ProductosController : ControllerBase
         [FromBody] ActualizarCategoriaRequest solicitud,
         CancellationToken ct = default)
     {
-        Result resultado = await _categorias.ActualizarCategoriaAsync(
+        Result resultado = await _servicio.ActualizarCategoriaAsync(
             ConvertirIdCatalogo(id), solicitud, ct);
 
         if (resultado.EsFallo)
@@ -301,7 +293,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result resultado =
-            await _categorias.DarDeBajaCategoriaAsync(ConvertirIdCatalogo(id), ct);
+            await _servicio.DarDeBajaCategoriaAsync(ConvertirIdCatalogo(id), ct);
 
         if (resultado.EsFallo)
         {
@@ -317,7 +309,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result resultado =
-            await _categorias.ReactivarCategoriaAsync(ConvertirIdCatalogo(id), ct);
+            await _servicio.ReactivarCategoriaAsync(ConvertirIdCatalogo(id), ct);
 
         if (resultado.EsFallo)
         {
@@ -334,7 +326,7 @@ public sealed class ProductosController : ControllerBase
         [FromBody] CrearMarcaRequest solicitud,
         CancellationToken ct = default)
     {
-        Result<short> resultado = await _marcas.CrearMarcaAsync(solicitud, ct);
+        Result<short> resultado = await _servicio.CrearMarcaAsync(solicitud, ct);
 
         if (resultado.EsFallo)
         {
@@ -359,7 +351,7 @@ public sealed class ProductosController : ControllerBase
         [FromBody] ActualizarMarcaRequest solicitud,
         CancellationToken ct = default)
     {
-        Result resultado = await _marcas.ActualizarMarcaAsync(
+        Result resultado = await _servicio.ActualizarMarcaAsync(
             ConvertirIdCatalogo(id), solicitud, ct);
 
         if (resultado.EsFallo)
@@ -376,7 +368,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result resultado =
-            await _marcas.DarDeBajaMarcaAsync(ConvertirIdCatalogo(id), ct);
+            await _servicio.DarDeBajaMarcaAsync(ConvertirIdCatalogo(id), ct);
 
         if (resultado.EsFallo)
         {
@@ -392,7 +384,7 @@ public sealed class ProductosController : ControllerBase
         CancellationToken ct = default)
     {
         Result resultado =
-            await _marcas.ReactivarMarcaAsync(ConvertirIdCatalogo(id), ct);
+            await _servicio.ReactivarMarcaAsync(ConvertirIdCatalogo(id), ct);
 
         if (resultado.EsFallo)
         {
@@ -416,21 +408,21 @@ public sealed class ProductosController : ControllerBase
         string error = resultado.Error;
 
         if (error.StartsWith(
-                PrefijosResultado.NoEncontrado,
+                ServicioProductos.PrefijoNoEncontrado,
                 StringComparison.Ordinal))
         {
             string mensaje = error[
-                PrefijosResultado.NoEncontrado.Length..];
+                ServicioProductos.PrefijoNoEncontrado.Length..];
 
             return NotFound(new { mensaje });
         }
 
         if (error.StartsWith(
-                PrefijosResultado.Conflicto,
+                ServicioProductos.PrefijoConflicto,
                 StringComparison.Ordinal))
         {
             string mensaje = error[
-                PrefijosResultado.Conflicto.Length..];
+                ServicioProductos.PrefijoConflicto.Length..];
 
             return Conflict(new { mensaje });
         }

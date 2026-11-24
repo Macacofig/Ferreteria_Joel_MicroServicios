@@ -6,7 +6,7 @@ namespace MicroServicioProductos.Infraestructura.Factories;
 
 /// <summary>
 /// Factory Method de repositorios: la aplicación conoce solo el contrato del
-/// dominio y el creador concreto decide qué adaptador MySQL instanciar.
+/// dominio y el creador concreto decide qué adaptador MySQL instantiar.
 /// </summary>
 public abstract class RepositoryCreator<TRepository>
 {
@@ -26,30 +26,18 @@ public sealed class ProductoRepositoryCreator : RepositoryCreator<IRepositoryPro
         new MySqlProductoRepository(_connectionFactory);
 }
 
-public sealed class CategoriaRepositoryCreator : RepositoryCreator<IRepositoryCategoria>
+public sealed class CatalogoAuxiliarRepositoryCreator
+    : RepositoryCreator<IRepositoryCatalogoAuxiliar>
 {
     private readonly IDbConnectionFactory _connectionFactory;
 
-    public CategoriaRepositoryCreator(IDbConnectionFactory connectionFactory)
+    public CatalogoAuxiliarRepositoryCreator(IDbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }
 
-    public override IRepositoryCategoria CreateRepository() =>
-        new MySqlCategoriaRepository(_connectionFactory);
-}
-
-public sealed class MarcaRepositoryCreator : RepositoryCreator<IRepositoryMarca>
-{
-    private readonly IDbConnectionFactory _connectionFactory;
-
-    public MarcaRepositoryCreator(IDbConnectionFactory connectionFactory)
-    {
-        _connectionFactory = connectionFactory;
-    }
-
-    public override IRepositoryMarca CreateRepository() =>
-        new MySqlMarcaRepository(_connectionFactory);
+    public override IRepositoryCatalogoAuxiliar CreateRepository() =>
+        new MySqlCatalogoAuxiliarRepository(_connectionFactory);
 }
 
 public sealed class HistoricoProductoRepositoryCreator
